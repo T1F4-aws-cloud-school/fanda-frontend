@@ -4,11 +4,14 @@ import { useState } from "react"
 import "./Login.css"
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState("")
+  const [id, setId] = useState("")
   const [password, setPassword] = useState("")
-
+  
+  const isFormValid = id.trim() !== "" && password.trim() !== ""
+  
+  
   const handleLogin = () => {
-    console.log("로그인 시도:", { email, password })
+    console.log("로그인 시도:", { id, password })
     // 로그인 로직
   }
 
@@ -26,10 +29,10 @@ export default function LoginScreen() {
         {/* 입력 필드 */}
         <div className="input-container">
           <input
-            type="email"
+            type="id"
             placeholder="ID 입력"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            value={id}
+            onChange={(e) => setId(e.target.value)}
             className="input-field"
           />
 
@@ -43,7 +46,10 @@ export default function LoginScreen() {
         </div>
 
         {/* 로그인 버튼 */}
-        <button onClick={handleLogin} className="login-button">
+        <button 
+          onClick={handleLogin}
+          disabled={!isFormValid} // 유효성 검사로 버튼 활성화 제어
+          className="login-button">
           로그인
         </button>
 
