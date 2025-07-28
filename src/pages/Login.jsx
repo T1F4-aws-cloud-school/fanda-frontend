@@ -2,8 +2,10 @@
 
 import { useState } from "react"
 import "./Login.css"
+import { useNavigate } from "react-router-dom"
 
 export default function LoginScreen() {
+  const navigate = useNavigate();
   const [id, setId] = useState("")
   const [password, setPassword] = useState("")
   
@@ -17,7 +19,7 @@ export default function LoginScreen() {
 
   const handleSignUp = () => {
     console.log("회원가입 페이지로 이동")
-    // 회원가입 페이지 이동 로직
+    navigate("/signup")
   }
 
   return (
