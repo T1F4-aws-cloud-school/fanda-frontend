@@ -1,0 +1,121 @@
+.signup-container {
+  position: relative;
+  max-width: 375px;
+  margin: 30px auto;
+  padding: 40px 24px;
+  background-color: #f8fafc; /* 연한 하늘색 배경 */
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 700;
+  margin-top: 80px; 
+  margin-bottom: 40px;
+  white-space: pre-line; 
+  line-height: 1.5; 
+}
+
+/* 개별 약관 라벨 */
+.checkbox {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  cursor: pointer;
+  font-size: 16px;
+  color: #4c5257;
+  position: relative;
+  padding-right: 20px; /* 오른쪽 아이콘 공간 확보 */
+}
+
+/* 오른쪽 화살표 아이콘 (CSS로 간단히) */
+.checkbox::after {
+  content: "›"; /* 유니코드 화살표 */
+  position: absolute;
+  right: 0;
+  color: #ccc;
+  font-size: 20px;
+}
+
+.checkbox input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin-right: 12px;
+  cursor: pointer;
+}
+
+/* 전체 동의 체크박스 */
+.all-check {
+  display: flex;
+  justify-content: center;
+  text-align: center;
+  align-items: center;
+  border: 1px solid #006aff;
+  border-radius: 12px;
+  padding: 14px 20px;
+  color: #006aff;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 32px;
+}
+
+.all-check::after {
+  content: none !important;
+}
+
+/* 체크박스 크기 조절 */
+input[type="checkbox"] {
+  width: 22px;
+  height: 22px;
+  margin-right: 14px;
+  cursor: pointer;
+}
+
+.checkbox-group {
+  margin-bottom: 40px;
+}
+
+/* 다음 버튼 */
+.next-button {
+  width: 100%;
+  padding: 18px 0;
+  font-weight: 700;
+  font-size: 18px;
+  border-radius: 24px;
+  background-color: #006aff;
+  color: white;
+  border: none;
+  cursor: pointer;
+  margin-top: auto; /* 하단 붙이기 */
+  transition: background-color 0.3s ease;
+}
+
+.next-button:disabled {
+  background-color: #d1d1d1;
+  cursor: not-allowed;
+}
+
+/* 배경과 외곽 모서리 */
+.signup-container {
+  max-width: 375px;
+  margin: 0 auto;
+  padding: 40px 24px;
+  background-color: #f8fafc; /* 연한 하늘색 배경 */
+  border-radius: 24px;
+}
+
+/* 뒤로가기 버튼 */
+.back-button {
+  position: absolute;  
+  top: 40px;          
+  left: 20px;        
+  font-size: 24px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #006aff;
+  z-index: 10;
+}
