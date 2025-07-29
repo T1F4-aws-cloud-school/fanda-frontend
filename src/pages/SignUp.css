@@ -10,13 +10,38 @@
   min-height: 100vh;
 }
 
+/* 헤더 영역 */
+.header {
+  display: flex;
+  align-items: center;
+  padding: 20px 0 10px 0;
+  position: relative;
+}
+
+/* 뒤로가기 버튼 */
+.back-button {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 24px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #006aff;
+  z-index: 10;
+  padding: 8px;
+}
+
+
 .title {
   font-size: 24px;
   font-weight: 700;
-  margin-top: 80px; 
-  margin-bottom: 40px;
-  white-space: pre-line; 
-  line-height: 1.5; 
+  white-space: pre-line;
+  line-height: 1.5;
+  text-align: center;
+  margin-top: 12px;
+  margin-bottom: 32px;
 }
 
 /* 개별 약관 라벨 */
@@ -98,24 +123,28 @@ input[type="checkbox"] {
   cursor: not-allowed;
 }
 
-/* 배경과 외곽 모서리 */
-.signup-container {
-  max-width: 375px;
-  margin: 0 auto;
-  padding: 40px 24px;
-  background-color: #f8fafc; /* 연한 하늘색 배경 */
-  border-radius: 24px;
+/* 반응형 디자인 */
+@media (max-width: 480px) {
+  .signup-container {
+    padding: 0 20px 30px 20px;
+  }
+
+  .title {
+    font-size: 22px;
+    margin-top: 30px;
+    margin-bottom: 30px;
+  }
+
+  .back-button {
+    font-size: 22px;
+    padding: 6px;
+  }
 }
 
-/* 뒤로가기 버튼 */
-.back-button {
-  position: absolute;  
-  top: 40px;          
-  left: 20px;        
-  font-size: 24px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #006aff;
-  z-index: 10;
+.signup-header {
+  position: relative;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
 }

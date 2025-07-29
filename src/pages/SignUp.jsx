@@ -48,16 +48,20 @@ export default function SignUp() {
     // TODO: 페이지 이동 로직
   }
 
-  return (
+    return (
     <div className="signup-container">
-      <button className="back-button" onClick={handleBack}>
-      {"<"}
-      </button>
+      {/* 상단 헤더 (뒤로가기 버튼만) */}
+      <div className="signup-header">
+        <button className="back-button" onClick={handleBack}>{"<"}</button>
+      </div>
+
+      {/* 타이틀은 헤더 아래 별도로 위치 */}
       <h1 className="title">
         세끼통살 이용을 위해{'\n'}
         이용약관에 동의해 주세요
       </h1>
 
+      {/* 전체 동의 */}
       <label className="checkbox all-check">
         <input
           type="checkbox"
@@ -67,8 +71,9 @@ export default function SignUp() {
         <span>이용약관 전체 동의</span>
       </label>
 
+      {/* 개별 약관 체크 */}
       <div className="checkbox-group">
-        <label className="checkbox">
+        <label className="checkbox" onClick={() => navigate("/terms/privacy")}>
           <input
             type="checkbox"
             name="privacyPolicy"
@@ -78,7 +83,7 @@ export default function SignUp() {
           <span>(필수) 개인정보처리방침을 읽고 숙지하였습니다</span>
         </label>
 
-        <label className="checkbox">
+        <label className="checkbox" onClick={() => navigate("/terms/personal")}>
           <input
             type="checkbox"
             name="personalInfo"
@@ -88,7 +93,7 @@ export default function SignUp() {
           <span>(필수) 개인정보 수집 및 이용 동의</span>
         </label>
 
-        <label className="checkbox">
+        <label className="checkbox" onClick={() => navigate("/terms/use")}>
           <input
             type="checkbox"
             name="termsOfUse"
