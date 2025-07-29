@@ -103,11 +103,11 @@ body {
 }
 
 /* 비활성화된 로그인 버튼 스타일 */
-.login-button:disabled,
 .login-button.disabled {
-  background-color: #d1d1d1;
+  background-color: #F2F4F5; /* 배경색 */
+  color: #929BA5;            /* 글자색 */
+  border: 1px solid #E8EBEC; /* 테두리 */
   cursor: not-allowed;
-  color: #ffffff;
 }
 
 /* 회원가입 링크 */
@@ -162,3 +162,4 @@ body {
     border-radius: 0;
   }
 }
+
