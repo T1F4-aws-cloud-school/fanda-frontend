@@ -1,13 +1,16 @@
 .signup-container {
-  position: relative;
-  max-width: 375px;
-  margin: 30px auto;
-  padding: 40px 24px;
-  background-color: #f8fafc; /* 연한 하늘색 배경 */
-  border-radius: 24px;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  justify-content: space-between; /* 위/아래 균등 배치 */
+  align-items: flex-start;
+  width: 375px;
+  height: 100vh;
+  padding: 40px 20px;
+  display: flex;
+  background-color: #F9FAFB;
+  flex-direction: column;
+  border-radius: 20px;
+  box-sizing: border-box;
 }
 
 /* 헤더 영역 */
@@ -21,25 +24,23 @@
 /* 뒤로가기 버튼 */
 .back-button {
   position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
+  left: 6px;
+  top: 6px;
   font-size: 24px;
   background: none;
   border: none;
   cursor: pointer;
-  color: #006aff;
+  color: #006aff !important;
   z-index: 10;
   padding: 8px;
 }
-
 
 .title {
   font-size: 24px;
   font-weight: 700;
   white-space: pre-line;
   line-height: 1.5;
-  text-align: center;
+  text-align: left;
   margin-top: 12px;
   margin-bottom: 32px;
 }
@@ -56,7 +57,7 @@
   padding-right: 20px; /* 오른쪽 아이콘 공간 확보 */
 }
 
-/* 오른쪽 화살표 아이콘 (CSS로 간단히) */
+/* 오른쪽 화살표 아이콘 */
 .checkbox::after {
   content: "›"; /* 유니코드 화살표 */
   position: absolute;
@@ -77,6 +78,7 @@
   display: flex;
   justify-content: center;
   text-align: center;
+  width: 335px;
   align-items: center;
   border: 1px solid #006aff;
   border-radius: 12px;
@@ -85,6 +87,7 @@
   font-weight: 600;
   cursor: pointer;
   margin-bottom: 32px;
+  box-sizing: border-box; 
 }
 
 .all-check::after {
@@ -109,18 +112,26 @@ input[type="checkbox"] {
   padding: 18px 0;
   font-weight: 700;
   font-size: 18px;
-  border-radius: 24px;
+  border-radius: 25px;
   background-color: #006aff;
   color: white;
   border: none;
   cursor: pointer;
-  margin-top: auto; /* 하단 붙이기 */
-  transition: background-color 0.3s ease;
+  margin-top: auto; 
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .next-button:disabled {
-  background-color: #d1d1d1;
+  background-color: #F2F4F5; /* 배경색 */
+  color: #929BA5;            /* 글자색 */
+  border: 1px solid #E8EBEC; /* 테두리 */
   cursor: not-allowed;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: #006aff;
+  background-color: #ffffff;
 }
 
 /* 반응형 디자인 */
@@ -137,6 +148,8 @@ input[type="checkbox"] {
 
   .back-button {
     font-size: 22px;
+    top: 6px;
+    left: 6px;
     padding: 6px;
   }
 }
@@ -146,5 +159,106 @@ input[type="checkbox"] {
   height: 56px;
   display: flex;
   align-items: center;
-  padding: 0 8px;
+  justify-content: center; 
+}
+
+.input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.eye-icon {
+  position: absolute;
+  right: 12px;
+  top: 43%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  opacity: 0.3;
+  cursor: pointer;
+}
+
+.eye-icon:hover {
+  opacity: 0.8;       /* 마우스 올리면 조금 더 선명하게 */
+}
+
+/* 팬더 이미지 */
+.welcome-img {
+  width: 120px;
+  margin-bottom: 50px;
+}
+
+.complete-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* 위/아래 균등 배치 */
+  align-items: center;
+  width: 375px;
+  height: 100vh;
+  padding: 40px 20px;
+  display: flex;
+  background-color: #F9FAFB;
+  flex-direction: column;
+  border-radius: 20px;
+  box-sizing: border-box;
+}
+
+/* complete 메인 제목 */
+.welcome-title {
+  color: #191C1F;
+  font-family: 'SUIT', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 34px; /* 141.667% */
+  letter-spacing: -0.6px;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+/* complete - 부제목 */
+.welcome-subtitle {
+  color: #6E7782;
+  font-family: 'SUIT', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  text-align: center;
+  margin-bottom: 50px;
+}
+
+/* 시작하기 버튼 */
+.start-button {
+  display: flex;
+  width: 335px;
+  padding: 16px 0;
+  justify-content: center;
+  align-items: center;
+
+  border-radius: 20px;
+  background: #006AFF;
+  color: white;
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 24px; /* 150% */
+  letter-spacing: -0.4px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+/* 데스크톱에서 중앙 정렬 */
+@media (min-width: 768px) {
+  body {
+    background-color: #f5f5f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+  }
+
+  .mobile-app {
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    border-radius: 0;
+  }
 }

@@ -44,8 +44,7 @@ export default function SignUp() {
   // 다음 버튼 클릭 핸들러
   const handleNext = () => {
     if (!allChecked) return
-    console.log("다음 단계로 이동")
-    // TODO: 페이지 이동 로직
+    navigate("/signup/name") 
   }
 
     return (
