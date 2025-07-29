@@ -1,9 +1,9 @@
 .signup-container {
   position: relative;
   max-width: 375px;
-  margin: 0 auto;
-  padding: 0 24px 40px 24px;
-  background-color: #f8fafc;
+  margin: 30px auto;
+  padding: 40px 24px;
+  background-color: #f8fafc; /* 연한 하늘색 배경 */
   border-radius: 24px;
   display: flex;
   flex-direction: column;
@@ -19,7 +19,6 @@
 }
 
 /* 뒤로가기 버튼 */
-/* 뒤로가기 버튼은 좌측 고정 */
 .back-button {
   position: absolute;
   left: 0;
