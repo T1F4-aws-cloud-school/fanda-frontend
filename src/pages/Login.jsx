@@ -5,16 +5,45 @@ import "./Login.css"
 import { useNavigate } from "react-router-dom"
 
 export default function LoginScreen() {
-  const navigate = useNavigate();
+  const navigate = useNavigate()
   const [id, setId] = useState("")
   const [password, setPassword] = useState("")
   
   const isFormValid = id.trim() !== "" && password.trim() !== ""
-  
-  
-  const handleLogin = () => {
+
+  const handleLogin = async () => {
     console.log("로그인 시도:", { id, password })
-    // 로그인 로직
+    
+    // API 호출
+    try {
+      const response = await fetch("http://localhost:4000/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          id,
+          password,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.token) {
+        // 로그인 성공, 토큰 저장
+        localStorage.setItem("token", data.token)
+        console.log("로그인 성공")
+
+        // 로그인 후 메인 화면으로 이동
+        navigate("/main")
+      } else {
+        // 로그인 실패
+        alert("로그인 실패: " + data.message)
+      }
+    } catch (error) {
+      console.error("로그인 오류:", error)
+      alert("로그인 중 오류 발생")
+    }
   }
 
   const handleSignUp = () => {
@@ -31,7 +60,7 @@ export default function LoginScreen() {
         {/* 입력 필드 */}
         <div className="input-container">
           <input
-            type="id"
+            type="text"
             placeholder="ID 입력"
             value={id}
             onChange={(e) => setId(e.target.value)}

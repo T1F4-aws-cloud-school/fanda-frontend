@@ -8,6 +8,7 @@ import UserTerms from "../pages/UserTerms";
 import NamedInput from "../pages/NameIdInput";
 import PasswordInput from "../pages/PasswordInput";
 import SignUpComplete from "../pages/SignUpComplete.jsx";
+import Detail from "../pages/Detail/Detail.jsx";
 
 const Router = () => {
   return (
@@ -22,6 +23,7 @@ const Router = () => {
         <Route path="/signup/name" element={<NamedInput />} />
         <Route path="/signup/password" element={<PasswordInput />} />
         <Route path="/signup/complete" element={<SignUpComplete />} />
+        <Route path="/product/detail" element={<Detail />} />
       </Routes>
     </BrowserRouter>
   )

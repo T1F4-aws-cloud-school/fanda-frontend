@@ -1,0 +1,44 @@
+{
+  "products": [
+    {
+      "id": 1,
+      "name": "수비드 닭가슴살",
+      "price": 43800,
+      "category": "닭가슴살 > 수비드",
+      "discountRate": 35,
+      "rating": 4.8,
+      "reviewCount": 2430,
+      "images": ["/placeholder.svg?height=400&width=400"],
+      "description": "손쉬운 단백질 충전",
+      "detailInfo": "고단백질 20g까지! 달걀 2개 이상의 단백질 함량으로 맛있고 간편해요"
+    }
+  ],
+  "reviews": [
+    {
+      "id": 1,
+      "productId": 1,
+      "username": "소정소정소정",
+      "rating": 5,
+      "date": "2025.07.12",
+      "content": "부드러운 수비드 닭가슴살 | 매운맛 구매\n\n다이어트 시작하고 나서 닭가슴살 계속 먹고 있는데, 여러 맛으로 질리지 않고, 여러 종류의 닭가슴살을 맛 볼 수 있어서 좋아요!",
+      "images": [
+        "/musinsa1.png",
+        "/musinsa2.png"
+      ],
+      "helpful": 0
+    },
+    {
+      "id": 2,
+      "productId": 1,
+      "username": "소정소정소정",
+      "rating": 5,
+      "date": "2025.07.12",
+      "content": "부드러운 수비드 닭가슴살 | 매운맛 구매",
+      "images": [
+        "/musinsa3.png",
+        "/musinsa4.png"
+      ],
+      "helpful": 0
+    }
+  ]
+}
