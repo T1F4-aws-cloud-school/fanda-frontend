@@ -4,18 +4,18 @@ import { useNavigate } from "react-router-dom"
 import "./Home.css"
 
 // 이미지 import
-import cartIcon from "../assets/cart.png"
+import cartIcon from "../assets/Cart.png"
 import notificationIcon from "../assets/Notification.png"
-import searchIcon from "../assets/search.png"
-import userIcon from "../assets/user.png"
-import bannerImage from "../assets/banner.png"
-import homeIcon from "../assets/home.png"
-import categoryIcon from "../assets/category.png"
-import mypageIcon from "../assets/mypage.png"
-import chickenImage from "../assets/chicken.png"
-import favoriteIcon from "../assets/favorite.png"
+import searchIcon from "../assets/Search.png"
+import userIcon from "../assets/User.png"
+import bannerImage from "../assets/Banner.png"
+import homeIcon from "../assets/Home.png"
+import categoryIcon from "../assets/Category.png"
+import mypageIcon from "../assets/Mypage.png"
+import chickenImage from "../assets/Chicken.png"
+import favoriteIcon from "../assets/Favorite.png"
 import redHeartIcon from "../assets/Heart.png"
-import greyHearIcon from "../assets/heart_grey.png"
+import greyHearIcon from "../assets/Heart_grey.png"
 
 const HomePage = () => {
   const navigate = useNavigate()
