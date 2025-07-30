@@ -1,4 +1,4 @@
-import HeartIcon from "../../assets/Heart.png"
+import HeartIcon from "../../assets/heart.png"
 
 const BottomActions = () => {
   return (

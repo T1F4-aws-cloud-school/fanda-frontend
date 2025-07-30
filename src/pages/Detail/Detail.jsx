@@ -13,8 +13,8 @@ import Tab from "./Tab"
 import BottomActions from "./BottomActions"
 
 // 아이콘
-import StarIcon from "../../assets/Star.png"
-import GoodIcon from "../../assets/Good.png"
+import StarIcon from "../../assets/star.png"
+import GoodIcon from "../../assets/good.png"
 
 const Detail = () => {
   const [activeTab, setActiveTab] = useState("정보")

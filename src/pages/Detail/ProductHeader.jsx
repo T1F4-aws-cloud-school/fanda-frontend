@@ -1,5 +1,5 @@
-import BuyIcon from "../../assets/Buy.png"
-import NotificationIcon from "../../assets/Notification.png"
+import BuyIcon from "../../assets/buy.png"
+import NotificationIcon from "../../assets/notification.png"
 
 const ProductHeader = () => {
   return (
