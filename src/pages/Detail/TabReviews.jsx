@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import StarIcon from "../../assets/Star.png";
-import GoodIcon from "../../assets/Good.png";
+import StarIcon from "../../assets/star.png";
+import GoodIcon from "../../assets/good.png";
 
 // 목업 데이터 (API 없을 때)
 const mockProduct = {

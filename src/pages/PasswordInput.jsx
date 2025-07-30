@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom"; 
 import "./SignUp.css";
-import eyeIcon from "../assets/Eye.png";
-import hiddenIcon from "../assets/Hidden.png";
+import eyeIcon from "../assets/eye.png";
+import hiddenIcon from "../assets/hidden.png";
 
 export default function PasswordInput() {
   const navigate = useNavigate();

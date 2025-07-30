@@ -1,4 +1,4 @@
-import StarIcon from "../../assets/Star.png"
+import StarIcon from "../../assets/star.png"
 
 const ProductMainInfo = ({ category, productData, rating, reviewCount, discountRate }) => {
   return (

@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import "./SignUp.css";
-import pandaImg from "../assets/Fanda.png"; 
+import pandaImg from "../assets/fanda.png"; 
 
 export default function SignUpComplete() {
   const navigate = useNavigate();
