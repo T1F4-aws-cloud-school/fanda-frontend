@@ -5,7 +5,7 @@ import "./Home.css"
 
 // 이미지 import
 import cartIcon from "../assets/cart.png"
-import notificationIcon from "../assets/notification.png"
+import notificationIcon from "../assets/Notification.png"
 import searchIcon from "../assets/search.png"
 import userIcon from "../assets/user.png"
 import bannerImage from "../assets/banner.png"
@@ -14,7 +14,7 @@ import categoryIcon from "../assets/category.png"
 import mypageIcon from "../assets/mypage.png"
 import chickenImage from "../assets/chicken.png"
 import favoriteIcon from "../assets/favorite.png"
-import redHeartIcon from "../assets/heart.png"
+import redHeartIcon from "../assets/Heart.png"
 import greyHearIcon from "../assets/heart_grey.png"
 
 const HomePage = () => {

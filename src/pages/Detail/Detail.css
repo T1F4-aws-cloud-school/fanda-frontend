@@ -34,8 +34,8 @@ body {
 /* 뒤로가기 버튼*/
 .back-button {
   position: absolute;
-  left: 6px;
-  top: 50%;
+  top: 50% !important;  
+  left: 6px !important;
   transform: translateY(-50%);
   background: none;
   border: none;
