@@ -1,40 +1,63 @@
+/* 전체 페이지 설정 */
 .signup-container {
   display: flex;
   flex-direction: column;
-  justify-content: space-between; /* 위/아래 균등 배치 */
+  justify-content: space-between;
   align-items: flex-start;
   width: 375px;
   height: 100vh;
   padding: 40px 20px;
-  display: flex;
   background-color: #F9FAFB;
-  flex-direction: column;
   border-radius: 20px;
   box-sizing: border-box;
+  position: relative; /* 변경된 부분 */
 }
 
-/* 헤더 영역 */
+/* 헤더 - 모든 border 제거 */
 .header {
   display: flex;
   align-items: center;
-  padding: 20px 0 10px 0;
+  justify-content: space-between;
+  padding: 16px;
   position: relative;
+  height: 56px;
+  z-index: 10;
+  margin-top: 0;
+  border: none !important;
+  border-top: none !important;
+  border-bottom: none !important;
+  border-left: none !important;
+  border-right: none !important;
+  box-shadow: none !important;
+  outline: none !important;
 }
 
-/* 뒤로가기 버튼 */
+/* 뒤로가기 버튼을 고정시킴 */
 .back-button {
-  position: absolute;
-  left: 6px;
-  top: 6px;
-  font-size: 24px;
+  position: fixed;
+  top: 6px !important;
+  left: 6px !important;
   background: none;
   border: none;
   cursor: pointer;
-  color: #006aff !important;
   z-index: 10;
   padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  box-shadow: none;
+  outline: none;
 }
 
+/* 뒤로가기 화살표 아이콘 */
+.back-arrow {
+  font-size: 24px;
+  color: #006aff;
+  font-weight: bold;
+}
+
+/* title */
 .title {
   font-size: 24px;
   font-weight: 700;
@@ -152,14 +175,6 @@ input[type="checkbox"] {
     left: 6px;
     padding: 6px;
   }
-}
-
-.signup-header {
-  position: relative;
-  height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: center; 
 }
 
 .input-wrapper {

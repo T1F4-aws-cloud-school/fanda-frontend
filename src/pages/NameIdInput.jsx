@@ -42,7 +42,7 @@ export default function NameIdInput() {
 
   return (
     <div className="signup-container">
-      <div className="signup-header">
+      <div className="header">
         <button className="back-button" onClick={() => navigate("/signup")}>
           &lt;
         </button>

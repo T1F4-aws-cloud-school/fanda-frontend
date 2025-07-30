@@ -50,7 +50,7 @@ export default function SignUp() {
     return (
     <div className="signup-container">
       {/* 상단 헤더 (뒤로가기 버튼만) */}
-      <div className="signup-header">
+      <div className="header">
         <button className="back-button" onClick={handleBack}>{"<"}</button>
       </div>
 
