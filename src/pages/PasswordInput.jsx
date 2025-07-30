@@ -11,8 +11,39 @@ export default function PasswordInput() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  
+
   const isFilled = password.trim() !== "" && confirmPassword.trim() !== "";
+
+  const handleNext = async () => {
+    if (!isFilled) return;
+
+    // 비밀번호 일치 여부 확인
+    if (password !== confirmPassword) {
+      alert("비밀번호가 일치하지 않습니다.");
+      return;
+    }
+
+    try {
+      const response = await fetch("http://localhost:4000/signup/password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ password }),
+      });
+
+      if (response.ok) {
+        navigate("/signup/complete");
+      } else {
+        const data = await response.json();
+        console.warn("비밀번호 저장 실패:", data.message);
+        navigate("/signup/complete"); // 실패해도 넘어가게 처리
+      }
+    } catch (err) {
+      console.warn("API 실패, 목업모드 이동");
+      navigate("/signup/complete"); // API 안되면 그냥 다음 화면
+    }
+  };
 
   return (
     <div className="signup-container">
@@ -61,11 +92,7 @@ export default function PasswordInput() {
       <button
         className="next-button"
         disabled={!isFilled}
-        onClick={() => {
-            if (isFilled) {
-            navigate("/signup/complete");
-            }
-        }}
+        onClick={handleNext}
       >
         다음
       </button>
