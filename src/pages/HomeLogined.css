@@ -104,10 +104,10 @@ body {
   color: #cacaca;
 }
 
-/* 로그인 유도 섹션 */
-.login-prompt {
+/* 사용자  섹션 */
+.user-prompt {
   width: 335px;
-  height: 163px;
+  height: 102px;
   margin: 15px 20px;
   padding: 15px 28px;
   background-color: #ffffff;
@@ -115,7 +115,7 @@ body {
   border: 1px solid #e8ebec;
 }
 
-.login-content {
+.user-content {
   display: flex;
   align-items: center;
 }
@@ -126,14 +126,14 @@ body {
   margin-top: -15px;
 }
 
-.login-text h3 {
+.user-text h3 {
   font-size: 18px;
   font-weight: bold;
   color: #333333;
   margin-left: 15px;
 }
 
-.login-text p {
+.user-text p {
   font-size: 14px;
   color: #666666;
   line-height: 1.4;
@@ -141,25 +141,6 @@ body {
   margin-left: 15px;
 }
 
-.login-button {
-  width: 100%;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 16px;
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
-  margin: 12px 0px;
-}
-
-.login-button:hover {
-  background-color: #0056b3;
-}
 
 /* 배너 섹션 */
 .banner-image {
@@ -206,7 +187,6 @@ body {
   height: 88px;
 }
 
-
 .product-image-horizontal img {
   width: 100%;
   height: 100%;
@@ -233,14 +213,6 @@ body {
 }
 
 
-
-.product-info-horizontal {
-  padding: 6px 9px;
-  height: 31px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
 .product-name {
   font-size: 10px;
   font-weight: bold;
@@ -291,6 +263,7 @@ body {
 .category-tab:hover {
   border-color: #007bff;
 }
+
 
 
 /* 2x3 그리드 */
@@ -374,6 +347,7 @@ body {
   color: #666666;
   cursor: pointer;
 }
+
 
 
 
