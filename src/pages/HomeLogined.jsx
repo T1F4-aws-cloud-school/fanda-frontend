@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import "./Home.css"
+import "./HomeLogined.css"
 
 // 이미지 import
 import cartIcon from "../assets/cart.png"
@@ -11,9 +11,9 @@ import userIcon from "../assets/user.png"
 import bannerImage from "../assets/banner.png"
 import homeIcon from "../assets/home.png"
 import categoryIcon from "../assets/category.png"
-import mypageIcon from "../assets/mypage.png"
+import mypageIcon from "../assets/mypage-2.png"
 import chickenImage from "../assets/chicken.png"
-import favoriteIcon from "../assets/favorite.png"
+import bookmarkIcon from "../assets/bookmark.png"
 import redHeartIcon from "../assets/heart.png"
 import greyHeartIcon from "../assets/heart_grey.png"
 
@@ -160,23 +160,21 @@ const HomePage = () => {
           </div>
         </div>
 
-        {/* 로그인 유도 섹션 - 항상 표시 */}
-        <div className="login-prompt">
-          <div className="login-content">
+        {/* 추천 표시 */}
+        <div className="user-prompt">
+          <div className="user-content">
             <div className="user-avatar">
               <img src={userIcon || "/placeholder.svg"} alt="사용자" />
             </div>
-            <div className="login-text">
-              <h3>세끼통살사랑님</h3>
+            <div className="user-text">
+              <h3>소정소정님</h3>
               <p>
-                로그인을 하면 고객님에게
-                <br />딱 맞는 상품을 추천해드려요!
+                소정소정님만을 위한
+                <br />추천 상품을 기다리고 있어요!
               </p>
             </div>
           </div>
-          <button className="login-button" onClick={handleLogin}>
-            로그인 하러 가기
-          </button>
+        
         </div>
 
         {/* 배너 섹션 - 항상 표시 */}
@@ -258,8 +256,8 @@ const HomePage = () => {
           <span>카테고리</span>
         </div>
         <div className="nav-item">
-          <img src={favoriteIcon || "/placeholder.svg"} alt="찜" className="nav-icon" />
-          <span>찜</span>
+          <img src={bookmarkIcon || "/placeholder.svg"} alt="북마크" className="nav-icon" />
+          <span>북마크</span>
         </div>
         <div className="nav-item">
           <img src={mypageIcon || "/placeholder.svg"} alt="마이" className="nav-icon" />

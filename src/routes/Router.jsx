@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom"
 import Home from "../pages/Home"
+import HomeLogined from "../pages/HomeLogined"
 import Login from "../pages/Login"
 import SignUp from "../pages/Signup/SignUp.jsx"
 import PrivacyPolicy from "../pages/Signup/PrivacyPolicy.jsx"
@@ -15,6 +16,7 @@ const Router = () => {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/home" element={<HomeLogined />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/terms/privacy" element={<PrivacyPolicy />} />
