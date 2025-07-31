@@ -31,28 +31,6 @@ body {
   height: 56px;
 }
 
-/* 뒤로가기 버튼*/
-.back-button {
-  position: absolute;
-  top: 50% !important;  
-  left: 6px !important;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  cursor: pointer;
-  z-index: 10;
-  padding: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.back-arrow {
-  font-size: 24px;
-  color: #006aff;
-  font-weight: bold;
-}
-
 /* 헤더 아이콘들 */
 .header-icons {
   display: flex;
@@ -95,6 +73,7 @@ body {
   font-size: 15px;
   color: #6e6e6e;
   margin-bottom: 8px;
+  line-height: 1;
 }
 
 .product-name {
@@ -102,6 +81,7 @@ body {
   font-weight: bold;
   color: #130f26;
   margin-bottom: 12px;
+  margin-left: 0px !important;
 }
 
 /* 평정 및 리뷰 수 */

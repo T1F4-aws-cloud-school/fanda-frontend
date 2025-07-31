@@ -1,12 +1,11 @@
-import BuyIcon from "../../assets/buy.png"
-import NotificationIcon from "../../assets/notification.png"
+import BuyIcon from "../../assets/buy.png";
+import NotificationIcon from "../../assets/notification.png";
+import BackButton from "../../components/BackButton";
 
 const ProductHeader = () => {
   return (
     <div className="header">
-      <button className="back-button">
-        <span className="back-arrow">‹</span>
-      </button>
+      <BackButton to="/" />
       <div className="header-icons">
         <div className="icon-container">
           <img src={BuyIcon} alt="장바구니" className="header-icon" />
@@ -16,7 +15,7 @@ const ProductHeader = () => {
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default ProductHeader
+export default ProductHeader;

@@ -1,44 +1,46 @@
 "use client"
 
 import { useState } from "react"
-import "./Login.css"
 import { useNavigate } from "react-router-dom"
+import "./Login.css"
 
 export default function LoginScreen() {
   const navigate = useNavigate()
-  const [id, setId] = useState("")
+  const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
-  
-  const isFormValid = id.trim() !== "" && password.trim() !== ""
+
+  const isFormValid = username.trim() !== "" && password.trim() !== ""
 
   const handleLogin = async () => {
-    console.log("로그인 시도:", { id, password })
+    console.log("로그인 시도:", { username, password })
     
     // API 호출
     try {
-      const response = await fetch("http://localhost:4000/login", {
+      const response = await fetch("http://localhost:4000/api/v1/user/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          id,
+          username,
           password,
         }),
       })
 
       const data = await response.json()
+      console.log("로그인 응답: ", data)
 
-      if (response.ok && data.token) {
+      if (response.ok && data.content?.accessToken) {
         // 로그인 성공, 토큰 저장
-        localStorage.setItem("token", data.token)
+        localStorage.setItem("accessToken", data.content.accessToken)
+        localStorage.setItem("refreshToken", data.content.refreshToken)
         console.log("로그인 성공")
 
         // 로그인 후 메인 화면으로 이동
         navigate("/main")
       } else {
         // 로그인 실패
-        alert("로그인 실패: " + data.message)
+        alert(`로그인 실패: ${data.message || "아이디/비밀번호를 확인하세요"}`)
       }
     } catch (error) {
       console.error("로그인 오류:", error)
@@ -62,8 +64,8 @@ export default function LoginScreen() {
           <input
             type="text"
             placeholder="ID 입력"
-            value={id}
-            onChange={(e) => setId(e.target.value)}
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
             className="input-field"
           />
 

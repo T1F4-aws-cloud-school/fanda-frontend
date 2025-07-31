@@ -1,13 +1,13 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom"
 import Home from "../pages/Home"
 import Login from "../pages/Login"
-import SignUp from "../pages/SignUp"
-import PrivacyPolicy from "../pages/PrivacyPolicy"
-import PersonalInfoConsent from "../pages/PersonalInfoConsent";
-import UserTerms from "../pages/UserTerms";
-import NamedInput from "../pages/NameIdInput";
-import PasswordInput from "../pages/PasswordInput";
-import SignUpComplete from "../pages/SignUpComplete.jsx";
+import SignUp from "../pages/Signup/SignUp.jsx"
+import PrivacyPolicy from "../pages/Signup/PrivacyPolicy.jsx"
+import PersonalInfoConsent from "../pages/Signup/PersonalInfoConsent.jsx";
+import UserTerms from "../pages/Signup/UserTerms.jsx";
+import NamedInput from "../pages/Signup/NameIdInput.jsx";
+import PasswordInput from "../pages/Signup/PasswordInput.jsx";
+import SignUpComplete from "../pages/Signup/SignUpComplete.jsx";
 import Detail from "../pages/Detail/Detail.jsx";
 
 const Router = () => {

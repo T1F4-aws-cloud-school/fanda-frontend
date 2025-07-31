@@ -32,31 +32,6 @@
   outline: none !important;
 }
 
-/* 뒤로가기 버튼을 고정시킴 */
-.back-button {
-  position: fixed;
-  top: 6px !important;
-  left: 6px !important;
-  background: none;
-  border: none;
-  cursor: pointer;
-  z-index: 10;
-  padding: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0;
-  box-shadow: none;
-  outline: none;
-}
-
-/* 뒤로가기 화살표 아이콘 */
-.back-arrow {
-  font-size: 24px;
-  color: #006aff;
-  font-weight: bold;
-}
-
 /* title */
 .title {
   font-size: 24px;

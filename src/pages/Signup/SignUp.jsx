@@ -3,7 +3,7 @@
 import { useState } from "react"
 import "./SignUp.css"
 import { useNavigate } from "react-router-dom";
-
+import BackButton from "../../components/BackButton";
 export default function SignUp() {
   const navigate = useNavigate();
 
@@ -51,7 +51,7 @@ export default function SignUp() {
     <div className="signup-container">
       {/* 상단 헤더 (뒤로가기 버튼만) */}
       <div className="header">
-        <button className="back-button" onClick={handleBack}>{"<"}</button>
+        <BackButton to="/login" />
       </div>
 
       {/* 타이틀은 헤더 아래 별도로 위치 */}

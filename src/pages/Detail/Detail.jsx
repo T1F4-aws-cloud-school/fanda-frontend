@@ -30,8 +30,7 @@ const Detail = () => {
     discountRate: 35,
     category: "닭가슴살 > 수비드",
     description: "손쉬운 단백질 충전",
-    detailInfo:
-      "고단백질 20g까지! 달걀 2개 이상의 단백질 함량으로 맛있고 간편하게 챙길 수 있어요",
+    detailInfo: "손쉬운 단백질 충전\n고단백질 20g까지!\n삶은 달걀 2개 이상 단백질 함량으로 맛있고 간편하게 챙길 수 있어요",
   }
 
   const [productData, setProductData] = useState(fallbackProductData)
