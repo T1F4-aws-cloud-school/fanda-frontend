@@ -1,7 +1,12 @@
 import Router from './routes/Router';
+import { SignupProvider } from './context/SignupContext';
 
 function App() {
-  return <Router />;
+  return (
+    <SignupProvider>
+      <Router />
+    </SignupProvider>
+  );
 }
 
 export default App;
