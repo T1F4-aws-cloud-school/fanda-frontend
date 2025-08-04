@@ -3,48 +3,59 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import "./Login.css"
+import apiService from "../api/apiService"
 
 export default function LoginScreen() {
   const navigate = useNavigate()
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
+  const [isLoading, setIsLoading] = useState(false)
 
   const isFormValid = username.trim() !== "" && password.trim() !== ""
 
   const handleLogin = async () => {
-    console.log("로그인 시도:", { username, password })
+    if (!isFormValid) return;
     
-    // API 호출
     try {
-      const response = await fetch("http://localhost:4000/api/v1/user/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username,
-          password,
-        }),
-      })
+      setIsLoading(true);
+      console.log("로그인 시도:", { username, password })
+      
+      // API Service를 통한 로그인
+      const response = await apiService.auth.login({
+        username,
+        password,
+      });
 
-      const data = await response.json()
-      console.log("로그인 응답: ", data)
+      console.log("로그인 응답:", response);
 
-      if (response.ok && data.content?.accessToken) {
-        // 로그인 성공, 토큰 저장
-        localStorage.setItem("accessToken", data.content.accessToken)
-        localStorage.setItem("refreshToken", data.content.refreshToken)
-        console.log("로그인 성공")
-
+      // 백엔드 응답 구조
+      if (response.statusCode === "OK" && response.content?.accessToken) {
+        // 토큰 저장
+        localStorage.setItem("accessToken", response.content.accessToken);
+        localStorage.setItem("refreshToken", response.content.refreshToken);
+        
+        console.log("로그인 성공");
+        
         // 로그인 후 메인 화면으로 이동
-        navigate("/main")
+        navigate("/main");
       } else {
         // 로그인 실패
-        alert(`로그인 실패: ${data.message || "아이디/비밀번호를 확인하세요"}`)
+        throw new Error(response.message || "로그인에 실패했습니다");
       }
     } catch (error) {
-      console.error("로그인 오류:", error)
-      alert("로그인 중 오류 발생")
+      console.error("로그인 오류:", error);
+      
+      // 에러 메시지 처리
+      let errorMessage = "로그인에 실패했습니다.";
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      alert(errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -57,7 +68,7 @@ export default function LoginScreen() {
     <div className="mobile-app">
       <div className="main-content">
         {/* 제목 */}
-        <h1 className="app-title">세 끼 통 살</h1>
+        <h1 className="login-app-title">세 끼 통 살</h1>
 
         {/* 입력 필드 */}
         <div className="input-container">
@@ -67,6 +78,7 @@ export default function LoginScreen() {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             className="input-field"
+            disabled={isLoading}
           />
 
           <input
@@ -75,19 +87,21 @@ export default function LoginScreen() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="input-field"
+            disabled={isLoading}
           />
         </div>
 
         {/* 로그인 버튼 */}
         <button 
           onClick={handleLogin}
-          disabled={!isFormValid} // 유효성 검사로 버튼 활성화 제어
-          className="login-button">
-          로그인
+          disabled={!isFormValid || isLoading}
+          className={`login-button ${(!isFormValid || isLoading) ? 'disabled' : ''}`}
+        >
+          {isLoading ? "로그인 중..." : "로그인"}
         </button>
 
         {/* 회원가입 링크 */}
-        <button onClick={handleSignUp} className="signup-link">
+        <button onClick={handleSignUp} className="signup-link" disabled={isLoading}>
           회원 가입
         </button>
       </div>

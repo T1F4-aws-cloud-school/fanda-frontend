@@ -1,4 +1,15 @@
-/* 전체 페이지 설정 */
+@import url("../../assets/fonts/fonts.css");
+
+/* 기본 초기화 */
+html, body {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+* {
+  box-sizing: border-box;
+}
+
 .signup-container {
   display: flex;
   flex-direction: column;
@@ -7,14 +18,13 @@
   width: 375px;
   height: 100vh;
   padding: 40px 20px;
-  background-color: #F9FAFB;
+  background-color: #F9FAFB; 
   border-radius: 20px;
-  box-sizing: border-box;
-  position: relative; /* 변경된 부분 */
+  position: relative;
 }
 
-/* 헤더 - 모든 border 제거 */
-.header {
+/* 헤더  */
+.signup-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -22,17 +32,13 @@
   position: relative;
   height: 56px;
   z-index: 10;
-  margin-top: 0;
+  margin-top: 3px;
   border: none !important;
-  border-top: none !important;
-  border-bottom: none !important;
-  border-left: none !important;
-  border-right: none !important;
   box-shadow: none !important;
   outline: none !important;
 }
 
-/* title */
+/* 타이틀 */
 .title {
   font-size: 24px;
   font-weight: 700;
@@ -49,15 +55,15 @@
   align-items: center;
   margin-bottom: 20px;
   cursor: pointer;
-  font-size: 16px;
+  font-size: 14px;
   color: #4c5257;
   position: relative;
-  padding-right: 20px; /* 오른쪽 아이콘 공간 확보 */
+  padding-right: 20px; 
 }
 
 /* 오른쪽 화살표 아이콘 */
 .checkbox::after {
-  content: "›"; /* 유니코드 화살표 */
+  content: "›"; 
   position: absolute;
   right: 0;
   color: #ccc;
@@ -76,7 +82,8 @@
   display: flex;
   justify-content: center;
   text-align: center;
-  width: 335px;
+  width: 100%;
+  max-width: 335px;
   align-items: center;
   border: 1px solid #006aff;
   border-radius: 12px;
@@ -85,7 +92,6 @@
   font-weight: 600;
   cursor: pointer;
   margin-bottom: 32px;
-  box-sizing: border-box; 
 }
 
 .all-check::after {
@@ -116,13 +122,14 @@ input[type="checkbox"] {
   border: none;
   cursor: pointer;
   margin-top: auto; 
+  margin-bottom: 30px;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .next-button:disabled {
-  background-color: #F2F4F5; /* 배경색 */
-  color: #929BA5;            /* 글자색 */
-  border: 1px solid #E8EBEC; /* 테두리 */
+  background-color: #F2F4F5; 
+  color: #929BA5;            
+  border: 1px solid #E8EBEC; 
   cursor: not-allowed;
 }
 
@@ -135,7 +142,7 @@ input[type="checkbox"] {
 /* 반응형 디자인 */
 @media (max-width: 480px) {
   .signup-container {
-    padding: 0 20px 30px 20px;
+    padding: 30px 10px 90px 20px;
   }
 
   .title {
@@ -175,66 +182,43 @@ input[type="checkbox"] {
 /* 팬더 이미지 */
 .welcome-img {
   width: 120px;
-  margin-bottom: 50px;
+  margin-bottom: 30px;
 }
 
-.complete-container {
+.signup-complete-container {
   display: flex;
   flex-direction: column;
-  justify-content: space-between; /* 위/아래 균등 배치 */
+  justify-content: flex-end;   /* 버튼은 아래쪽 */
   align-items: center;
+  position: relative;
   width: 375px;
+  max-width: 375px;
   height: 100vh;
   padding: 40px 20px;
-  display: flex;
   background-color: #F9FAFB;
-  flex-direction: column;
   border-radius: 20px;
-  box-sizing: border-box;
 }
 
-/* complete 메인 제목 */
+.welcome-text-block {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%); /* 화면 정중앙 */
+  text-align: center;
+}
+
 .welcome-title {
   color: #191C1F;
-  font-family: 'SUIT', sans-serif;
   font-size: 24px;
   font-weight: 700;
-  line-height: 34px; /* 141.667% */
-  letter-spacing: -0.6px;
+  line-height: 34px;
   margin-bottom: 10px;
-  text-align: center;
 }
 
-/* complete - 부제목 */
 .welcome-subtitle {
   color: #6E7782;
-  font-family: 'SUIT', sans-serif;
   font-size: 14px;
-  font-weight: 400;
-  line-height: 20px;
-  text-align: center;
   margin-bottom: 50px;
-}
-
-/* 시작하기 버튼 */
-.start-button {
-  display: flex;
-  width: 335px;
-  padding: 16px 0;
-  justify-content: center;
-  align-items: center;
-
-  border-radius: 20px;
-  background: #006AFF;
-  color: white;
-  font-family: 'Inter', sans-serif;
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 24px; /* 150% */
-  letter-spacing: -0.4px;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
 }
 
 /* 데스크톱에서 중앙 정렬 */
@@ -251,4 +235,47 @@ input[type="checkbox"] {
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
     border-radius: 0;
   }
+}
+
+/* 반응형 - 모바일 우선, 데스크톱에서 375px 제한 */
+
+/* 데스크톱(768px 이상)에서 회원가입 화면 중앙 정렬 + 여백 */
+@media (min-width: 768px) {
+  .signup-container,
+  .signup-complete-container {
+    margin: 0 auto;
+    max-width: 375px;       /* 모바일 크기 유지 */
+    height: 100vh;           /* vh 고정 대신 컨텐츠 높이에 맞게 */
+    min-height: 100vh;      /* 최소 화면 높이 확보 */
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    border-radius: 20px;
+  }
+
+  body {
+    background-color: #f5f5f5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+}
+
+/* 모바일(767px 이하)에서는 꽉 차게 */
+@media (max-width: 767px) {
+  .signup-container,
+  .signup-complete-container {
+    width: 100%;
+    max-width: none;
+    height: 100vh;
+    padding: 30px 20px 60px;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .signup-header{
+    margin-top: 0px;
+  }
+
+  .next-button {
+    margin-bottom: 100px;
+  }
+  
 }

@@ -5,6 +5,7 @@ import "./SignUp.css";
 import eyeIcon from "../../assets/eye.png";
 import hiddenIcon from "../../assets/hidden.png";
 import BackButton from "../../components/BackButton";
+import apiService from "../../api/apiService"; // API Service 사용
 
 export default function PasswordInput() {
   const navigate = useNavigate();
@@ -14,6 +15,7 @@ export default function PasswordInput() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const isFilled = password.trim() !== "" && confirmPassword.trim() !== "";
 
@@ -26,34 +28,38 @@ export default function PasswordInput() {
     }
 
     try {
-      const response = await fetch("http://localhost:4000/api/v1/user/join", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: form.username,
-          nickname: form.nickname,
-          password: password,
-        }),
+      setIsLoading(true);
+      
+      // API Service를 통한 회원가입
+      const response = await apiService.auth.signup({
+        username: form.username,
+        nickname: form.nickname,
+        password: password,
       });
 
-      const data = await response.json(); // 한 번만 호출
+      console.log("회원가입 성공:", response);
+      navigate("/signup/complete");
 
-      if (response.ok) {
-        console.log("회원가입 성공:", data);
-        navigate("/signup/complete");
-      } else {
-        console.warn("회원가입 실패:", data.message);
-        alert(`회원가입 실패: ${data.message || "다시 시도해주세요."}`);
+    } catch (error) {
+      console.error("회원가입 요청 실패:", error);
+      
+      // 에러 메시지 처리
+      let errorMessage = "회원가입에 실패했습니다.";
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
       }
-    } catch (err) {
-      console.error("회원가입 요청 실패:", err);
-      alert("서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+      
+      alert(errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <div className="signup-container">
-      <div className="header">
+      <div className="signup-header">
         <BackButton to="/signup/name" />
       </div>
 
@@ -67,6 +73,7 @@ export default function PasswordInput() {
           placeholder="비밀번호 입력"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          disabled={isLoading}
         />
         <img
           src={showPassword ? eyeIcon : hiddenIcon}
@@ -84,6 +91,7 @@ export default function PasswordInput() {
           placeholder="비밀번호 확인"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
+          disabled={isLoading}
         />
         <img
           src={showConfirmPassword ? eyeIcon : hiddenIcon}
@@ -95,10 +103,10 @@ export default function PasswordInput() {
 
       <button
         className="next-button"
-        disabled={!isFilled}
+        disabled={!isFilled || isLoading}
         onClick={handleNext}
       >
-        다음
+        {isLoading ? "가입 중..." : "다음"}
       </button>
     </div>
   );

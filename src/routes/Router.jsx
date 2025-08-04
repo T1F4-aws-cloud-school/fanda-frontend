@@ -1,6 +1,4 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom"
-import Home from "../pages/Home"
-import HomeLogined from "../pages/HomeLogined"
 import Login from "../pages/Login"
 import SignUp from "../pages/Signup/SignUp.jsx"
 import PrivacyPolicy from "../pages/Signup/PrivacyPolicy.jsx"
@@ -10,13 +8,13 @@ import NamedInput from "../pages/Signup/NameIdInput.jsx";
 import PasswordInput from "../pages/Signup/PasswordInput.jsx";
 import SignUpComplete from "../pages/Signup/SignUpComplete.jsx";
 import Detail from "../pages/Detail/Detail.jsx";
+import HomeGuest from "../pages/HomeGuest.jsx";
+import HomeLoggedIn from "../pages/HomeLoggedIn.jsx";
 
 const Router = () => {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/home" element={<HomeLogined />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/terms/privacy" element={<PrivacyPolicy />} />
@@ -26,6 +24,9 @@ const Router = () => {
         <Route path="/signup/password" element={<PasswordInput />} />
         <Route path="/signup/complete" element={<SignUpComplete />} />
         <Route path="/product/detail" element={<Detail />} />
+        <Route path="/" element={<HomeGuest/>} />
+        <Route path="/homelogin" element={<HomeLoggedIn/>} />
+
       </Routes>
     </BrowserRouter>
   )

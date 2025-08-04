@@ -7,7 +7,7 @@ export default function SignUpComplete() {
   const navigate = useNavigate();
 
   return (
-    <div className="complete-container" style={{ textAlign: "center" }}>
+    <div className="signup-complete-container" style={{ textAlign: "center" }}>
       <img src={pandaImg} alt="팬더" style={{ width: "120px", margin: "180px auto 30px" }} />
       <h2 style={{ marginBottom: "10px" }}>가입을 환영해요</h2>
       <p style={{ color: "#888", marginBottom: "50px" }}>

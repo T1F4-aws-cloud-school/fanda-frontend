@@ -25,7 +25,7 @@ export default function NameIdInput() {
 
   return (
     <div className="signup-container">
-      <div className="header">
+      <div className="signup-header">
         <BackButton to="/signup" />
       </div>
 

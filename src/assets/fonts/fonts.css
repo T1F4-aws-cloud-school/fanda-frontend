@@ -1,0 +1,48 @@
+@font-face {
+  font-family: "Inter-Light";
+  src: url("./Inter-Light.ttf") format("truetype");
+  font-weight: 300;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Inter-Regular";
+  src: url("./Inter-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Inter-Medium";
+  src: url("./Inter-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Inter-Bold";
+  src: url("./Inter-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Inter-ExtraBold";
+  src: url("./Inter-ExtraBold.ttf") format("truetype");
+  font-weight: 800;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Suit-Medium";
+  src: url("./SUIT-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "GyeonggiTitleV";
+  src: url("./GyeonggiTitleV.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
