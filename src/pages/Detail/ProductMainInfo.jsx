@@ -4,7 +4,7 @@ const ProductMainInfo = ({ category, productData, rating, reviewCount, discountR
   return (
     <div className="product-details">
       <p className="category">{category}</p>
-      <h1 className="product-name">{productData.name}</h1>
+      <h1 className="detail-product-name">{productData.name}</h1>
 
       <div className="rating-section">
         <img src={StarIcon} alt="별점" className="star-icon filled" />

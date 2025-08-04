@@ -50,7 +50,7 @@ export default function SignUp() {
     return (
     <div className="signup-container">
       {/* 상단 헤더 (뒤로가기 버튼만) */}
-      <div className="header">
+      <div className="signup-header">
         <BackButton to="/login" />
       </div>
 

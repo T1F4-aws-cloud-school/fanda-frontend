@@ -4,7 +4,7 @@ import BackButton from "../../components/BackButton";
 
 const ProductHeader = () => {
   return (
-    <div className="header">
+    <div className="detail-header">
       <BackButton to="/" />
       <div className="header-icons">
         <div className="icon-container">

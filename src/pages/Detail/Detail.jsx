@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useParams } from "react-router-dom"
 import "./Detail.css"
 
 // 하위 컴포넌트
@@ -12,43 +13,81 @@ import TabReviews from "./TabReviews"
 import Tab from "./Tab"
 import BottomActions from "./BottomActions"
 
-// 아이콘
-import StarIcon from "../../assets/star.png"
-import GoodIcon from "../../assets/good.png"
+import apiService from "../../api/apiService" // API Service 사용
 
 const Detail = () => {
+  const { id } = useParams() // URL에서 상품 ID 가져오기
   const [activeTab, setActiveTab] = useState("정보")
 
-  // 하드코딩된 초기 데이터 (백엔드 없을 때 fallback 용)
+  // 하드코딩된 초기 데이터 (API 실패 시 사용)
   const fallbackProductData = {
-    id: "1",
+    id: id || "1",
     name: "수비드 닭가슴살",
     price: 43800,
     images: ["/placeholder.svg?height=400&width=400"],
-    rating: 4.8,
+    averageRating: 4.8, // API에는 averageRating으로 옴
     reviewCount: 2430,
-    discountRate: 35,
-    category: "닭가슴살 > 수비드",
+    discountRate: 35, // 하드코딩 (API에 없음)
+    category: "닭가슴살 > 수비드", // 하드코딩 (API에 없음)
     description: "손쉬운 단백질 충전",
-    detailInfo: "손쉬운 단백질 충전\n고단백질 20g까지!\n삶은 달걀 2개 이상 단백질 함량으로 맛있고 간편하게 챙길 수 있어요",
+    reviews: []
   }
 
   const [productData, setProductData] = useState(fallbackProductData)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
-  // API 연동
+  // API 연동 - 상품 상세정보 및 리뷰 로드
   useEffect(() => {
-    // 상품 정보
-    fetch("http://localhost:4000/products/1")
-      .then((res) => res.json())
-      .then((data) => {
-        // 필요한 필드만 안전하게 업데이트 (없으면 기존 목업 유지)
-        setProductData((prev) => ({
-          ...prev,
-          ...data, // API 데이터 덮어쓰기
-        }))
-      })
-      .catch(() => console.log("상품 데이터 로드 실패"))
-  }, [])
+    loadProductData()
+  }, [id])
+
+  const loadProductData = async () => {
+    if (!id) {
+      setLoading(false)
+      return
+    }
+
+    try {
+      setLoading(true)
+      setError(null)
+
+      // API Service를 통한 상품 상세정보 조회
+      const response = await apiService.products.getDetail(id);
+      
+      console.log("상품 상세 API 응답:", response);
+
+      if (response) {
+        // 백엔드 API 응답 구조에 맞게 데이터 변환
+        const apiData = {
+          id: response.id,
+          name: response.name,
+          description: response.description,
+          price: response.price,
+          averageRating: response.averageRating || 4.0, // API 명세에 있음
+          reviewCount: response.reviews ? response.reviews.length : 0,
+          reviews: response.reviews || [],
+          
+          // API에 없는 필드들은 하드코딩으로 유지
+          images: ["/placeholder.svg?height=400&width=400"], // API에 상품 이미지 필드 없음
+          discountRate: 35, // 하드코딩
+          category: "닭가슴살 > 수비드", // 하드코딩
+        }
+
+        setProductData(apiData)
+      } else {
+        throw new Error("상품 데이터가 없습니다")
+      }
+    } catch (error) {
+      console.error("상품 데이터 로드 실패:", error)
+      setError("상품 정보를 불러오는데 실패했습니다")
+      
+      // 에러 시 기본 데이터 유지하되 ID는 URL에서 가져온 것으로 설정
+      setProductData(prev => ({ ...prev, id: id || "1" }))
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const tabs = ["정보", "구매 안내", "리뷰", "문의"]
 
@@ -57,7 +96,7 @@ const Detail = () => {
       case "정보":
         return <TabInfo productData={productData} />
       case "리뷰":
-        return <TabReviews productId={productData.id} />
+        return <TabReviews productId={productData.id} productData={productData} />
       case "구매 안내":
         return <Tab type="구매 안내" />
       case "문의":
@@ -67,23 +106,49 @@ const Detail = () => {
     }
   }
 
+  // 로딩 중 표시
+  if (loading) {
+    return (
+      <div className="mobile-app">
+        <ProductHeader />
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          height: '50vh',
+          fontSize: '16px',
+          color: '#666'
+        }}>
+          상품 정보를 불러오는 중...
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="mobile-app">
       <ProductHeader />
 
-      {/* 상품 대표 이미지 */}
+      {/* 상품 대표 이미지 - 현재 API에 이미지 필드 없어서 기본 이미지 */}
       <div className="main-product-image">
-        <img
-          src={productData.images?.[0] || "/placeholder.svg?height=400&width=400"}
-          alt={productData.name}
-        />
-        <span className="brand-logo">MUSINSA</span>
+        {productData.images?.[0] ? (
+          <img
+            src={productData.images[0]}
+            alt={productData.name}
+            onError={(e) => {
+              // 이미지 로드 실패 시 MUSINSA 로고 표시
+              e.target.style.display = 'none'
+              e.target.nextSibling.style.display = 'flex'
+            }}
+          />
+        ) : null}
+        <span className="brand-logo">세 끼 통 살</span>
       </div>
 
       <ProductMainInfo
         category={productData.category}
         productData={productData}
-        rating={productData.rating}
+        rating={productData.averageRating} // API 필드명 수정
         reviewCount={productData.reviewCount}
         discountRate={productData.discountRate}
       />
