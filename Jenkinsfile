@@ -3,7 +3,7 @@ pipeline {
     
     environment {
         // Harbor Registry 설정
-        HARBOR_URL = 'harbor.fanda'  # 실제 Harbor 주소
+        HARBOR_URL = 'harbor.fanda'
         HARBOR_CREDENTIALS = 'Harbor-credentials'
         
         // 프로젝트 설정
