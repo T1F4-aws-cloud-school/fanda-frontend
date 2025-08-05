@@ -236,21 +236,21 @@ function App() {
 
       {/* 하단 네비게이션 */}
       <nav className="home-bottom-nav">
-        <div className="nav-item active">
-          <img src={ichomeIcon || "/placeholder.svg"} alt="홈" className="nav-icon" />
-          <span className="nav-label">홈</span>
+        <div className="home-nav-item active">
+          <img src={ichomeIcon || "/placeholder.svg"} alt="홈" className="home-nav-icon" />
+          <span className="home-nav-label">홈</span>
         </div>
-        <div className="nav-item">
-          <img src={categoryIcon || "/placeholder.svg"} alt="카테고리" className="nav-icon" />
-          <span className="nav-label">카테고리</span>
+        <div className="home-nav-item">
+          <img src={categoryIcon || "/placeholder.svg"} alt="카테고리" className="home-nav-icon" />
+          <span className="home-nav-label">카테고리</span>
         </div>
-        <div className="nav-item">
-          <img src={favoriteIcon || "/placeholder.svg"} alt="찜" className="nav-icon" />
-          <span className="nav-label">찜</span>
+        <div className="home-nav-item">
+          <img src={favoriteIcon || "/placeholder.svg"} alt="찜" className="home-nav-icon" />
+          <span className="home-nav-label">찜</span>
         </div>
-        <div className="nav-item">
-          <img src={mypageIcon || "/placeholder.svg"} alt="마이" className="nav-icon" />
-          <span className="nav-label">마이</span>
+        <div className="home-nav-item">
+          <img src={mypageIcon || "/placeholder.svg"} alt="마이" className="home-nav-icon" />
+          <span className="home-nav-label">마이</span>
         </div>
       </nav>
     </div>

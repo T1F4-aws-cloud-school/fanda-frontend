@@ -332,7 +332,7 @@ body {
 .product-info {
   padding: 0px 4px 4px 4px; 
   height: 31px;
-  margin-top: -12px;
+  margin-top: -15px;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -343,12 +343,12 @@ body {
   font-size: 12px;
   font-weight: 600;
   color: #130f26;
-  margin: 0 0 6px 0 !important;
+  margin: 0 0 2px 0 !important;
   line-height: 1.2;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  text-align: left; /* 왼쪽 정렬 */
+  text-align: left; 
 }
 
 /* 제품 가격  */
@@ -358,7 +358,7 @@ body {
   color: #84888C;
   line-height: 1.2;
   text-align: left; 
-  margin-left: 0; 
+  margin-left: 0;
 }
 
 /* 카테고리 탭 */
@@ -367,7 +367,7 @@ body {
   display: flex;
   gap: 4px;
   padding: 0 12px;
-  margin-bottom: 20px;
+  margin-bottom: 8px; /* 20px → 8px로 줄임 */
   overflow-x: hidden;
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -409,7 +409,7 @@ body {
 
 /* 카테고리 상품 그리드 */
 .category-section {
-  padding: 0 20px 20px;
+  padding: 8px 20px 20px; /* 상단 패딩을 0에서 8px로 조정 */
   background-color: #f9fafb;
 }
 
@@ -418,6 +418,7 @@ body {
   grid-template-columns: 1fr 1fr;
   gap: 12px;
   width: 100%;
+  justify-items: center;
 }
 
 .category-product-card {
@@ -466,13 +467,14 @@ body {
   color: #929ba5;
 }
 
-/* 하단 네비게이션 */
+/* 하단 네비게이션 - 수정된 부분 */
 .home-bottom-nav {
   position: fixed;
   bottom: 0;
-  left: 0;
-  right: 0;
-  width: 100vw;
+  left: 50%;                     
+  transform: translateX(-50%);   
+  width: 100%;
+  max-width: 375px;              
   background-color: #ffffff;
   border-top: 1px solid #e8ebec;
   display: flex;
@@ -481,28 +483,29 @@ body {
   padding: 8px 0 20px;
   z-index: 100;
   box-sizing: border-box;
-  margin: 0;
 }
 
-.nav-item {
+.home-nav-item {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
   cursor: pointer;
   padding: 4px 8px;
+  flex: 1;
+  max-width: none;
 }
 
-.nav-item.active .nav-icon {
+.home-nav-item.active .home-nav-icon {
   color: #006aff;
 }
 
-.nav-item.active .nav-label {
+.home-nav-item.active .home-nav-label {
   color: #0055ff;
 }
 
 /* 하단 네비게이션 아이콘  */
-.nav-icon {
+.home-nav-icon {
   font-size: 24px;
   width: 24px;
   height: 24px;
@@ -510,13 +513,13 @@ body {
 }
 
 /* 이미지인 경우 */
-.nav-item img.nav-icon {
+.home-nav-item img.home-nav-icon {
   width: 24px;
   height: 24px;
   object-fit: contain;
 }
 
-.nav-label {
+.home-nav-label {
   font-size: 10px;
   color: #929ba5;
   font-weight: 500;
@@ -528,23 +531,24 @@ body {
 @media (min-width: 768px) {
   .app {
     max-width: 375px;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    margin: 0 auto;
+    position: relative;
   }
-  
+
   .home-bottom-nav {
-    left: 50%;
-    transform: translateX(-50%);
-    width: 375px;
+    left: 37.5%;
+    transform: none;    
+    width: 100%;        
     max-width: 375px;
   }
 }
 
 /* 모바일 (767px 이하) */
 @media (max-width: 767px) {
-  .bottom-nav {
-    width: 100vw;
+  .home-bottom-nav {
     left: 0;
-    right: 0;
     transform: none;
+    width: 100%;
+    max-width: 100%;
   }
 }
