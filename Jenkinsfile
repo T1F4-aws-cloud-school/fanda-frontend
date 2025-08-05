@@ -16,7 +16,7 @@ pipeline {
     }
     
     options {
-        // 빌드 기록 관리
+        // 빌드 기록 관리 (10개 빌드 보관, 30일 이상된 것 삭제)
         buildDiscarder(logRotator(
             numToKeepStr: '10',
             daysToKeepStr: '30'
@@ -30,11 +30,10 @@ pipeline {
     }
     
     stages {
-        stage('준비') {
+        stage('환경 검증') {
             steps {
                 echo '🚀 fanda-frontend 빌드 시작'
                 
-                // 환경 검증
                 sh '''
                     echo "빌드 정보:"
                     echo "  - 프로젝트: ${PROJECT_NAME}"
@@ -66,29 +65,30 @@ pipeline {
                             docker build \\
                                 --tag ${IMAGE_NAME}:${IMAGE_TAG} \\
                                 --tag ${IMAGE_NAME}:latest \\
-                                --label "build.number=${BUILD_NUMBER}" \\
-                                --label "build.url=${BUILD_URL}" \\
-                                --label "git.commit=${env.GIT_COMMIT ?: 'unknown'}" \\
+                                --label "version=${IMAGE_TAG}" \\
+                                --label "build-date=\$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \\
+                                --label "git-commit=${GIT_COMMIT}" \\
+                                --label "jenkins-build=${BUILD_URL}" \\
                                 .
                             
                             # 빌드 결과 확인
-                            docker images ${IMAGE_NAME}:${IMAGE_TAG}
+                            docker inspect ${IMAGE_NAME}:${IMAGE_TAG} --format='{{.Size}}' | \\
+                                awk '{printf "   이미지 크기: %.1f MB\\n", \$1/1024/1024}'
                         """
                         
                         echo '✅ Docker 빌드 완료'
                         
                     } catch (Exception e) {
-                        echo '❌ Docker 빌드 실패'
-                        sh 'docker system df'  // 디스크 사용량 확인
-                        throw e
+                        currentBuild.result = 'FAILURE'
+                        throw new Exception("Docker 빌드 실패: ${e.message}")
                     }
                 }
             }
         }
         
-        stage('푸시') {
+        stage('Harbor 푸시') {
             steps {
-                echo '🚢 Harbor에 이미지 업로드 중...'
+                echo '🚢 Harbor Registry에 이미지 업로드 중...'
                 
                 withCredentials([usernamePassword(
                     credentialsId: env.HARBOR_CREDENTIALS,
@@ -100,10 +100,12 @@ pipeline {
                         echo "\${HARBOR_PASS}" | docker login ${HARBOR_URL} -u "\${HARBOR_USER}" --password-stdin
                         
                         # 이미지 푸시
+                        echo "   업로드 중: ${IMAGE_NAME}:${IMAGE_TAG}"
                         docker push ${IMAGE_NAME}:${IMAGE_TAG}
                         docker push ${IMAGE_NAME}:latest
                         
-                        echo "✅ 이미지 업로드 완료: ${IMAGE_NAME}:${IMAGE_TAG}"
+                        echo "✅ Harbor 업로드 완료"
+                        echo "   이미지 URL: ${HARBOR_URL}/harbor/projects"
                     """
                 }
             }
@@ -130,25 +132,27 @@ pipeline {
         }
         
         success {
-            echo '''
-            ✅ 성공! 다음 단계:
-            1. Harbor에서 이미지 확인
-            2. 팀원과 k8s 배포 논의
-            '''
+            echo """
+            🎉 빌드 성공!
+            
+             결과 요약:
+               프로젝트: ${env.PROJECT_NAME}
+               이미지: ${env.IMAGE_NAME}:${env.IMAGE_TAG}
+               Harbor: ${env.HARBOR_URL}/harbor/projects
+            
+             다음 단계:
+               ArgoCD에서 자동 배포가 시작됩니다
+            """
         }
         
         failure {
-            echo '''
-            ❌ 실패! 확인사항:
-            1. Console Output 로그
-            2. Harbor 접속 상태
-            3. Docker 서비스 상태
-            '''
+            echo """
+            ❌ 빌드 실패!
+            
+            """
         }
         
         cleanup {
-            // 최종 정리
+            // 최종 정리 (Jenkins 작업공간 제외)
             sh 'docker container prune -f || true'
         }
-    }
-}
