@@ -4,7 +4,7 @@ pipeline {
     environment {
         // Harbor Registry 설정
         HARBOR_URL = '192.168.2.111'
-        HARBOR_CREDENTIALS = 'harbor-credentials'
+        HARBOR_CREDENTIALS = 'Harbor-credentials'
         
         // 프로젝트 설정
         PROJECT_NAME = 'fanda-frontend'
