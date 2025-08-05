@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fanda-fe-deploy
+  namespace: fanda-fe
+  labels:
+    app: fanda-fe
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fanda-fe
+  template:
+    metadata:
+      labels:
+        app: fanda-fe
+        version: v1
+    spec:
+      containers:
+      - name: fanda-fe
+        image: harbor.fanda/fanda-fe:latest
+        ports:
+        - containerPort: 80
+          name: http
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi" 
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
