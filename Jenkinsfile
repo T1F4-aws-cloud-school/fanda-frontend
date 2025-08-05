@@ -3,12 +3,12 @@ pipeline {
     
     environment {
         // Harbor Registry 설정
-        HARBOR_URL = '192.168.2.111'
+        HARBOR_URL = 'harbor.fanda'  # 실제 Harbor 주소
         HARBOR_CREDENTIALS = 'Harbor-credentials'
         
         // 프로젝트 설정
-        PROJECT_NAME = 'fanda-frontend'
-        IMAGE_NAME = "${HARBOR_URL}/${PROJECT_NAME}/frontend"
+        PROJECT_NAME = 'fanda-fe'
+        IMAGE_NAME = "${HARBOR_URL}/${PROJECT_NAME}"
         IMAGE_TAG = "${BUILD_NUMBER}"
         
         // Docker 설정
