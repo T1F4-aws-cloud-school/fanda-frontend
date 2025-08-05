@@ -8,7 +8,7 @@ pipeline {
         
         // 프로젝트 설정
         PROJECT_NAME = 'fanda-frontend'
-        IMAGE_NAME = "${HARBOR_URL}/${PROJECT_NAME}"
+        IMAGE_NAME = "${HARBOR_URL}/${PROJECT_NAME}/frontend"
         IMAGE_TAG = "${BUILD_NUMBER}"
         
         // Docker 설정
