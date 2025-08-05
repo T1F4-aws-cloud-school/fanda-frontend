@@ -2,13 +2,13 @@ pipeline {
     agent any
     
     environment {
-        // Harbor Registry 설정
+        // Harbor Registry 설정 - IP 주소로 변경
         HARBOR_URL = '192.168.2.111'
         HARBOR_CREDENTIALS = 'Harbor-credentials'
         
-        // 프로젝트 설정
+        // 프로젝트 설정 - Harbor 프로젝트 구조에 맞게 수정
         PROJECT_NAME = 'fanda-fe'
-        IMAGE_NAME = "${HARBOR_URL}/${PROJECT_NAME}"
+        IMAGE_NAME = "${HARBOR_URL}/${PROJECT_NAME}/frontend"  // frontend 이미지명 추가
         IMAGE_TAG = "${BUILD_NUMBER}"
         
         // Docker 설정
