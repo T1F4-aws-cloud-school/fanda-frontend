@@ -18,7 +18,6 @@ COPY . .
 # React 앱 빌드
 RUN npm run build
 
-
 # ===============================
 # 2️⃣ Production Stage - Nginx
 # ===============================
@@ -36,8 +35,9 @@ COPY --from=builder /app/build /usr/share/nginx/html
 # Nginx 설정 복사 
 COPY nginx/default.conf /etc/nginx/conf.d/default.conf
 
-RUN addgroup -S nginx && adduser -S nginx -G nginx
-USER nginx
+# USER nginx 제거 - 80포트 바인딩 문제로 root로 실행
+# RUN addgroup -S nginx && adduser -S nginx -G nginx
+# USER nginx
 
 # 포트 80 노출
 EXPOSE 80
