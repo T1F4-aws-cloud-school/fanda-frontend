@@ -31,12 +31,6 @@ spec:
         version: v1
         component: frontend
     spec:
-      # 보안 설정
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 101  # nginx 사용자
-        fsGroup: 101
-      
       containers:
       - name: fanda-fe
         image: 192.168.2.111/fanda-fe/frontend:latest  # Image Updater가 자동 업데이트
@@ -60,7 +54,7 @@ spec:
             path: /
             port: 80
             scheme: HTTP
-          initialDelaySeconds: 30  # 더 빠른 시작
+          initialDelaySeconds: 30
           periodSeconds: 10
           timeoutSeconds: 5
           failureThreshold: 3
@@ -76,21 +70,10 @@ spec:
           successThreshold: 1
           failureThreshold: 2
         
-        # 환경 변수 (필요시)
+        # 환경 변수
         env:
         - name: TZ
           value: "Asia/Seoul"
-        
-        # 보안 컨텍스트
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: false  # nginx 로그 때문에 false
-          capabilities:
-            drop:
-            - ALL
-            add:
-            - NET_BIND_SERVICE  # 80 포트 바인딩용
-    
       
       # DNS 정책
       dnsPolicy: ClusterFirst
