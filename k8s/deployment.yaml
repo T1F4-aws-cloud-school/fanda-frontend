@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
       - name: fanda-fe
-        image: 192.168.2.111/fanda-fe/frontend:52
+        image: 192.168.2.111/fanda-fe/frontend:53
         ports:
         - containerPort: 80
           name: http
