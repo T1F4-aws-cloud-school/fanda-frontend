@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
       - name: fanda-fe
-        image: 192.168.2.111/fanda-fe/frontend:latest
+        image: 192.168.2.111/fanda-fe/frontend:latest  # Jenkins가 이 부분을 자동 업데이트
         ports:
         - containerPort: 80
           name: http
@@ -42,3 +42,5 @@ spec:
             port: 80
           initialDelaySeconds: 15
           periodSeconds: 10
+      imagePullSecrets: 
+      - name: harbor-secret
