@@ -2,7 +2,7 @@ pipeline {
     agent any
     
     environment {
-        // Harbor Registry 설정 - IP 주소로 변경
+        // Harbor Registry 설정
         HARBOR_URL = '192.168.2.111'
         HARBOR_CREDENTIALS = 'Harbor-credentials'
         
@@ -104,7 +104,7 @@ pipeline {
             }
         }
         
-        stage('GitOps 매니페스트 업데이트') {  // ← stages 블록 안으로 이동
+        stage('GitOps 매니페스트 업데이트') {  
             steps {
                 echo '📝 K8s 매니페스트 업데이트 중...'
                 
