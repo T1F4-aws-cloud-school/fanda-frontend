@@ -8,7 +8,7 @@ pipeline {
         
         // 프로젝트 설정
         PROJECT_NAME = 'fanda-fe'
-        IMAGE_NAME = "${HARBOR_URL}/${PROJECT_NAME}/frontend"  // frontend 이미지명 추가
+        IMAGE_NAME = "${HARBOR_URL}/${PROJECT_NAME}/frontend"
         IMAGE_TAG = "${BUILD_NUMBER}"
         GIT_CREDENTIALS = 'github-credentials'
         
@@ -103,9 +103,8 @@ pipeline {
                 }
             }
         }
-    }
-    
-        stage('GitOps 매니페스트 업데이트') {  // ← 새로 추가된 핵심 단계
+        
+        stage('GitOps 매니페스트 업데이트') {  // ← stages 블록 안으로 이동
             steps {
                 echo '📝 K8s 매니페스트 업데이트 중...'
                 
@@ -149,7 +148,7 @@ Date: \$(date -u +'%Y-%m-%d %H:%M:%S UTC')"
                 }
             }
         }
-    }
+    }  // ← stages 블록 닫기
     
     post {
         always {
