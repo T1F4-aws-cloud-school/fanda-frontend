@@ -129,6 +129,11 @@ pipeline {
                         # dev 브랜치로 체크아웃 (detached HEAD 해결)
                         git checkout dev || git checkout -b dev
                         
+                        # 🔥 원격 변경사항 먼저 가져오기 (충돌 방지)
+                        echo "원격 변경사항 동기화 중..."
+                        git fetch origin
+                        git pull origin dev || echo "첫 번째 푸시이거나 충돌 해결 필요"
+                        
                         # k8s/deployment.yaml에서 이미지 태그 업데이트
                         echo "이미지 태그 업데이트: latest → ${IMAGE_TAG}"
                         
@@ -143,7 +148,7 @@ pipeline {
                         git add k8s/deployment.yaml
                         
                         if git diff --staged --quiet; then
-                            echo "변경사항이 없습니다."
+                            echo "⚠️ 변경사항이 없습니다. 이미 최신 태그입니다."
                         else
                             git commit -m "🚀 Update image tag to ${IMAGE_TAG}
 
@@ -209,4 +214,3 @@ GitOps: Automated deployment update"
             sh 'docker container prune -f || true'
         }
     }
-}
