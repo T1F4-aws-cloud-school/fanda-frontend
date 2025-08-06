@@ -6,10 +6,11 @@ pipeline {
         HARBOR_URL = '192.168.2.111'
         HARBOR_CREDENTIALS = 'Harbor-credentials'
         
-        // 프로젝트 설정 - Harbor 프로젝트 구조에 맞게 수정
+        // 프로젝트 설정
         PROJECT_NAME = 'fanda-fe'
         IMAGE_NAME = "${HARBOR_URL}/${PROJECT_NAME}/frontend"  // frontend 이미지명 추가
         IMAGE_TAG = "${BUILD_NUMBER}"
+        GIT_CREDENTIALS = 'github-credentials'
         
         // Docker 설정
         DOCKER_BUILDKIT = '1'
@@ -41,6 +42,9 @@ pipeline {
                     fi
                     if [ ! -f nginx/default.conf ]; then
                         echo "❌ nginx/default.conf 없음" && exit 1
+                    fi
+                    if [ ! -f k8s/deployment.yaml ]; then
+                        echo "❌ k8s/deployment.yaml 없음" && exit 1
                     fi
                     echo "✅ 필수 파일 확인 완료"
                 """
@@ -101,39 +105,78 @@ pipeline {
         }
     }
     
+        stage('GitOps 매니페스트 업데이트') {  // ← 새로 추가된 핵심 단계
+            steps {
+                echo '📝 K8s 매니페스트 업데이트 중...'
+                
+                withCredentials([usernamePassword(
+                    credentialsId: env.GIT_CREDENTIALS,
+                    usernameVariable: 'GIT_USER',
+                    passwordVariable: 'GIT_PASS'
+                )]) {
+                    sh """
+                        # Git 설정
+                        git config user.name "Jenkins CI"
+                        git config user.email "jenkins@fanda-fe.com"
+                        
+                        # k8s/deployment.yaml에서 이미지 태그 업데이트
+                        echo "이미지 태그 업데이트: latest → ${IMAGE_TAG}"
+                        
+                        # sed로 이미지 태그 변경
+                        sed -i 's|image: 192.168.2.111/fanda-fe/frontend:.*|image: 192.168.2.111/fanda-fe/frontend:${IMAGE_TAG}|g' k8s/deployment.yaml
+                        
+                        # 변경사항 확인
+                        echo "변경된 deployment.yaml:"
+                        grep "image:" k8s/deployment.yaml
+                        
+                        # Git에 커밋 및 푸시
+                        git add k8s/deployment.yaml
+                        
+                        if git diff --staged --quiet; then
+                            echo "변경사항이 없습니다."
+                        else
+                            git commit -m "🚀 Update image tag to ${IMAGE_TAG}
+
+Build: #${BUILD_NUMBER}
+Image: ${IMAGE_NAME}:${IMAGE_TAG}
+Date: \$(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+                            
+                            git push origin main
+                            
+                            echo "✅ GitOps 매니페스트 업데이트 완료"
+                        fi
+                    """
+                }
+            }
+        }
+    }
+    
     post {
         always {
             sh '''
-                # Harbor 로그아웃
                 docker logout ${HARBOR_URL} 2>/dev/null || true
-                
-                # 로컬 이미지 정리
                 docker rmi ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest 2>/dev/null || true
                 docker system prune -f
             '''
-            
-            echo '🏁 fanda-frontend 파이프라인 완료'
+            echo '🏁 fanda-frontend GitOps 파이프라인 완료'
         }
         
         success {
             echo """
-🎉 빌드 성공!
+🎉 GitOps 빌드 성공!
 
 결과 요약:
   프로젝트: ${env.PROJECT_NAME}
   이미지: ${env.IMAGE_NAME}:${env.IMAGE_TAG}
   Harbor: ${env.HARBOR_URL}/harbor/projects
+  매니페스트: k8s/deployment.yaml 업데이트됨
 
-다음 단계: ArgoCD에서 자동 배포가 시작됩니다
+다음 단계: ArgoCD가 Git 변경사항을 감지하여 자동 배포를 시작합니다 🚀
             """
         }
         
         failure {
-            echo "❌ 빌드 실패! 로그를 확인하세요."
-        }
-        
-        cleanup {
-            sh 'docker container prune -f || true'
+            echo "❌ GitOps 빌드 실패! 로그를 확인하세요."
         }
     }
 }
