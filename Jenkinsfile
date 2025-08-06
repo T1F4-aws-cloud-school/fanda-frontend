@@ -140,7 +140,7 @@ Build: #${BUILD_NUMBER}
 Image: ${IMAGE_NAME}:${IMAGE_TAG}
 Date: \$(date -u +'%Y-%m-%d %H:%M:%S UTC')"
                             
-                            git push origin main
+                            git push origin dev
                             
                             echo "✅ GitOps 매니페스트 업데이트 완료"
                         fi
