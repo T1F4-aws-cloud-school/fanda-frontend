@@ -25,13 +25,15 @@ pipeline {
     stages {
         stage('환경 검증') {
             steps {
-                echo '🚀 fanda-frontend 빌드 시작'
+                echo '🚀 fanda-frontend GitOps 빌드 시작'
                 
                 sh """
                     echo "빌드 정보:"
                     echo "  - 프로젝트: ${PROJECT_NAME}"
                     echo "  - 빌드 번호: ${BUILD_NUMBER}"
                     echo "  - 이미지: ${IMAGE_NAME}:${IMAGE_TAG}"
+                    echo "  - Git 브랜치: ${GIT_BRANCH}"
+                    echo "  - Git 커밋: ${GIT_COMMIT}"
                     
                     echo "필수 파일 확인:"
                     if [ ! -f package.json ]; then
@@ -65,6 +67,7 @@ pipeline {
                                 --label "version=${IMAGE_TAG}" \\
                                 --label "build-date=\$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \\
                                 --label "git-commit=${GIT_COMMIT}" \\
+                                --label "git-branch=${GIT_BRANCH}" \\
                                 .
                             
                             # 이미지 크기 확인
@@ -98,13 +101,13 @@ pipeline {
                         docker push ${IMAGE_NAME}:latest
                         
                         echo "✅ Harbor 업로드 완료"
-                        echo "   이미지 URL: ${HARBOR_URL}/harbor/projects"
+                        echo "   이미지: ${IMAGE_NAME}:${IMAGE_TAG}"
                     """
                 }
             }
         }
         
-        stage('GitOps 매니페스트 업데이트') {  
+        stage('GitOps 매니페스트 업데이트') {
             steps {
                 echo '📝 K8s 매니페스트 업데이트 중...'
                 
@@ -117,6 +120,14 @@ pipeline {
                         # Git 설정
                         git config user.name "Jenkins CI"
                         git config user.email "jenkins@fanda-fe.com"
+                        
+                        # 현재 브랜치 상태 확인
+                        echo "현재 Git 상태:"
+                        git status
+                        git branch -a
+                        
+                        # dev 브랜치로 체크아웃 (detached HEAD 해결)
+                        git checkout dev || git checkout -b dev
                         
                         # k8s/deployment.yaml에서 이미지 태그 업데이트
                         echo "이미지 태그 업데이트: latest → ${IMAGE_TAG}"
@@ -138,9 +149,11 @@ pipeline {
 
 Build: #${BUILD_NUMBER}
 Image: ${IMAGE_NAME}:${IMAGE_TAG}
-Date: \$(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+Date: \$(date -u +'%Y-%m-%d %H:%M:%S UTC')
+GitOps: Automated deployment update"
                             
-                            git push origin dev
+                            # HTTPS URL로 푸시 (credential 포함)
+                            git push https://\${GIT_USER}:\${GIT_PASS}@github.com/T1F4-aws-cloud-school/fanda-frontend.git HEAD:dev
                             
                             echo "✅ GitOps 매니페스트 업데이트 완료"
                         fi
@@ -148,15 +161,19 @@ Date: \$(date -u +'%Y-%m-%d %H:%M:%S UTC')"
                 }
             }
         }
-    }  // ← stages 블록 닫기
+    }
     
     post {
         always {
             sh '''
+                # Harbor 로그아웃
                 docker logout ${HARBOR_URL} 2>/dev/null || true
+                
+                # 로컬 이미지 정리
                 docker rmi ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest 2>/dev/null || true
                 docker system prune -f
             '''
+            
             echo '🏁 fanda-frontend GitOps 파이프라인 완료'
         }
         
@@ -164,18 +181,32 @@ Date: \$(date -u +'%Y-%m-%d %H:%M:%S UTC')"
             echo """
 🎉 GitOps 빌드 성공!
 
-결과 요약:
-  프로젝트: ${env.PROJECT_NAME}
-  이미지: ${env.IMAGE_NAME}:${env.IMAGE_TAG}
-  Harbor: ${env.HARBOR_URL}/harbor/projects
-  매니페스트: k8s/deployment.yaml 업데이트됨
+📋 배포 요약:
+  ├─ 프로젝트: ${env.PROJECT_NAME}
+  ├─ 빌드: #${env.BUILD_NUMBER}
+  ├─ 이미지: ${env.IMAGE_NAME}:${env.IMAGE_TAG}
+  ├─ Harbor: ${env.HARBOR_URL}/harbor/projects
+  ├─ 매니페스트: k8s/deployment.yaml 업데이트됨
+  └─ 접속 URL: http://192.168.2.247
 
-다음 단계: ArgoCD가 Git 변경사항을 감지하여 자동 배포를 시작합니다 🚀
+🚀 다음 단계: ArgoCD가 Git 변경사항을 감지하여 자동 배포를 시작합니다!
             """
         }
         
         failure {
-            echo "❌ GitOps 빌드 실패! 로그를 확인하세요."
+            echo """
+❌ GitOps 빌드 실패!
+
+🔍 확인사항:
+  - Harbor 접속 가능한지 확인
+  - Git 권한이 올바른지 확인  
+  - K8s 클러스터 상태 확인
+  - Jenkins Credentials 설정 확인
+            """
+        }
+        
+        cleanup {
+            sh 'docker container prune -f || true'
         }
     }
 }
