@@ -19,39 +19,26 @@ pipeline {
         stage('트리거 검증') {
             steps {
                 script {
-                    // Jenkins CI 커밋인지 확인
-                    def author = sh(
-                        script: "git log -1 --pretty=%an",
-                        returnStdout: true
-                    ).trim()
+                    def author = sh(script: "git log -1 --pretty=%an", returnStdout: true).trim()
+                    def commitMessage = sh(script: "git log -1 --pretty=%B", returnStdout: true).trim()
                     
-                    // [skip ci] 태그 확인
-                    def commitMessage = sh(
-                        script: "git log -1 --pretty=%B",
-                        returnStdout: true
-                    ).trim()
-                    
-                    echo "👤 커밋 작성자: ${author}"
-                    echo "📝 커밋 메시지: ${commitMessage}"
-                    
-                    // Jenkins CI가 만든 커밋이거나 [skip ci] 태그가 있으면 종료
                     if (author == "Jenkins CI" || commitMessage.contains('[skip ci]')) {
-                        echo "⏭️ 자동 커밋 감지 - 파이프라인 종료"
+                        echo "⏭️ Jenkins CI 커밋 감지 - 파이프라인 스킵"
+                        env.SKIP_ALL = 'true'
                         currentBuild.result = 'SUCCESS'
-                        currentBuild.description = "🔄 Jenkins CI 커밋 - 자동 스킵"
-                        error("정상적인 스킵 - Jenkins CI 커밋")
+                        currentBuild.description = "⏭️ 자동 스킵"
+                        return
                     }
-                    
-                    echo "✅ 개발자 커밋 확인 - 파이프라인 계속 진행"
+                    env.SKIP_ALL = 'false'
                 }
             }
         }
         
         stage('환경 검증') {
+            when { environment name: 'SKIP_ALL', value: 'false' }
             steps {
                 echo "🚀 빌드 시작: ${IMAGE_NAME}:${IMAGE_TAG}"
                 sh '''
-                    echo "빌드 환경: Docker $(docker --version | cut -d' ' -f3), Git ${GIT_COMMIT}"
                     for file in package.json Dockerfile nginx/default.conf; do
                         [ ! -f "$file" ] && echo "❌ $file 없음" && exit 1
                     done
@@ -61,6 +48,7 @@ pipeline {
         }
         
         stage('이미지 중복 확인') {
+            when { environment name: 'SKIP_ALL', value: 'false' }
             steps {
                 script {
                     env.SKIP_BUILD = sh(
@@ -76,7 +64,12 @@ pipeline {
         }
         
         stage('빌드 & 푸시') {
-            when { environment name: 'SKIP_BUILD', value: 'false' }
+            when { 
+                allOf {
+                    environment name: 'SKIP_ALL', value: 'false'
+                    environment name: 'SKIP_BUILD', value: 'false'
+                }
+            }
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'Harbor-credentials',
@@ -99,7 +92,12 @@ pipeline {
         }
         
         stage('보안 스캔') {
-            when { environment name: 'SKIP_BUILD', value: 'false' }
+            when { 
+                allOf {
+                    environment name: 'SKIP_ALL', value: 'false'
+                    environment name: 'SKIP_BUILD', value: 'false'
+                }
+            }
             steps {
                 sh '''
                     echo "🔐 Trivy 보안 스캔..."
@@ -110,6 +108,7 @@ pipeline {
         }
 
         stage('배포 업데이트') {
+            when { environment name: 'SKIP_ALL', value: 'false' }
             steps {
                 script {
                     try {
@@ -126,16 +125,6 @@ pipeline {
                         
                         if (currentTag == env.IMAGE_TAG) {
                             echo "⏭️ 이미지 태그 동일 - 스킵"
-                            return
-                        }
-                        
-                        def hasCodeChanges = sh(
-                            script: "git diff --quiet HEAD~1 HEAD -- . ':!k8s/deployment.yaml' ':!k8s/*'",
-                            returnStatus: true
-                        ) != 0
-                        
-                        if (!hasCodeChanges) {
-                            echo "⏭️ 코드 변경 없음 - 스킵"
                             return
                         }
                         
@@ -169,22 +158,19 @@ pipeline {
     
     post {
         always {
-            sh '''
-                docker logout ${HARBOR_URL} 2>/dev/null || true
-                docker rmi ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest 2>/dev/null || true
-                docker system prune -f --volumes
-            '''
-        }
-        success {
             script {
-                if (currentBuild.description?.contains("자동 스킵")) {
-                    echo "⏭️ Jenkins CI 커밋으로 인한 정상 스킵"
-                } else if (env.SKIP_BUILD == 'true') {
-                    echo "🎯 이미지 재사용 성공!"
-                } else {
-                    echo "🎉 완전 자동화 성공!"
+                if (env.SKIP_ALL != 'true') {
+                    sh '''
+                        docker logout ${HARBOR_URL} 2>/dev/null || true
+                        docker rmi ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest 2>/dev/null || true
+                        docker system prune -f --volumes
+                    '''
                 }
             }
+        }
+        success {
+            echo env.SKIP_ALL == 'true' ? "🎯 자동 스킵 완료" : 
+                 env.SKIP_BUILD == 'true' ? "🎯 이미지 재사용 성공!" : "🎉 완전 자동화 성공!"
         }
         unstable { echo "⚠️ 빌드 성공, Git 업데이트 실패" }
         failure { echo "❌ 빌드 실패!" }
