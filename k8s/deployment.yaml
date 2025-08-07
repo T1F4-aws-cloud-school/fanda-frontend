@@ -26,7 +26,7 @@ spec:
     spec:
       containers:
       - name: fanda-fe
-        image: 192.168.2.111/fanda-fe/frontend:79  # Jenkins가 자동으로 업데이트
+        image: 192.168.2.111/fanda-fe/frontend:85
         imagePullPolicy: Always 
         ports:
         - containerPort: 80
