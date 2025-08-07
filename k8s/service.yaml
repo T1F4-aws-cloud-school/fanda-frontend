@@ -6,11 +6,11 @@ metadata:
   labels:
     app: fanda-fe
 spec:
-  type: LoadBalancer
+  type: LoadBalancer   # 외부 접근 가능
   ports:
   - port: 80
-    targetPort: 80
-    protocol: TCP
+    targetPort: 80     # 서비스 포트
+    protocol: TCP      # 컨테이너 포트
     name: http
   selector:
-    app: fanda-fe
+    app: fanda-fe      # 라벨 셀렉터로 Pod 선택

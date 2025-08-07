@@ -7,14 +7,14 @@ spec:
   project: default
   source:
     repoURL: https://github.com/T1F4-aws-cloud-school/fanda-frontend.git
-    targetRevision: HEAD
-    path: k8s 
+    targetRevision: HEAD # dev 브랜치  추적
+    path: k8s            # k8s/ 디렉터리 매니페스트 사용
   destination:
     server: https://kubernetes.default.svc
-    namespace: fanda-fe
+    namespace: fanda-fe  # 배포 대상 네임스페이스
   syncPolicy:
     automated:
-      prune: true
-      selfHeal: true
+      prune: true        # 불필요한 리소스 자동 삭제
+      selfHeal: true     # 자동 복구
     syncOptions:
-      - CreateNamespace=true
+      - CreateNamespace=true # 네임스페이스 없으면 자동 생성

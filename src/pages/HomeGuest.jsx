@@ -127,7 +127,7 @@ function App() {
     <div className="app">
       {/* 헤더 */}
       <header className="header">
-        <h1 className="logo">안 효 민 바 부</h1>
+        <h1 className="logo">안 효 민 몽 총 이</h1>
         <div className="header-icons">
           <img src={cartIcon || "/placeholder.svg"} alt="장바구니" className="header-icon cart-icon" />
           <img src={notificationIcon || "/placeholder.svg"} alt="알림" className="header-icon" />
