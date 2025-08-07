@@ -5,7 +5,7 @@ pipeline {
         HARBOR_URL = '192.168.2.111'
         PROJECT_NAME = 'fanda-fe'
         IMAGE_NAME = "${HARBOR_URL}/${PROJECT_NAME}/frontend"
-        IMAGE_TAG = "${BUILD_NUMBER}"
+        IMAGE_TAG = "${BUILD_NUMBER}"  // 유니크한 태그
         DOCKER_BUILDKIT = '1'
     }
     
@@ -25,6 +25,7 @@ pipeline {
                     echo "  - Docker: $(docker --version)"
                     echo "  - 현재 디렉토리: $(pwd)"
                     echo "  - Git 커밋: ${GIT_COMMIT}"
+                    echo "  - 이미지 태그: ${IMAGE_TAG}"
                     
                     # 필수 파일 확인
                     for file in package.json Dockerfile nginx/default.conf; do
@@ -48,7 +49,7 @@ pipeline {
                     script {
                         try {
                             sh """
-                                # Docker 빌드
+                                # Docker 빌드 (유니크 태그)
                                 docker build \\
                                     --tag ${IMAGE_NAME}:${IMAGE_TAG} \\
                                     --tag ${IMAGE_NAME}:latest \\
@@ -62,13 +63,56 @@ pipeline {
                                 docker push ${IMAGE_NAME}:${IMAGE_TAG}
                                 docker push ${IMAGE_NAME}:latest
                                 
-                                echo "✅ 빌드 완료: ${IMAGE_NAME}:${IMAGE_TAG}"
-                                echo "🔄 ArgoCD Image Updater가 자동으로 배포를 처리합니다"
-                                echo "⏳ 3-5분 후 웹사이트에서 변경사항을 확인하세요"
+                                echo "✅ 빌드 완료"
+                                echo "📦 유니크 태그: ${IMAGE_NAME}:${IMAGE_TAG}"
+                                echo "📦 Latest 태그: ${IMAGE_NAME}:latest"
                             """
                         } catch (Exception e) {
                             error "빌드 실패: ${e.message}"
                         }
+                    }
+                }
+            }
+        }
+        
+        stage('배포 파일 업데이트') {
+            steps {
+                script {
+                    try {
+                        // Git 설정
+                        sh '''
+                            git config --global user.email "jenkins@company.com"
+                            git config --global user.name "Jenkins CI"
+                        '''
+                        
+                        // deployment.yaml 이미지 태그 업데이트
+                        sh """
+                            # 현재 이미지 태그를 새로운 BUILD_NUMBER로 변경
+                            sed -i 's|image: ${HARBOR_URL}/${PROJECT_NAME}/frontend:.*|image: ${HARBOR_URL}/${PROJECT_NAME}/frontend:${IMAGE_TAG}|g' k8s/deployment.yaml
+                            
+                            # 변경사항 확인
+                            echo "=== 업데이트된 deployment.yaml ==="
+                            grep "image:" k8s/deployment.yaml
+                        """
+                        
+                        // Git 커밋 및 푸시
+                        withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+                            sh """
+                                # Git 변경사항 커밋
+                                git add k8s/deployment.yaml
+                                git commit -m "🚀 Update image tag to ${IMAGE_TAG} [skip ci]" || echo "No changes to commit"
+                                
+                                # GitHub에 푸시
+                                git push https://${GITHUB_TOKEN}@github.com/T1F4-aws-cloud-school/fanda-frontend.git HEAD:main || echo "Push failed, but continuing..."
+                            """
+                        }
+                        
+                        echo "✅ 배포 파일 업데이트 완료"
+                        echo "🔄 ArgoCD가 새로운 태그를 감지하여 자동 배포합니다"
+                        
+                    } catch (Exception e) {
+                        echo "⚠️ 배포 파일 업데이트 실패: ${e.message}"
+                        echo "수동으로 확인이 필요할 수 있습니다."
                     }
                 }
             }
@@ -87,20 +131,23 @@ pipeline {
         
         success {
             echo """
-🎉 빌드 성공!
+🎉 빌드 & 배포 성공!
 
 📋 결과:
-  ├─ 이미지: ${env.IMAGE_NAME}:${env.IMAGE_TAG}
-  ├─ Latest: ${env.IMAGE_NAME}:latest
-  ├─ Harbor: ${env.HARBOR_URL}/harbor/projects
+  ├─ 유니크 태그: ${env.IMAGE_NAME}:${env.IMAGE_TAG}
+  ├─ Latest 태그: ${env.IMAGE_NAME}:latest
+  ├─ Git 업데이트: k8s/deployment.yaml
+  └─ ArgoCD: 자동 배포 진행 중
 
-💡 수동 확인이 필요하다면:
-   kubectl rollout restart deployment fanda-fe-deploy -n fanda-fe
             """
         }
         
         failure {
-            echo "❌ 빌드 실패! 로그를 확인하세요."
+            echo """
+❌ 빌드 실패!
+🛠️ 이미지는 성공적으로 빌드되었다면 수동 배포 가능:
+   kubectl set image deployment/fanda-fe-deploy fanda-fe=${env.IMAGE_NAME}:${env.IMAGE_TAG} -n fanda-fe
+            """
         }
         
         cleanup {

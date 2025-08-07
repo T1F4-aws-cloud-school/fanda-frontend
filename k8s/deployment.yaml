@@ -7,22 +7,12 @@ metadata:
     app: fanda-fe
     version: v1
     component: frontend
-  annotations: 
-    # ArgoCD Image Updater 설정
-    argocd-image-updater.argoproj.io/image-list: frontend=192.168.2.111/fanda-fe/frontend:latest
-    argocd-image-updater.argoproj.io/write-back-method: git
-    argocd-image-updater.argoproj.io/frontend.update-strategy: digest  # latest 대신 digest 사용
-    argocd-image-updater.argoproj.io/frontend.platforms: linux/amd64
-    argocd-image-updater.argoproj.io/frontend.helm.image-name: frontend
-    argocd-image-updater.argoproj.io/frontend.helm.image-tag: latest
-    # 배포 정보
-    deployment.kubernetes.io/revision: "1"
 spec:
   replicas: 1
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxUnavailable: 0  # 무중단 배포
+      maxUnavailable: 0
       maxSurge: 1
   selector:
     matchLabels:
@@ -36,14 +26,13 @@ spec:
     spec:
       containers:
       - name: fanda-fe
-        image: 192.168.2.111/fanda-fe/frontend:latest  # Image Updater가 자동 업데이트
-        imagePullPolicy: Always
+        image: 192.168.2.111/fanda-fe/frontend:79  # Jenkins가 자동으로 업데이트
+        imagePullPolicy: Always 
         ports:
         - containerPort: 80
           name: http
           protocol: TCP
         
-        # 리소스 최적화
         resources:
           requests:
             memory: "128Mi"
@@ -52,7 +41,6 @@ spec:
             memory: "256Mi"
             cpu: "200m"
         
-        # Health Check 최적화
         livenessProbe:
           httpGet:
             path: /
@@ -74,11 +62,9 @@ spec:
           successThreshold: 1
           failureThreshold: 2
         
-        # 환경 변수
         env:
         - name: TZ
           value: "Asia/Seoul"
       
-      # DNS 정책
       dnsPolicy: ClusterFirst
       restartPolicy: Always
