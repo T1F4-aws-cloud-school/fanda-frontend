@@ -5,7 +5,7 @@ pipeline {
         HARBOR_URL = '192.168.2.111'
         PROJECT_NAME = 'fanda-fe'
         IMAGE_NAME = "${HARBOR_URL}/${PROJECT_NAME}/frontend"
-        // ✅ 수정: Git 커밋 해시 사용 (코드 변경이 있을 때만 달라짐)
+        // Git 커밋 해시 사용 (코드 변경이 있을 때만 달라짐)
         IMAGE_TAG = "${env.GIT_COMMIT.take(8)}"
         DOCKER_BUILDKIT = '1'
     }
@@ -100,9 +100,25 @@ pipeline {
             }
         }
         
+        stage('Security Scan (Trivy)') {
+            when {
+                environment name: 'SKIP_BUILD', value: 'false'
+            }
+            steps {
+                sh '''
+                    echo "🔐 Trivy 보안 스캔 시작..."
+                    trivy image \
+                        --server http://192.168.2.248:4954 \
+                        --exit-code 1 \
+                        --severity HIGH,CRITICAL \
+                        ${IMAGE_NAME}:${IMAGE_TAG}
+                '''
+            }
+        }
+
         stage('배포 파일 업데이트') {
             when {
-                // ✅ 추가: [skip ci] 커밋은 배포 파일 업데이트 스킵
+                // [skip ci] 커밋은 배포 파일 업데이트 스킵
                 not { changelog '.*\\[skip ci\\].*' }
             }
             steps {
@@ -114,7 +130,6 @@ pipeline {
                             git config --global user.name "Jenkins CI"
                         '''
                         
-                        // 🔥 Detached HEAD 문제 해결
                         sh """
                             echo "=== Git 상태 진단 ==="
                             git status
@@ -131,7 +146,7 @@ pipeline {
                             git log --oneline -3
                         """
                         
-                        // ✅ 추가: 실제 코드 변경 확인
+                        // 실제 코드 변경 확인
                         def shouldUpdate = sh(
                             script: """
                                 echo "=== 코드 변경 확인 ==="
@@ -143,17 +158,17 @@ pipeline {
                                 
                                 # 이미 같은 태그면 스킵
                                 if [ "\$CURRENT_TAG" = "${IMAGE_TAG}" ]; then
-                                    echo "📝 이미지 태그 동일 - 업데이트 불필요"
+                                    echo "이미지 태그 동일 - 업데이트 불필요"
                                     exit 1
                                 fi
                                 
                                 # 실제 애플리케이션 코드 변경이 있는지 확인 (최근 2개 커밋 비교)
                                 if git diff --quiet HEAD~1 HEAD -- . ':!k8s/deployment.yaml' ':!k8s/*'; then
-                                    echo "📝 애플리케이션 코드 변경 없음 - deployment.yaml 업데이트 불필요"
+                                    echo "애플리케이션 코드 변경 없음 - deployment.yaml 업데이트 불필요"
                                     exit 1
                                 fi
                                 
-                                echo "📝 코드 변경 감지 - deployment.yaml 업데이트 필요"
+                                echo "코드 변경 감지 - deployment.yaml 업데이트 필요"
                                 exit 0
                             """,
                             returnStatus: true
@@ -195,9 +210,9 @@ pipeline {
                                 
                                 # 변경사항이 있는지 확인
                                 if git diff --quiet k8s/deployment.yaml; then
-                                    echo "📝 변경사항 없음 - 스킵"
+                                    echo "변경사항 없음 - 스킵"
                                 else
-                                    echo "📝 변경사항 감지 - 업데이트 진행"
+                                    echo "변경사항 감지 - 업데이트 진행"
                                     
                                     # 스테이징
                                     git add k8s/deployment.yaml
