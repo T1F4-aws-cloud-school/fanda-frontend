@@ -5,7 +5,8 @@ pipeline {
         HARBOR_URL = '192.168.2.111'
         PROJECT_NAME = 'fanda-fe'
         IMAGE_NAME = "${HARBOR_URL}/${PROJECT_NAME}/frontend"
-        IMAGE_TAG = "${BUILD_NUMBER}"
+        // ✅ 수정: Git 커밋 해시 사용 (코드 변경이 있을 때만 달라짐)
+        IMAGE_TAG = "${env.GIT_COMMIT.take(8)}"
         DOCKER_BUILDKIT = '1'
     }
     
@@ -39,7 +40,31 @@ pipeline {
             }
         }
         
+        stage('이미지 중복 확인') {
+            steps {
+                script {
+                    // 동일한 커밋 해시로 이미 이미지가 있는지 확인
+                    def imageExists = sh(
+                        script: "docker manifest inspect ${IMAGE_NAME}:${IMAGE_TAG} > /dev/null 2>&1",
+                        returnStatus: true
+                    ) == 0
+                    
+                    if (imageExists) {
+                        echo "📦 이미지 이미 존재: ${IMAGE_NAME}:${IMAGE_TAG}"
+                        echo "🔄 기존 이미지 재사용 - 빌드 스킵"
+                        env.SKIP_BUILD = 'true'
+                    } else {
+                        echo "🆕 새 이미지 빌드 필요: ${IMAGE_NAME}:${IMAGE_TAG}"
+                        env.SKIP_BUILD = 'false'
+                    }
+                }
+            }
+        }
+        
         stage('빌드 & 푸시') {
+            when {
+                environment name: 'SKIP_BUILD', value: 'false'
+            }
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'Harbor-credentials',
@@ -76,6 +101,10 @@ pipeline {
         }
         
         stage('배포 파일 업데이트') {
+            when {
+                // ✅ 추가: [skip ci] 커밋은 배포 파일 업데이트 스킵
+                not { changelog '.*\\[skip ci\\].*' }
+            }
             steps {
                 script {
                     try {
@@ -101,6 +130,39 @@ pipeline {
                             echo "현재 브랜치: \$(git branch --show-current)"
                             git log --oneline -3
                         """
+                        
+                        // ✅ 추가: 실제 코드 변경 확인
+                        def shouldUpdate = sh(
+                            script: """
+                                echo "=== 코드 변경 확인 ==="
+                                
+                                # 현재 deployment.yaml의 이미지 태그 확인
+                                CURRENT_TAG=\$(grep -o 'image: .*/frontend:.*' k8s/deployment.yaml | cut -d':' -f3)
+                                echo "현재 태그: \$CURRENT_TAG"
+                                echo "새 태그: ${IMAGE_TAG}"
+                                
+                                # 이미 같은 태그면 스킵
+                                if [ "\$CURRENT_TAG" = "${IMAGE_TAG}" ]; then
+                                    echo "📝 이미지 태그 동일 - 업데이트 불필요"
+                                    exit 1
+                                fi
+                                
+                                # 실제 애플리케이션 코드 변경이 있는지 확인 (최근 2개 커밋 비교)
+                                if git diff --quiet HEAD~1 HEAD -- . ':!k8s/deployment.yaml' ':!k8s/*'; then
+                                    echo "📝 애플리케이션 코드 변경 없음 - deployment.yaml 업데이트 불필요"
+                                    exit 1
+                                fi
+                                
+                                echo "📝 코드 변경 감지 - deployment.yaml 업데이트 필요"
+                                exit 0
+                            """,
+                            returnStatus: true
+                        ) == 0
+                        
+                        if (!shouldUpdate) {
+                            echo "⏭️ 업데이트 불필요 - 스킵"
+                            return
+                        }
                         
                         // deployment.yaml 이미지 태그 업데이트
                         sh """
@@ -140,7 +202,7 @@ pipeline {
                                     # 스테이징
                                     git add k8s/deployment.yaml
                                     
-                                    # 커밋
+                                    # 커밋 (skip ci 태그로 순환 방지)
                                     git commit -m "🚀 Auto-update image tag to ${IMAGE_TAG} [skip ci]"
                                     
                                     # dev 브랜치에 푸시
@@ -182,28 +244,25 @@ pipeline {
         }
         
         success {
-            echo """
+            script {
+                if (env.SKIP_BUILD == 'true') {
+                    echo """
+🎯 이미지 재사용 성공!
+
+                    """
+                } else {
+                    echo """
 🎉 완전 자동화 성공!
 
-📋 결과:
-  ├─ 이미지 빌드: ${env.IMAGE_NAME}:${env.IMAGE_TAG} ✅
-  ├─ Harbor 푸시: 완료 ✅
-  ├─ Git 업데이트: dev 브랜치 업데이트 ✅
-  └─ ArgoCD 배포: 자동 진행 중 ⏳
-
-🚀 완전 자동화 달성!
-💻 웹사이트에서 곧 변경사항을 확인할 수 있습니다.
-            """
+                    """
+                }
+            }
         }
         
         unstable {
             echo """
 ⚠️ 빌드 성공, Git 업데이트 실패
 
-📋 상황:
-  ├─ 이미지: ${env.IMAGE_NAME}:${env.IMAGE_TAG} ✅
-  ├─ Harbor: 정상 업로드 ✅  
-  └─ Git: 수동 확인 필요 ❌
 
 🛠️ 자동 복구 시도 또는 로그 확인 필요
             """
