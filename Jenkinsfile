@@ -74,6 +74,37 @@ pipeline {
                 }
             }
         }
+        
+        stage('배포 트리거') {
+            steps {
+                script {
+                    try {
+                        sh """
+                            echo "🔄 Kubernetes 배포 트리거"
+                            
+                            # kubectl 명령어 확인
+                            kubectl version --client || (echo "❌ kubectl 명령어 없음" && exit 1)
+                            
+                            # 네임스페이스 및 deployment 존재 확인
+                            kubectl get deployment fanda-fe-deploy -n fanda-fe || (echo "❌ deployment 없음" && exit 1)
+                            
+                            # Pod 재시작으로 최신 이미지 적용
+                            kubectl patch deployment fanda-fe-deploy -n fanda-fe -p '{"spec":{"template":{"metadata":{"annotations":{"kubectl.kubernetes.io/restartedAt":"'\$(date +%Y-%m-%dT%H:%M:%S%z)'"}}}}}'
+                            
+                            # 재시작 상태 확인 (30초 대기)
+                            echo "⏳ 배포 상태 확인 중..."
+                            kubectl rollout status deployment/fanda-fe-deploy -n fanda-fe --timeout=30s
+                            
+                            echo "✅ 배포 완료"
+                        """
+                    } catch (Exception e) {
+                        echo "⚠️ 배포 트리거 실패: ${e.message}"
+                        echo "수동으로 확인이 필요할 수 있습니다."
+                        echo "수동 명령어: kubectl rollout restart deployment fanda-fe-deploy -n fanda-fe"
+                    }
+                }
+            }
+        }
     }
     
     post {
@@ -89,26 +120,23 @@ pipeline {
         
         success {
             echo """
-🎉 빌드 성공!
+🎉 빌드 & 배포 성공!
 
 📋 결과:
   ├─ 이미지: ${env.IMAGE_NAME}:${env.IMAGE_TAG}
+  ├─ Latest: ${env.IMAGE_NAME}:latest
   ├─ Harbor: ${env.HARBOR_URL}/harbor/projects
-  └─ 상태: ArgoCD Image Updater가 자동 배포 진행 중
+  └─ 배포: Kubernetes Pod 재시작 완료
 
-🚀 ArgoCD에서 배포 상태를 확인하세요!
             """
         }
         
         failure {
             echo """
-❌ 빌드 실패!
+❌ 빌드 또는 배포 실패!
 
-🔍 확인사항:
-  - Docker 데몬 상태
-  - Harbor 접속 및 인증
-  - 네트워크 연결 상태
-  - 디스크 공간
+🛠️ 수동 복구:
+  kubectl rollout restart deployment fanda-fe-deploy -n fanda-fe
             """
         }
         
