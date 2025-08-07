@@ -21,7 +21,7 @@ RUN npm run build
 # ===============================
 # 2️⃣ Production Stage - Nginx
 # ===============================
-FROM nginx:1.27-alpine
+FROM nginx:1.27-alpine3.20
 
 # 환경 변수 설정 
 ENV TZ=Asia/Seoul
