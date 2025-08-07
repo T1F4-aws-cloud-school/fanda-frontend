@@ -27,7 +27,7 @@ spec:
       containers:
       - name: fanda-fe
         # Jenkins가 자동으로 업데이트하는 이미지 태그
-        image: 192.168.2.111/fanda-fe/frontend:3e6db2c0
+        image: 192.168.2.111/fanda-fe/frontend:6be88bfd
         imagePullPolicy: Always # 항상 최신 이미지 pull
 
         ports:
