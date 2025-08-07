@@ -11,7 +11,10 @@ metadata:
     # ArgoCD Image Updater 설정
     argocd-image-updater.argoproj.io/image-list: frontend=192.168.2.111/fanda-fe/frontend:latest
     argocd-image-updater.argoproj.io/write-back-method: git
-    argocd-image-updater.argoproj.io/frontend.update-strategy: latest
+    argocd-image-updater.argoproj.io/frontend.update-strategy: digest  # latest 대신 digest 사용
+    argocd-image-updater.argoproj.io/frontend.platforms: linux/amd64
+    argocd-image-updater.argoproj.io/frontend.helm.image-name: frontend
+    argocd-image-updater.argoproj.io/frontend.helm.image-tag: latest
     # 배포 정보
     deployment.kubernetes.io/revision: "1"
 spec:
