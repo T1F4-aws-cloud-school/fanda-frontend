@@ -26,7 +26,8 @@ spec:
     spec:
       containers:
       - name: fanda-fe
-        image: 192.168.2.111/fanda-fe/frontend:41509326
+        # Image Updater가 자동으로 이 태그를 업데이트
+        image: 192.168.2.111/fanda-fe/frontend:93
         imagePullPolicy: Always 
         ports:
         - containerPort: 80
