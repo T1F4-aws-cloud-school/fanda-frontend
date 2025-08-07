@@ -85,38 +85,86 @@ pipeline {
                             git config --global user.name "Jenkins CI"
                         '''
                         
-                        // deployment.yaml 이미지 태그 업데이트
+                        // 🔥 Detached HEAD 문제 해결
                         sh """
-                            # 현재 이미지 태그를 새로운 BUILD_NUMBER로 변경
-                            sed -i 's|image: ${HARBOR_URL}/${PROJECT_NAME}/frontend:.*|image: ${HARBOR_URL}/${PROJECT_NAME}/frontend:${IMAGE_TAG}|g' k8s/deployment.yaml
+                            echo "=== Git 상태 진단 ==="
+                            git status
+                            git branch -a
+                            echo "현재 브랜치: \$(git branch --show-current || echo 'detached')"
                             
-                            # 변경사항 확인
-                            echo "=== 업데이트된 deployment.yaml ==="
-                            grep "image:" k8s/deployment.yaml
+                            # dev 브랜치로 확실히 checkout
+                            git fetch origin
+                            git checkout dev
+                            git reset --hard origin/dev
+                            
+                            echo "=== dev 브랜치 확인 ==="
+                            echo "현재 브랜치: \$(git branch --show-current)"
+                            git log --oneline -3
                         """
                         
-                        // Git 커밋 및 푸시 (기존 credential 사용)
+                        // deployment.yaml 이미지 태그 업데이트
+                        sh """
+                            echo "=== 이미지 태그 업데이트 ==="
+                            
+                            # 현재 이미지 확인
+                            echo "변경 전:"
+                            grep "image:" k8s/deployment.yaml
+                            
+                            # 이미지 태그 변경
+                            sed -i 's|image: ${HARBOR_URL}/${PROJECT_NAME}/frontend:.*|image: ${HARBOR_URL}/${PROJECT_NAME}/frontend:${IMAGE_TAG}|g' k8s/deployment.yaml
+                            
+                            # 변경 후 확인
+                            echo "변경 후:"
+                            grep "image:" k8s/deployment.yaml
+                            
+                            # Git 변경사항 확인
+                            git status
+                            git diff k8s/deployment.yaml
+                        """
+                        
+                        // Git 커밋 및 푸시
                         withCredentials([usernamePassword(
                             credentialsId: 'github-credentials', 
                             usernameVariable: 'GITHUB_USER',
                             passwordVariable: 'GITHUB_TOKEN'
                         )]) {
                             sh """
-                                # Git 변경사항 커밋
-                                git add k8s/deployment.yaml
-                                git commit -m "🚀 Update image tag to ${IMAGE_TAG} [skip ci]" || echo "No changes to commit"
+                                echo "=== Git 커밋 & 푸시 ==="
                                 
-                                # GitHub에 푸시
-                                git push https://${GITHUB_TOKEN}@github.com/T1F4-aws-cloud-school/fanda-frontend.git HEAD:main || echo "Push failed, but continuing..."
+                                # 변경사항이 있는지 확인
+                                if git diff --quiet k8s/deployment.yaml; then
+                                    echo "📝 변경사항 없음 - 스킵"
+                                else
+                                    echo "📝 변경사항 감지 - 업데이트 진행"
+                                    
+                                    # 스테이징
+                                    git add k8s/deployment.yaml
+                                    
+                                    # 커밋
+                                    git commit -m "🚀 Auto-update image tag to ${IMAGE_TAG} [skip ci]"
+                                    
+                                    # dev 브랜치에 푸시
+                                    git push https://${GITHUB_TOKEN}@github.com/T1F4-aws-cloud-school/fanda-frontend.git HEAD:dev
+                                    
+                                    echo "✅ Git 푸시 성공"
+                                    
+                                    # 결과 확인
+                                    echo "=== 푸시 후 상태 ==="
+                                    git log --oneline -3
+                                    git status
+                                fi
                             """
                         }
                         
                         echo "✅ 배포 파일 업데이트 완료"
-                        echo "🔄 ArgoCD가 새로운 태그를 감지하여 자동 배포합니다"
+                        echo "🔄 ArgoCD가 dev 브랜치 변경을 감지하여 자동 배포합니다"
+                        echo "⏱️ 약 3분 내에 새로운 이미지로 배포될 예정입니다"
                         
                     } catch (Exception e) {
                         echo "⚠️ 배포 파일 업데이트 실패: ${e.message}"
-                        echo "수동으로 확인이 필요할 수 있습니다."
+                        echo "🔍 로그를 확인하여 문제를 해결해주세요"
+                        // 실패해도 빌드는 성공으로 처리 (이미지는 정상적으로 생성됨)
+                        currentBuild.result = 'UNSTABLE'
                     }
                 }
             }
@@ -135,24 +183,34 @@ pipeline {
         
         success {
             echo """
-🎉 빌드 & 배포 성공!
+🎉 완전 자동화 성공!
 
 📋 결과:
-  ├─ 유니크 태그: ${env.IMAGE_NAME}:${env.IMAGE_TAG}
-  ├─ Latest 태그: ${env.IMAGE_NAME}:latest
-  ├─ Git 업데이트: k8s/deployment.yaml
-  └─ ArgoCD: 자동 배포 진행 중
+  ├─ 이미지 빌드: ${env.IMAGE_NAME}:${env.IMAGE_TAG} ✅
+  ├─ Harbor 푸시: 완료 ✅
+  ├─ Git 업데이트: dev 브랜치 업데이트 ✅
+  └─ ArgoCD 배포: 자동 진행 중 ⏳
 
-🚀 ArgoCD에서 배포 상태를 확인하세요!
+🚀 완전 자동화 달성!
+💻 웹사이트에서 곧 변경사항을 확인할 수 있습니다.
+            """
+        }
+        
+        unstable {
+            echo """
+⚠️ 빌드 성공, Git 업데이트 실패
+
+📋 상황:
+  ├─ 이미지: ${env.IMAGE_NAME}:${env.IMAGE_TAG} ✅
+  ├─ Harbor: 정상 업로드 ✅  
+  └─ Git: 수동 확인 필요 ❌
+
+🛠️ 자동 복구 시도 또는 로그 확인 필요
             """
         }
         
         failure {
-            echo """
-❌ 빌드 실패!
-🛠️ 이미지는 성공적으로 빌드되었다면 수동 배포 가능:
-   kubectl set image deployment/fanda-fe-deploy fanda-fe=${env.IMAGE_NAME}:${env.IMAGE_TAG} -n fanda-fe
-            """
+            echo "❌ 빌드 실패! 로그를 확인하세요."
         }
         
         cleanup {
