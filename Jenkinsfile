@@ -117,9 +117,13 @@ pipeline {
                         
                         withCredentials([usernamePassword(
                             credentialsId: 'github-credentials',
+                            usernameVariable: 'GITHUB_USER',
                             passwordVariable: 'GITHUB_TOKEN'
                         )]) {
-                            sh 'git push https://${GITHUB_TOKEN}@github.com/T1F4-aws-cloud-school/fanda-frontend.git HEAD:dev'
+                            sh '''
+                                git push https://${GITHUB_TOKEN}@github.com/T1F4-aws-cloud-school/fanda-frontend.git HEAD:dev
+                                echo "✅ Git 푸시 성공"
+                            '''
                         }
                         
                         echo "✅ 배포 업데이트 완료 - ArgoCD가 3분 내 배포합니다"
