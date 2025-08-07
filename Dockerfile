@@ -52,12 +52,9 @@ RUN find /usr/share/nginx/html -type f -exec chmod 644 {} \; && \
     chown -R nginx:nginx /var/log/nginx && \
     chown -R nginx:nginx /etc/nginx/conf.d
 
-# 헬스체크 추가
+# 헬스체크 추가 (컨테이너 상태 모니터링)
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:80/ || exit 1
-
-# USER nginx 제거 - 80포트 바인딩 문제로 root로 실행
-# 참고: K8s 환경에서는 runAsNonRoot 정책으로 보안 강화 가능
 
 # 포트 80 노출
 EXPOSE 80

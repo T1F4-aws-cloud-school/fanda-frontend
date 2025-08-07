@@ -12,8 +12,8 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxUnavailable: 0
-      maxSurge: 1
+      maxUnavailable: 0    # 다운타임 없는 배포
+      maxSurge: 1          # 한 번에 하나씩 업데이트 
   selector:
     matchLabels:
       app: fanda-fe
@@ -26,8 +26,9 @@ spec:
     spec:
       containers:
       - name: fanda-fe
+        # Jenkins가 자동으로 업데이트하는 이미지 태그
         image: 192.168.2.111/fanda-fe/frontend:3e6db2c0
-        imagePullPolicy: Always 
+        imagePullPolicy: Always # 항상 최신 이미지 pull
         ports:
         - containerPort: 80
           name: http
@@ -40,8 +41,9 @@ spec:
           limits:
             memory: "256Mi"
             cpu: "200m"
-        
-        livenessProbe:
+
+        # 헬스 체크 설정 (Dockerfile에 정의된 대로)
+        livenessProbe: # 컨테이너 생존 여부
           httpGet:
             path: /
             port: 80
@@ -51,7 +53,7 @@ spec:
           timeoutSeconds: 5
           failureThreshold: 3
         
-        readinessProbe:
+        readinessProbe: # 트래픽 수신 준비 여부
           httpGet:
             path: /
             port: 80
