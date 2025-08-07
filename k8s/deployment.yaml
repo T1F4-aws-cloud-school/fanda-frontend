@@ -34,6 +34,7 @@ spec:
       containers:
       - name: fanda-fe
         image: 192.168.2.111/fanda-fe/frontend:latest  # Image Updater가 자동 업데이트
+        imagePullPolicy: Always
         ports:
         - containerPort: 80
           name: http
