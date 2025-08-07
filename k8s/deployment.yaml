@@ -26,7 +26,7 @@ spec:
     spec:
       containers:
       - name: fanda-fe
-        image: 192.168.2.111/fanda-fe/frontend:09c4e36f
+        image: 192.168.2.111/fanda-fe/frontend:3e6db2c0
         imagePullPolicy: Always 
         ports:
         - containerPort: 80
