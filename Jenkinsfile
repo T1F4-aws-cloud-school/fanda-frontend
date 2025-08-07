@@ -5,7 +5,7 @@ pipeline {
         HARBOR_URL = '192.168.2.111'
         PROJECT_NAME = 'fanda-fe'
         IMAGE_NAME = "${HARBOR_URL}/${PROJECT_NAME}/frontend"
-        IMAGE_TAG = "${BUILD_NUMBER}"  // 유니크한 태그
+        IMAGE_TAG = "${BUILD_NUMBER}"
         DOCKER_BUILDKIT = '1'
     }
     
@@ -95,8 +95,12 @@ pipeline {
                             grep "image:" k8s/deployment.yaml
                         """
                         
-                        // Git 커밋 및 푸시
-                        withCredentials([string(credentialsId: 'github-token', variable: 'GITHUB_TOKEN')]) {
+                        // Git 커밋 및 푸시 (기존 credential 사용)
+                        withCredentials([usernamePassword(
+                            credentialsId: 'github-credentials', 
+                            usernameVariable: 'GITHUB_USER',
+                            passwordVariable: 'GITHUB_TOKEN'
+                        )]) {
                             sh """
                                 # Git 변경사항 커밋
                                 git add k8s/deployment.yaml
@@ -139,6 +143,7 @@ pipeline {
   ├─ Git 업데이트: k8s/deployment.yaml
   └─ ArgoCD: 자동 배포 진행 중
 
+🚀 ArgoCD에서 배포 상태를 확인하세요!
             """
         }
         
