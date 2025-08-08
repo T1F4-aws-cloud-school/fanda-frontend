@@ -7,6 +7,7 @@ import cartIcon from "../assets/cart.png"
 import notificationIcon from "../assets/notification.png"
 import searchIcon from "../assets/search.png"
 import bannerImage from "../assets/banner.png"
+import bannerlast from "../assets/home-banner.png"
 import categoryIcon from "../assets/category.png"
 import mypageIcon from "../assets/mypage.png"
 import favoriteIcon from "../assets/favorite.png"
@@ -42,9 +43,14 @@ function HomeLoggedIn() {
   const [likedRecommended, setLikedRecommended] = useState([])
   const [likedCategory, setLikedCategory] = useState([])
   
+  // 배너 슬라이드를 위한 상태
+  const [banners, setBanners] = useState([{ 
+    url: bannerlast, 
+    chatPhrase: "인기 최고 판매율 1위 닭가슴살을 만나보세요!" 
+  }])
+  const [currentBannerIndex, setCurrentBannerIndex] = useState(0)
+  
   // API 연동을 위한 상태 추가
-  const [bannerUrl, setBannerUrl] = useState(bannerImage) // 기본 배너
-  const [bannerChatPhrase, setBannerChatPhrase] = useState("") // 캐치프레이즈 추가
   const [recommendedProducts, setRecommendedProducts] = useState(mockRecommendedProducts)
   const [loading, setLoading] = useState(false)
 
@@ -54,6 +60,16 @@ function HomeLoggedIn() {
   useEffect(() => {
     loadApiData()
   }, [])
+
+  // 자동 슬라이드 (5초마다)
+  useEffect(() => {
+    if (banners.length > 1) {
+      const interval = setInterval(() => {
+        setCurrentBannerIndex((prev) => (prev + 1) % banners.length)
+      }, 5000)
+      return () => clearInterval(interval)
+    }
+  }, [banners.length])
 
   // API 데이터 로드 함수
   const loadApiData = async () => {
@@ -76,20 +92,24 @@ function HomeLoggedIn() {
     }
   }
 
-  // 배너 이미지 및 리포트 생성 (새로운 API 사용)
+  // 배너 이미지 및 리포트 생성 (정확한 API 엔드포인트 사용)
   const loadBannerWithReport = async () => {
     try {
-      const response = await apiService.banner.getLatest();
+      const response = await apiService.reports.generate(); // reports/generate 엔드포인트 사용
       
       if (response) {
-        // 새로운 API 응답 구조
-        if (response.imageUrl) {
-          setBannerUrl(response.imageUrl);
-        }
-        if (response.chatPhrase) {
-          setBannerChatPhrase(response.chatPhrase);
+        const newBanner = {
+          url: response.imageBannerUrl || bannerlast,
+          chatPhrase: response.chatPhraseKo || "인기 최고 판매율 1위 닭가슴살을 만나보세요!"
         }
         
+        // 새로운 배너를 맨 앞에 추가
+        setBanners(prev => {
+          const filteredPrev = prev.filter(banner => banner.url !== newBanner.url)
+          return [newBanner, ...filteredPrev].slice(0, 3)
+        })
+        
+        setCurrentBannerIndex(0)
         console.log("배너 및 리포트 생성 성공:", response);
       }
     } catch (error) {
@@ -98,7 +118,7 @@ function HomeLoggedIn() {
     }
   }
 
-  // 리뷰 수집 (백그라운드에서 실행)
+  // 리뷰 수집 (정확한 API 엔드포인트 사용)
   const collectReviews = async () => {
     try {
       const token = localStorage.getItem('accessToken');
@@ -107,11 +127,12 @@ function HomeLoggedIn() {
         return;
       }
 
-      const response = await apiService.reviews.collect();
+      const response = await apiService.reviews.collect(); // reviews/collect 엔드포인트 사용
       console.log("리뷰 수집 완료:", response);
       
       if (response && Array.isArray(response) && response.length > 0) {
         console.log(`${response.length}개의 새로운 리뷰가 수집되었습니다.`);
+        // 수집된 리뷰 예시: [{ id, content, rating, productId, createdAt }]
       }
     } catch (error) {
       console.log("리뷰 수집 실패 (정상적인 경우일 수 있음):", error.message);
@@ -146,6 +167,19 @@ function HomeLoggedIn() {
     }
   }
 
+  // 배너 슬라이드 제어
+  const goToPrevBanner = () => {
+    setCurrentBannerIndex((prev) => (prev - 1 + banners.length) % banners.length)
+  }
+
+  const goToNextBanner = () => {
+    setCurrentBannerIndex((prev) => (prev + 1) % banners.length)
+  }
+
+  const goToBanner = (index) => {
+    setCurrentBannerIndex(index)
+  }
+
   const toggleRecommendedLike = (productId) => {
     setLikedRecommended((prev) =>
       prev.includes(productId) ? prev.filter((id) => id !== productId) : [...prev, productId]
@@ -157,6 +191,9 @@ function HomeLoggedIn() {
       prev.includes(productId) ? prev.filter((id) => id !== productId) : [...prev, productId]
     )
   }
+
+  // 현재 배너의 캐치프레이즈
+  const currentCatchPhrase = banners[currentBannerIndex]?.chatPhrase || "인기 최고 판매율 1위 닭가슴살을 만나보세요!"
 
   return (
     <div className="app">
@@ -177,6 +214,66 @@ function HomeLoggedIn() {
         </div>
       </div>
 
+      {/* 리뷰 기반 추천 텍스트 - 하드코딩 */}
+      <div className="review-recommendation-text">
+        * 고객님들의 리뷰를 기반으로 상품을 추천드립니다.
+      </div>
+
+      {/* 배너 존 - 슬라이드 기능 포함 */}
+      <div className={`home-banner-zone ${banners.length > 1 ? 'multiple-banners' : ''}`}>
+        <div className="banner-slider">
+          <div 
+            className="banner-slides" 
+            style={{ transform: `translateX(calc(-${currentBannerIndex * 300}px + 50% - 140px))` }}
+          >
+            {banners.map((banner, index) => {
+              let className = 'banner-slide';
+              if (index === currentBannerIndex) {
+                className += ' active';
+              } else {
+                className += ' side';
+              }
+              
+              return (
+                <div 
+                  key={index} 
+                  className={className}
+                  onClick={() => index !== currentBannerIndex && goToBanner(index)}
+                  style={{ cursor: index !== currentBannerIndex ? 'pointer' : 'default' }}
+                >
+                  <img
+                    src={banner.url}
+                    alt={banner.chatPhrase}
+                    className="home-banner-image"
+                    onError={(e) => {
+                      e.target.src = bannerlast
+                    }}
+                  />
+                </div>
+              )
+            })}
+          </div>
+          
+          {/* 배너가 여러 개일 때만 인디케이터 표시 */}
+          {banners.length > 1 && (
+            <div className="banner-indicators">
+              {banners.map((_, index) => (
+                <div
+                  key={index}
+                  className={`banner-indicator ${index === currentBannerIndex ? 'active' : ''}`}
+                  onClick={() => goToBanner(index)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 캐치프레이즈 - 현재 배너의 캐치프레이즈 표시 */}
+      <div className="catch-phrase">
+        {currentCatchPhrase}
+      </div>
+
       {/* 사용자 프로필 창 - 로그인 후 */}
       <div className="home-user-profile-section">
         <div className="home-user-profile-top">
@@ -186,23 +283,10 @@ function HomeLoggedIn() {
           <div className="home-user-info">
             <h3 className="home-user-name">{userName}님</h3>
             <p className="home-user-description">
-              {bannerChatPhrase || "오늘도 맛있게 단백질 챙기세요!"}
+              {currentCatchPhrase || "오늘도 맛있게 단백질 챙기세요!"}
             </p>
           </div>
         </div>
-      </div>
-
-      {/* 배너 - API 연동 (새로운 이미지 및 캐치프레이즈) */}
-      <div className="banner">
-        <img
-          src={bannerUrl}
-          alt={bannerChatPhrase || "DELICIOUS CHICKEN BREAST Try it now!"}
-          className="banner-image"
-          onError={(e) => {
-            // 이미지 로드 실패 시 기본 이미지로 대체
-            e.target.src = bannerImage
-          }}
-        />
       </div>
 
       {/* 추천상품 - API 연동 */}
