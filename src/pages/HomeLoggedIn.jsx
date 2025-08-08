@@ -44,7 +44,8 @@ function HomeLoggedIn() {
   
   // API 연동을 위한 상태 추가
   const [bannerUrl, setBannerUrl] = useState(bannerImage) // 기본 배너
-  const [recommendedProducts, setRecommendedProducts] = useState(mockRecommendedProducts) // 추천 상품
+  const [bannerChatPhrase, setBannerChatPhrase] = useState("") // 캐치프레이즈 추가
+  const [recommendedProducts, setRecommendedProducts] = useState(mockRecommendedProducts)
   const [loading, setLoading] = useState(false)
 
   const categories = ["전체", "베스트", "오늘특가", "대량구매", "신상품"]
@@ -58,11 +59,14 @@ function HomeLoggedIn() {
   const loadApiData = async () => {
     setLoading(true)
     try {
-      // 1. 배너 이미지 로드 시도
-      await loadBannerImage()
+      // 1. 배너 이미지 및 리포트 생성
+      await loadBannerWithReport()
       
       // 2. 개인별 추천 상품 로드 시도
       await loadRecommendedProducts()
+      
+      // 3. 리뷰 수집 (백그라운드에서)
+      await collectReviews()
       
     } catch (error) {
       console.error("API 데이터 로드 실패:", error)
@@ -72,20 +76,50 @@ function HomeLoggedIn() {
     }
   }
 
-  // 배너 이미지 로드 (Bedrock S3 API 연동 예정)
-  const loadBannerImage = async () => {
+  // 배너 이미지 및 리포트 생성 (새로운 API 사용)
+  const loadBannerWithReport = async () => {
     try {
       const response = await apiService.banner.getLatest();
-      if (response && response.imageUrl) {
-        setBannerUrl(response.imageUrl);
+      
+      if (response) {
+        // 새로운 API 응답 구조
+        if (response.imageUrl) {
+          setBannerUrl(response.imageUrl);
+        }
+        if (response.chatPhrase) {
+          setBannerChatPhrase(response.chatPhrase);
+        }
+        
+        console.log("배너 및 리포트 생성 성공:", response);
       }
     } catch (error) {
-      console.log("배너 API 아직 미구현, 기본 배너 사용:", error.message);
+      console.log("배너 API 호출 실패, 기본 배너 사용:", error.message);
       // 기본 배너 유지
     }
   }
 
-  // 개인별 추천 상품 로드 (API 연동 예정)
+  // 리뷰 수집 (백그라운드에서 실행)
+  const collectReviews = async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        console.log("토큰 없음, 리뷰 수집 건너뛰기");
+        return;
+      }
+
+      const response = await apiService.reviews.collect();
+      console.log("리뷰 수집 완료:", response);
+      
+      if (response && Array.isArray(response) && response.length > 0) {
+        console.log(`${response.length}개의 새로운 리뷰가 수집되었습니다.`);
+      }
+    } catch (error) {
+      console.log("리뷰 수집 실패 (정상적인 경우일 수 있음):", error.message);
+      // 리뷰 수집은 필수가 아니므로 에러 무시
+    }
+  }
+
+  // 개인별 추천 상품 로드
   const loadRecommendedProducts = async () => {
     try {
       const token = localStorage.getItem('accessToken');
@@ -143,7 +177,7 @@ function HomeLoggedIn() {
         </div>
       </div>
 
-      {/* 사용자 프로필 창- 로그인 후 */}
+      {/* 사용자 프로필 창 - 로그인 후 */}
       <div className="home-user-profile-section">
         <div className="home-user-profile-top">
           <div className="home-user-avatar">
@@ -151,17 +185,18 @@ function HomeLoggedIn() {
           </div>
           <div className="home-user-info">
             <h3 className="home-user-name">{userName}님</h3>
-            <p className="home-
-            home-user-description">오늘도 맛있게 단백질 챙기세요!</p>
+            <p className="home-user-description">
+              {bannerChatPhrase || "오늘도 맛있게 단백질 챙기세요!"}
+            </p>
           </div>
         </div>
       </div>
 
-      {/* 배너 - API 연동 */}
+      {/* 배너 - API 연동 (새로운 이미지 및 캐치프레이즈) */}
       <div className="banner">
         <img
           src={bannerUrl}
-          alt="DELICIOUS CHICKEN BREAST Try it now!"
+          alt={bannerChatPhrase || "DELICIOUS CHICKEN BREAST Try it now!"}
           className="banner-image"
           onError={(e) => {
             // 이미지 로드 실패 시 기본 이미지로 대체
@@ -248,21 +283,21 @@ function HomeLoggedIn() {
 
       {/* 하단 네비게이션 */}
       <nav className="home-bottom-nav">
-        <div className="nav-item active">
-          <img src={ichomeIcon || "/placeholder.svg"} alt="홈" className="nav-icon" />
-          <span className="nav-label">홈</span>
+        <div className="home-nav-item active">
+          <img src={ichomeIcon || "/placeholder.svg"} alt="홈" className="home-nav-icon" />
+          <span className="home-nav-label">홈</span>
         </div>
-        <div className="nav-item">
-          <img src={categoryIcon || "/placeholder.svg"} alt="카테고리" className="nav-icon" />
-          <span className="nav-label">카테고리</span>
+        <div className="home-nav-item">
+          <img src={categoryIcon || "/placeholder.svg"} alt="카테고리" className="home-nav-icon" />
+          <span className="home-nav-label">카테고리</span>
         </div>
-        <div className="nav-item">
-          <img src={favoriteIcon || "/placeholder.svg"} alt="찜" className="nav-icon" />
-          <span className="nav-label">찜</span>
+        <div className="home-nav-item">
+          <img src={favoriteIcon || "/placeholder.svg"} alt="찜" className="home-nav-icon" />
+          <span className="home-nav-label">찜</span>
         </div>
-        <div className="nav-item">
-          <img src={mypageIcon || "/placeholder.svg"} alt="마이" className="nav-icon" />
-          <span className="nav-label">마이</span>
+        <div className="home-nav-item">
+          <img src={mypageIcon || "/placeholder.svg"} alt="마이" className="home-nav-icon" />
+          <span className="home-nav-label">마이</span>
         </div>
       </nav>
     </div>
