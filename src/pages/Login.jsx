@@ -4,9 +4,11 @@ import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import "./Login.css"
 import apiService from "../api/apiService"
+import { useAuth } from "../context/AuthContext"
 
 export default function LoginScreen() {
   const navigate = useNavigate()
+  const { handleLoginSuccess } = useAuth() 
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -35,9 +37,10 @@ export default function LoginScreen() {
         localStorage.setItem("refreshToken", response.content.refreshToken);
         
         console.log("로그인 성공");
-        
+
+        handleLoginSuccess();
         // 로그인 후 메인 화면으로 이동
-        navigate("/main");
+        navigate("/");
       } else {
         // 로그인 실패
         throw new Error(response.message || "로그인에 실패했습니다");

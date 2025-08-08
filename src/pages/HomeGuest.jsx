@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import "./Home2.css"
 
 import cartIcon from "../assets/cart.png"
@@ -15,6 +15,7 @@ import userIcon from "../assets/user.png"
 import chicken from "../assets/chicken.png"
 import heart from "../assets/heart.png"  // 빨간 하트
 import heartGrey from "../assets/heart_grey.png"  // 회색 하트
+import apiService from "../api/apiService" // API Service 추가
 
 import { useNavigate } from "react-router-dom"
 
@@ -102,9 +103,39 @@ function App() {
   const [activeCategory, setActiveCategory] = useState("전체")
   const [likedRecommended, setLikedRecommended] = useState([])
   const [likedCategory, setLikedCategory] = useState([])
+  
+  // 배너 API 연동을 위한 상태 추가
+  const [bannerUrl, setBannerUrl] = useState(bannerImage)
+  const [bannerChatPhrase, setBannerChatPhrase] = useState("")
+  
   const navigate = useNavigate()
-
   const categories = ["전체", "베스트", "오늘특가", "대량구매", "신상품"]
+
+  // 컴포넌트 마운트 시 배너 로드
+  useEffect(() => {
+    loadBanner()
+  }, [])
+
+  // 배너 이미지 로드 (비로그인 상태에서도 배너 API 호출)
+  const loadBanner = async () => {
+    try {
+      const response = await apiService.banner.getLatest();
+      
+      if (response) {
+        if (response.imageUrl) {
+          setBannerUrl(response.imageUrl);
+        }
+        if (response.chatPhrase) {
+          setBannerChatPhrase(response.chatPhrase);
+        }
+        
+        console.log("게스트 배너 로드 성공:", response);
+      }
+    } catch (error) {
+      console.log("배너 API 호출 실패, 기본 배너 사용:", error.message);
+      // 기본 배너 유지
+    }
+  }
 
   // 로그인 핸들러 함수
   const handleLogin = () => {
@@ -127,7 +158,7 @@ function App() {
     <div className="app">
       {/* 헤더 */}
       <header className="header">
-        <h1 className="logo">안 효 민 몽 총 이</h1>
+        <h1 className="logo">세 끼 통 살</h1>
         <div className="header-icons">
           <img src={cartIcon || "/placeholder.svg"} alt="장바구니" className="header-icon cart-icon" />
           <img src={notificationIcon || "/placeholder.svg"} alt="알림" className="header-icon" />
@@ -161,16 +192,20 @@ function App() {
         </button>
       </div>
 
-      {/* 배너 */}
+      {/* 배너 - API 연동 (로그인 상관없이 동일) */}
       <div className="banner">
         <img
-          src={bannerImage || "/placeholder.svg"}
-          alt="DELICIOUS CHICKEN BREAST Try it now!"
+          src={bannerUrl}
+          alt={bannerChatPhrase || "DELICIOUS CHICKEN BREAST Try it now!"}
           className="banner-image"
+          onError={(e) => {
+            // 이미지 로드 실패 시 기본 이미지로 대체
+            e.target.src = bannerImage
+          }}
         />
       </div>
 
-      {/* 추천상품 */}
+      {/* 추천상품 - 비로그인: 하드코딩 목업 데이터 */}
       <section className="recommended-section">
         <h2 className="section-title">나를 위한 추천 상품</h2>
         <div className="products-scroll">
