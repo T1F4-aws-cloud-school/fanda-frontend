@@ -38,17 +38,36 @@ export default function PasswordInput() {
       });
 
       console.log("회원가입 성공:", response);
-      navigate("/signup/complete");
+      
+      // API 명세에 따른 응답 체크
+      // 응답: { "id": 1, "username": "fanda123", "nickname": "다팬다" }
+      if (response && response.id && response.username) {
+        navigate("/signup/complete");
+      } else {
+        throw new Error("회원가입 응답이 올바르지 않습니다.");
+      }
 
     } catch (error) {
       console.error("회원가입 요청 실패:", error);
       
       // 에러 메시지 처리
       let errorMessage = "회원가입에 실패했습니다.";
+      
+      // 백엔드 에러 응답 처리
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
+      } else if (error.response?.data) {
+        // 일반적인 에러 메시지가 있는 경우
+        errorMessage = typeof error.response.data === 'string' 
+          ? error.response.data 
+          : "서버에서 오류가 발생했습니다.";
       } else if (error.message) {
         errorMessage = error.message;
+      }
+      
+      // 네트워크 에러나 서버 연결 실패
+      if (error.code === 'NETWORK_ERROR' || error.message.includes('Network Error')) {
+        errorMessage = "서버에 연결할 수 없습니다. 네트워크 상태를 확인해주세요.";
       }
       
       alert(errorMessage);
