@@ -41,7 +41,6 @@ class ApiService {
 
     // 개인별 추천 상품
     getRecommended: async () => {
-      // 백엔드에서 API 구현 후 연동
       const response = await axios.get('/products/recommended');
       return response.data;
     },
@@ -54,17 +53,52 @@ class ApiService {
     }
   };
 
-  // 배너 관련 API
-  banner = {
-    // 최신 배너 조회 
-    getLatest: async () => {
-      // 백엔드에서 Bedrock S3 배너 API 구현 후 연동
-      const response = await axios.get('/banner/latest');
+  // 리뷰 관련 API
+  reviews = {
+    // 수집 되지 않은 리뷰만 수집 (사용자 토큰 필요)
+    collect: async () => {
+      const response = await axios.post('/reviews/collect');
       return response.data;
     }
   };
 
+  // 리포트 및 배너 관련 API
+  reports = {
+    // 긍/부정 리포트 생성 및 배너 이미지 생성 (관리자 토큰 필요)
+    generage: async () => {
+      const response = await axios.get('/reports/generate');
+      return response.data;
+    }
+  }
 
+  // 배너 관련 API
+  banner = {
+    // 기존 방식 
+    getLatest: async () => {
+      try {
+        // 먼저 새로운 API 시도
+        const response = await this.reports.generate();
+        return {
+          imageUrl: response.imageBannerUrl,
+          chatPhrase: response.chatPhraseKo
+        };
+      } catch (error) {
+        // 실패 시 기존 API 시도
+        const response = await axios.get('/banner/latest');
+        return response.data;
+      }
+    },
+
+    // 리포트 생성과 함께
+    generateWithReport: async () => {
+      const response = await this.reports.generate();
+      return {
+        imageUrl: response.imageBannerUrl,
+        chatPhrase: response.chatPhraseKo,
+        fullResponse: response
+      };
+    }
+  };
 }
 
 // 싱글톤 인스턴스 생성
