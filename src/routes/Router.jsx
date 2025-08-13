@@ -11,10 +11,11 @@ import SignUpComplete from "../pages/Signup/SignUpComplete.jsx";
 import Detail from "../pages/Detail/Detail.jsx";
 import HomeGuest from "../pages/HomeGuest.jsx";
 import HomeLoggedIn from "../pages/HomeLoggedIn.jsx";
+import Manager from "../pages/Manager/Manager.jsx"; // 관리자 페이지 추가
 import { useAuth } from "../context/AuthContext"; // 새로 추가
 
 const Router = () => {
-  const { isLoggedIn, isLoading } = useAuth(); // 인증 상태 가져오기
+  const { isLoggedIn, isLoading } = useAuth(); // userType 제거
 
   // 로딩 중일 때 스피너 표시
   if (isLoading) {
@@ -39,6 +40,12 @@ const Router = () => {
         <Route 
           path="/" 
           element={isLoggedIn ? <HomeLoggedIn /> : <HomeGuest />} 
+        />
+        
+        {/* 관리자 페이지 - 임시로 조건 제거 */}
+        <Route 
+          path="/manager" 
+          element={<Manager />} 
         />
         
         {/* 로그인/회원가입 - 이미 로그인된 경우 홈으로 리다이렉트 */}
