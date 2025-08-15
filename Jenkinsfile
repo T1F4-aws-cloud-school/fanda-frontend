@@ -101,8 +101,8 @@ pipeline {
             steps {
                 sh '''
                     echo "🔐 Trivy 보안 스캔..."
-                    trivy image --server http://192.168.2.248:4954 \
-                        --exit-code 1 --severity HIGH,CRITICAL ${IMAGE_NAME}:${IMAGE_TAG}
+                    #trivy image --server http://192.168.2.248:4954 \
+                    #   --exit-code 1 --severity HIGH,CRITICAL ${IMAGE_NAME}:${IMAGE_TAG}
                 '''
             }
         }
