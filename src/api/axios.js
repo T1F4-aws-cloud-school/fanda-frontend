@@ -1,9 +1,9 @@
 import axios from "axios";
 
 const instance = axios.create({
-  baseURL: "http://localhost:8080/api/v1", // 백엔드 실제 주소
+  baseURL: "http://172.16.1.1:8080/api/v1", // 백엔드 실제 주소
   withCredentials: false,
-  timeout: 10000, // 10초 타임아웃
+  timeout: 30000, // 10초 타임아웃
 });
 
 // 요청 인터셉터 - 토큰 자동 추가
