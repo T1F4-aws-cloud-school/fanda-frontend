@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const instance = axios.create({
-  baseURL: "http://localhost:8080/api/v1", // 백엔드 실제 주소
+  baseURL: "http://192.168.2.100:30803/api/v1", // 백엔드 실제 주소
   withCredentials: false,
   timeout: 10000, // 10초 타임아웃
 });
