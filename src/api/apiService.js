@@ -65,7 +65,7 @@ class ApiService {
   // 리포트 및 배너 관련 API
   reports = {
     // 긍/부정 리포트 생성 및 배너 이미지 생성 (관리자 토큰 필요)
-    generage: async () => {
+    generate: async () => {
       const response = await axios.get('/reports/generate');
       return response.data;
     }
