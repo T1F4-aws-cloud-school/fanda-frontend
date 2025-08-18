@@ -30,18 +30,18 @@ export default function LoginScreen() {
 
       console.log("로그인 응답:", response);
 
-      // 백엔드 응답 구조
+      // 백엔드 응답 구조에 맞게 수정
       if (response.statusCode === "OK" && response.content?.accessToken) {
         // 토큰 저장
         localStorage.setItem("accessToken", response.content.accessToken);
         localStorage.setItem("refreshToken", response.content.refreshToken);
         
-        // 사용자 정보 구성 (백엔드 응답에 따라 조정)
+        // 로그인 응답에는 사용자 정보가 없으므로 입력받은 username을 그대로 사용
         const userInfo = {
-          username: response.content.username || username,
-          nickname: response.content.nickname || username, // 닉네임이 없으면 username 사용
-          email: response.content.email,
-          id: response.content.id,
+          username: username,
+          nickname: username, // username을 그대로 닉네임으로 사용
+          email: null,        // 로그인 응답에 없음
+          id: null,          // 로그인 응답에 없음
         };
         
         // localStorage에도 저장 (새로고침 시 유지)
