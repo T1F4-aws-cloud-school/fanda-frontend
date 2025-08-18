@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import "./Home2.css"
 
 import cartIcon from "../assets/cart.png"
@@ -8,15 +8,18 @@ import notificationIcon from "../assets/notification.png"
 import searchIcon from "../assets/search.png"
 import bannerImage from "../assets/banner.png"
 import bannerlast from "../assets/home-banner.png"
+import testBanner1 from "../assets/test-banner-1.png"
+import testBanner2 from "../assets/test-banner-2.png"
 import categoryIcon from "../assets/category.png"
 import mypageIcon from "../assets/mypage.png"
 import favoriteIcon from "../assets/favorite.png"
 import ichomeIcon from "../assets/ichome.png"
 import userIcon from "../assets/user.png"
 import chicken from "../assets/chicken.png"
-import heart from "../assets/heart.png"        // 빨간 하트
-import heartGrey from "../assets/heart_grey.png" // 회색 하트
-import apiService from "../api/apiService" // API Service 사용
+import heart from "../assets/heart.png"        
+import heartGrey from "../assets/heart_grey.png" 
+import apiService from "../api/apiService"
+import { useAuth } from "../context/AuthContext" // AuthContext 사용
 
 // 목업 데이터 (API 없을 때 사용)
 const mockRecommendedProducts = [
@@ -38,17 +41,38 @@ const mockCategoryProducts = [
 ]
 
 function HomeLoggedIn() {
-  const [userName] = useState("소정소정") // 로그인된 사용자명
+  // AuthContext에서 사용자 정보 가져오기
+  const { userInfo, handleLogout } = useAuth()
+  
   const [activeCategory, setActiveCategory] = useState("전체")
   const [likedRecommended, setLikedRecommended] = useState([])
   const [likedCategory, setLikedCategory] = useState([])
   
-  // 배너 슬라이드를 위한 상태
-  const [banners, setBanners] = useState([{ 
-    url: bannerlast, 
-    chatPhrase: "인기 최고 판매율 1위 닭가슴살을 만나보세요!" 
-  }])
+  // 배너 슬라이드를 위한 상태 (HomeGuest와 동일)
+  const [banners, setBanners] = useState([
+    { 
+      url: bannerlast, 
+      chatPhrase: "인기 최고 판매율 1위 닭가슴살을 만나보세요!" 
+    },
+    { 
+      url: testBanner1, 
+      chatPhrase: "신선한 닭가슴살로 건강한 다이어트!" 
+    },
+    { 
+      url: testBanner2, 
+      chatPhrase: "부드럽고 맛있는 프리미엄 닭가슴살" 
+    }
+  ])
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0)
+  
+  // 스와이프 기능을 위한 상태 (HomeGuest와 동일)
+  const [isDragging, setIsDragging] = useState(false)
+  const [startX, setStartX] = useState(0)
+  const [currentX, setCurrentX] = useState(0)
+  const [dragOffset, setDragOffset] = useState(0)
+  const [autoSlideEnabled, setAutoSlideEnabled] = useState(true)
+  const bannerSlidesRef = useRef(null)
+  const autoSlideRef = useRef(null)
   
   // API 연동을 위한 상태 추가
   const [recommendedProducts, setRecommendedProducts] = useState(mockRecommendedProducts)
@@ -56,20 +80,36 @@ function HomeLoggedIn() {
 
   const categories = ["전체", "베스트", "오늘특가", "대량구매", "신상품"]
 
+  // 사용자 이름 처리 (AuthContext에서 가져온 정보 사용)
+  const displayName = userInfo?.nickname || userInfo?.username || "사용자"
+
   // 컴포넌트 마운트 시 API 데이터 로드
   useEffect(() => {
     loadApiData()
   }, [])
 
-  // 자동 슬라이드 (5초마다)
+  // 자동 슬라이드 (5초마다) - 스와이프 중일 때는 멈춤 (HomeGuest와 동일)
   useEffect(() => {
-    if (banners.length > 1) {
-      const interval = setInterval(() => {
-        setCurrentBannerIndex((prev) => (prev + 1) % banners.length)
+    if (banners.length > 1 && autoSlideEnabled && !isDragging) {
+      autoSlideRef.current = setInterval(() => {
+        setCurrentBannerIndex((prev) => {
+          const nextIndex = (prev + 1) % banners.length
+          console.log(`Auto slide: ${prev} -> ${nextIndex}`)
+          return nextIndex
+        })
       }, 5000)
-      return () => clearInterval(interval)
+      
+      return () => {
+        if (autoSlideRef.current) {
+          clearInterval(autoSlideRef.current)
+        }
+      }
+    } else {
+      if (autoSlideRef.current) {
+        clearInterval(autoSlideRef.current)
+      }
     }
-  }, [banners.length])
+  }, [banners.length, autoSlideEnabled, isDragging])
 
   // API 데이터 로드 함수
   const loadApiData = async () => {
@@ -92,10 +132,10 @@ function HomeLoggedIn() {
     }
   }
 
-  // 배너 이미지 및 리포트 생성 (정확한 API 엔드포인트 사용)
+  // 배너 이미지 및 리포트 생성
   const loadBannerWithReport = async () => {
     try {
-      const response = await apiService.reports.generate(); // reports/generate 엔드포인트 사용
+      const response = await apiService.reports.generate();
       
       if (response) {
         const newBanner = {
@@ -114,11 +154,10 @@ function HomeLoggedIn() {
       }
     } catch (error) {
       console.log("배너 API 호출 실패, 기본 배너 사용:", error.message);
-      // 기본 배너 유지
     }
   }
 
-  // 리뷰 수집 (정확한 API 엔드포인트 사용)
+  // 리뷰 수집
   const collectReviews = async () => {
     try {
       const token = localStorage.getItem('accessToken');
@@ -127,16 +166,14 @@ function HomeLoggedIn() {
         return;
       }
 
-      const response = await apiService.reviews.collect(); // reviews/collect 엔드포인트 사용
+      const response = await apiService.reviews.collect();
       console.log("리뷰 수집 완료:", response);
       
       if (response && Array.isArray(response) && response.length > 0) {
         console.log(`${response.length}개의 새로운 리뷰가 수집되었습니다.`);
-        // 수집된 리뷰 예시: [{ id, content, rating, productId, createdAt }]
       }
     } catch (error) {
       console.log("리뷰 수집 실패 (정상적인 경우일 수 있음):", error.message);
-      // 리뷰 수집은 필수가 아니므로 에러 무시
     }
   }
 
@@ -152,32 +189,136 @@ function HomeLoggedIn() {
       const response = await apiService.products.getRecommended();
       
       if (response && Array.isArray(response)) {
-        // API 응답 데이터를 프론트엔드 형식으로 변환
         const formattedProducts = response.map(product => ({
           id: product.id,
           name: product.name,
           price: `${product.price.toLocaleString()}원`,
-          image: product.imageUrl || chicken // 이미지 없으면 기본 이미지
+          image: product.imageUrl || chicken
         }));
         setRecommendedProducts(formattedProducts);
       }
     } catch (error) {
       console.log("추천 상품 API 아직 미구현, 목업 데이터 사용:", error.message);
-      // 목업 데이터 유지
     }
   }
 
-  // 배너 슬라이드 제어
+  // 배너 슬라이드 제어 (HomeGuest와 동일)
   const goToPrevBanner = () => {
-    setCurrentBannerIndex((prev) => (prev - 1 + banners.length) % banners.length)
+    setCurrentBannerIndex((prev) => {
+      const newIndex = (prev - 1 + banners.length) % banners.length
+      console.log(`Manual prev: ${prev} -> ${newIndex}`)
+      return newIndex
+    })
   }
 
   const goToNextBanner = () => {
-    setCurrentBannerIndex((prev) => (prev + 1) % banners.length)
+    setCurrentBannerIndex((prev) => {
+      const newIndex = (prev + 1) % banners.length
+      console.log(`Manual next: ${prev} -> ${newIndex}`)
+      return newIndex
+    })
   }
 
   const goToBanner = (index) => {
+    console.log(`Direct go to banner: ${currentBannerIndex} -> ${index}`)
     setCurrentBannerIndex(index)
+  }
+
+  // 스와이프 이벤트 핸들러들 (HomeGuest와 동일)
+  const handleTouchStart = (e) => {
+    if (banners.length <= 1) return
+    
+    setIsDragging(true)
+    setAutoSlideEnabled(false)
+    const touch = e.touches[0]
+    setStartX(touch.clientX)
+    setCurrentX(touch.clientX)
+    setDragOffset(0)
+    
+    console.log('Touch start:', touch.clientX)
+  }
+
+  const handleTouchMove = (e) => {
+    if (!isDragging || banners.length <= 1) return
+    
+    e.preventDefault()
+    const touch = e.touches[0]
+    setCurrentX(touch.clientX)
+    const offset = touch.clientX - startX
+    setDragOffset(offset)
+    
+    console.log('Touch move:', offset)
+  }
+
+  const handleTouchEnd = (e) => {
+    if (!isDragging || banners.length <= 1) return
+    
+    setIsDragging(false)
+    const offset = currentX - startX
+    const threshold = 80
+    
+    console.log('Touch end, offset:', offset)
+    
+    if (Math.abs(offset) > threshold) {
+      if (offset > 0) {
+        goToPrevBanner()
+      } else {
+        goToNextBanner()
+      }
+    }
+    
+    setDragOffset(0)
+    
+    setTimeout(() => {
+      setAutoSlideEnabled(true)
+    }, 100)
+  }
+
+  // 마우스 이벤트 핸들러들 (HomeGuest와 동일)
+  const handleMouseDown = (e) => {
+    if (banners.length <= 1) return
+    
+    setIsDragging(true)
+    setAutoSlideEnabled(false)
+    setStartX(e.clientX)
+    setCurrentX(e.clientX)
+    setDragOffset(0)
+    
+    console.log('Mouse down:', e.clientX)
+  }
+
+  const handleMouseMove = (e) => {
+    if (!isDragging || banners.length <= 1) return
+    
+    setCurrentX(e.clientX)
+    const offset = e.clientX - startX
+    setDragOffset(offset)
+    
+    console.log('Mouse move:', offset)
+  }
+
+  const handleMouseUp = (e) => {
+    if (!isDragging || banners.length <= 1) return
+    
+    setIsDragging(false)
+    const offset = currentX - startX
+    const threshold = 80
+    
+    console.log('Mouse up, offset:', offset)
+    
+    if (Math.abs(offset) > threshold) {
+      if (offset > 0) {
+        goToPrevBanner()
+      } else {
+        goToNextBanner()
+      }
+    }
+    
+    setDragOffset(0)
+    
+    setTimeout(() => {
+      setAutoSlideEnabled(true)
+    }, 100)
   }
 
   const toggleRecommendedLike = (productId) => {
@@ -214,32 +355,76 @@ function HomeLoggedIn() {
         </div>
       </div>
 
-      {/* 리뷰 기반 추천 텍스트 - 하드코딩 */}
+      {/* 리뷰 기반 추천 텍스트 */}
       <div className="review-recommendation-text">
         * 고객님들의 리뷰를 기반으로 상품을 추천드립니다.
       </div>
 
-      {/* 배너 존 - 슬라이드 기능 포함 */}
+      {/* 배너 존 - 스와이프 기능 (HomeGuest와 동일) */}
       <div className={`home-banner-zone ${banners.length > 1 ? 'multiple-banners' : ''}`}>
         <div className="banner-slider">
           <div 
-            className="banner-slides" 
-            style={{ transform: `translateX(calc(-${currentBannerIndex * 300}px + 50% - 140px))` }}
+            ref={bannerSlidesRef}
+            className="banner-slides"
+            style={{
+              cursor: isDragging ? 'grabbing' : 'grab',
+              userSelect: 'none'
+            }}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
           >
             {banners.map((banner, index) => {
-              let className = 'banner-slide';
-              if (index === currentBannerIndex) {
-                className += ' active';
-              } else {
-                className += ' side';
+              let position = index - currentBannerIndex
+              
+              if (position > banners.length / 2) {
+                position -= banners.length
+              } else if (position < -banners.length / 2) {
+                position += banners.length
               }
+              
+              let className = 'banner-slide'
+              if (position === 0) {
+                className += ' active'
+              } else {
+                className += ' side'
+              }
+              
+              const SLIDE = 298
+              const GAP = 20      
+              const STEP = SLIDE + GAP
+              let translateX = position * STEP
+              
+              if (isDragging) {
+                translateX += dragOffset
+              }
+              
+              const scale = 1
+              const opacity = position === 0 ? 1 : 0.7
               
               return (
                 <div 
-                  key={index} 
+                  key={`${banner.url}-${index}`}
                   className={className}
-                  onClick={() => index !== currentBannerIndex && goToBanner(index)}
-                  style={{ cursor: index !== currentBannerIndex ? 'pointer' : 'default' }}
+                  style={{
+                    transform: `translateX(${translateX}px) scale(${scale})`,
+                    opacity: opacity,
+                    zIndex: position === 0 ? 10 : 5,
+                    transition: isDragging ? 'none' : 'transform 420ms cubic-bezier(.22,.61,.36,1), opacity 300ms ease'
+                  }}
+                  onClick={(e) => {
+                    if (isDragging || Math.abs(dragOffset) > 10) {
+                      e.preventDefault()
+                      return
+                    }
+                    if (position !== 0) {
+                      goToBanner(index)
+                    }
+                  }}
                 >
                   <img
                     src={banner.url}
@@ -248,6 +433,7 @@ function HomeLoggedIn() {
                     onError={(e) => {
                       e.target.src = bannerlast
                     }}
+                    draggable={false}
                   />
                 </div>
               )
@@ -269,7 +455,7 @@ function HomeLoggedIn() {
         </div>
       </div>
 
-      {/* 캐치프레이즈 - 현재 배너의 캐치프레이즈 표시 */}
+      {/* 캐치프레이즈 */}
       <div className="catch-phrase">
         {currentCatchPhrase}
       </div>
@@ -281,7 +467,7 @@ function HomeLoggedIn() {
             <img src={userIcon || "/placeholder.svg"} alt="사용자" />
           </div>
           <div className="home-user-info">
-            <h3 className="home-user-name">{userName}님</h3>
+            <h3 className="home-user-name">{displayName}님</h3>
             <p className="home-user-description">
               {currentCatchPhrase || "오늘도 맛있게 단백질 챙기세요!"}
             </p>
@@ -306,7 +492,6 @@ function HomeLoggedIn() {
                     alt={product.name} 
                     className="product-image"
                     onError={(e) => {
-                      // 상품 이미지 로드 실패 시 기본 이미지로 대체
                       e.target.src = chicken
                     }}
                   />
