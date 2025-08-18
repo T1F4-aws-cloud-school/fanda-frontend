@@ -469,7 +469,7 @@ function HomeLoggedIn() {
           <div className="home-user-info">
             <h3 className="home-user-name">{displayName}님</h3>
             <p className="home-user-description">
-              {currentCatchPhrase || "오늘도 맛있게 단백질 챙기세요!"}
+              {displayName}님을 위한 추천상품이 기다리고 있어요!
             </p>
           </div>
         </div>
