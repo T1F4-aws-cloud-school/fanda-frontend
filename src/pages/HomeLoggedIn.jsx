@@ -10,16 +10,13 @@ import bannerImage from "../assets/banner.png"
 import bannerlast from "../assets/home-banner.png"
 import testBanner1 from "../assets/test-banner-1.png"
 import testBanner2 from "../assets/test-banner-2.png"
-import categoryIcon from "../assets/category.png"
-import mypageIcon from "../assets/mypage.png"
-import favoriteIcon from "../assets/favorite.png"
-import ichomeIcon from "../assets/ichome.png"
 import userIcon from "../assets/user.png"
 import chicken from "../assets/chicken.png"
 import heart from "../assets/heart.png"        
 import heartGrey from "../assets/heart_grey.png" 
 import apiService from "../api/apiService"
 import { useAuth } from "../context/AuthContext" // AuthContext 사용
+import BottomNavigation from "./BottomNavigation" // 추가된 import
 
 // 목업 데이터 (API 없을 때 사용)
 const mockRecommendedProducts = [
@@ -340,7 +337,7 @@ function HomeLoggedIn() {
     <div className="app">
       {/* 헤더 */}
       <header className="header">
-        <h1 className="logo">세 끼 통 살</h1>
+        <h1 className="logo">세 라 통 살</h1>
         <div className="header-icons">
           <img src={cartIcon || "/placeholder.svg"} alt="장바구니" className="header-icon cart-icon" />
           <img src={notificationIcon || "/placeholder.svg"} alt="알림" className="header-icon" />
@@ -351,7 +348,7 @@ function HomeLoggedIn() {
       <div className="search-container">
         <div className="search-bar">
           <img src={searchIcon || "/placeholder.svg"} alt="검색" className="search-icon" />
-          <input type="text" placeholder="세끼통살에서 검색해보세요!" className="search-input" />
+          <input type="text" placeholder="세라통살에서 검색해보세요!" className="search-input" />
         </div>
       </div>
 
@@ -550,25 +547,8 @@ function HomeLoggedIn() {
         </div>
       </section>
 
-      {/* 하단 네비게이션 */}
-      <nav className="home-bottom-nav">
-        <div className="home-nav-item active">
-          <img src={ichomeIcon || "/placeholder.svg"} alt="홈" className="home-nav-icon" />
-          <span className="home-nav-label">홈</span>
-        </div>
-        <div className="home-nav-item">
-          <img src={categoryIcon || "/placeholder.svg"} alt="카테고리" className="home-nav-icon" />
-          <span className="home-nav-label">카테고리</span>
-        </div>
-        <div className="home-nav-item">
-          <img src={favoriteIcon || "/placeholder.svg"} alt="찜" className="home-nav-icon" />
-          <span className="home-nav-label">찜</span>
-        </div>
-        <div className="home-nav-item">
-          <img src={mypageIcon || "/placeholder.svg"} alt="마이" className="home-nav-icon" />
-          <span className="home-nav-label">마이</span>
-        </div>
-      </nav>
+      {/* 하단 네비게이션 - 공통 컴포넌트로 교체 */}
+      <BottomNavigation />
     </div>
   )
 }

@@ -9,15 +9,12 @@ import searchIcon from "../assets/search.png"
 import testBanner1 from "../assets/test-banner-1.png"
 import testBanner2 from "../assets/test-banner-2.png"
 import bannerlast from "../assets/home-banner.png"
-import categoryIcon from "../assets/category.png"
-import mypageIcon from "../assets/mypage.png"
-import favoriteIcon from "../assets/favorite.png"
-import ichomeIcon from "../assets/ichome.png"
 import userIcon from "../assets/user.png"
 import chicken from "../assets/chicken.png"
 import heart from "../assets/heart.png"
 import heartGrey from "../assets/heart_grey.png"
 import apiService from "../api/apiService"
+import BottomNavigation from "./BottomNavigation" // 추가된 import
 
 import { useNavigate } from "react-router-dom"
 
@@ -334,7 +331,7 @@ function App() {
     <div className="app">
       {/* 헤더 */}
       <header className="header">
-        <h1 className="logo">세 끼 통 살</h1>
+        <h1 className="logo">세 라 통 살</h1>
         <div className="header-icons">
           <img src={cartIcon || "/placeholder.svg"} alt="장바구니" className="header-icon cart-icon" />
           <img src={notificationIcon || "/placeholder.svg"} alt="알림" className="header-icon" />
@@ -345,7 +342,7 @@ function App() {
       <div className="search-container">
         <div className="search-bar">
           <img src={searchIcon || "/placeholder.svg"} alt="검색" className="search-icon" />
-          <input type="text" placeholder="세끼통살에서 검색해보세요!" className="search-input" />
+          <input type="text" placeholder="세라통살에서 검색해보세요!" className="search-input" />
         </div>
       </div>
       
@@ -465,7 +462,7 @@ function App() {
             <img src={userIcon || "/placeholder.svg"} alt="사용자" />
           </div>
           <div className="home-user-info">
-            <h3 className="home-user-name">세끼통살사랑님</h3>
+            <h3 className="home-user-name">세라통살사랑님</h3>
             <p className="home-user-description">
               로그인을 하면 고객님에게{"\n"}
               딱 맞는 상품을 추천해드려요!
@@ -541,25 +538,8 @@ function App() {
         </div>
       </section>
 
-      {/* 하단 네비게이션 */}
-      <nav className="home-bottom-nav">
-        <div className="home-nav-item active">
-          <img src={ichomeIcon || "/placeholder.svg"} alt="홈" className="home-nav-icon" />
-          <span className="home-nav-label">홈</span>
-        </div>
-        <div className="home-nav-item">
-          <img src={categoryIcon || "/placeholder.svg"} alt="카테고리" className="home-nav-icon" />
-          <span className="home-nav-label">카테고리</span>
-        </div>
-        <div className="home-nav-item">
-          <img src={favoriteIcon || "/placeholder.svg"} alt="찜" className="home-nav-icon" />
-          <span className="home-nav-label">찜</span>
-        </div>
-        <div className="home-nav-item">
-          <img src={mypageIcon || "/placeholder.svg"} alt="마이" className="home-nav-icon" />
-          <span className="home-nav-label">마이</span>
-        </div>
-      </nav>
+      {/* 하단 네비게이션 - 공통 컴포넌트로 교체 */}
+      <BottomNavigation />
     </div>
   )
 }
