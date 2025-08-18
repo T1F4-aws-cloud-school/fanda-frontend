@@ -1,5 +1,3 @@
-// context/AuthContext.jsx - 새로 생성할 파일
-
 import { createContext, useContext, useState, useEffect } from "react";
 
 const AuthContext = createContext();
@@ -15,7 +13,8 @@ const checkAuthStatus = () => {
 
 export const AuthProvider = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isLoading, setIsLoading] = useState(true); // 초기 로딩 상태
+  const [isLoading, setIsLoading] = useState(true);
+  const [userInfo, setUserInfo] = useState(null); // 사용자 정보 상태
 
   // 앱 시작 시 로그인 상태 확인
   useEffect(() => {
@@ -25,13 +24,22 @@ export const AuthProvider = ({ children }) => {
         setIsLoggedIn(authStatus);
         
         if (authStatus) {
+          // 로그인 상태라면 저장된 사용자 정보도 불러오기
+          const storedUserInfo = localStorage.getItem('userInfo');
+          if (storedUserInfo) {
+            const parsedUserInfo = JSON.parse(storedUserInfo);
+            setUserInfo(parsedUserInfo);
+            console.log("저장된 사용자 정보 불러옴:", parsedUserInfo);
+          }
           console.log("로그인 상태 유지됨");
         } else {
           console.log("비로그인 상태");
+          setUserInfo(null);
         }
       } catch (error) {
         console.error("인증 확인 실패:", error);
         setIsLoggedIn(false);
+        setUserInfo(null);
       } finally {
         setIsLoading(false);
       }
@@ -41,20 +49,31 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // 로그인 성공 시 호출할 함수
-  const handleLoginSuccess = () => {
+  const handleLoginSuccess = (userData = null) => {
     setIsLoggedIn(true);
+    
+    if (userData) {
+      setUserInfo(userData);
+      console.log("AuthContext에 사용자 정보 저장:", userData);
+    }
   };
 
   // 로그아웃 시 호출할 함수
   const handleLogout = () => {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
+    localStorage.removeItem('userInfo');
+    
     setIsLoggedIn(false);
+    setUserInfo(null);
+    
+    console.log("로그아웃 완료");
   };
 
   const value = {
     isLoggedIn,
     isLoading,
+    userInfo, // 사용자 정보 제공
     handleLoginSuccess,
     handleLogout,
     checkAuthStatus: () => checkAuthStatus()

@@ -36,11 +36,25 @@ export default function LoginScreen() {
         localStorage.setItem("accessToken", response.content.accessToken);
         localStorage.setItem("refreshToken", response.content.refreshToken);
         
-        console.log("로그인 성공");
+        // 사용자 정보 구성 (백엔드 응답에 따라 조정)
+        const userInfo = {
+          username: response.content.username || username,
+          nickname: response.content.nickname || username, // 닉네임이 없으면 username 사용
+          email: response.content.email,
+          id: response.content.id,
+        };
+        
+        // localStorage에도 저장 (새로고침 시 유지)
+        localStorage.setItem("userInfo", JSON.stringify(userInfo));
+        
+        console.log("로그인 성공, 사용자 정보:", userInfo);
 
-        handleLoginSuccess();
-        // 로그인 후 메인 화면으로 이동
+        // AuthContext에 로그인 성공 알림
+        handleLoginSuccess(userInfo);
+        
+        // 로그인 후 메인 화면으로 이동 (HomeLoggedIn이 자동으로 표시됨)
         navigate("/");
+        
       } else {
         // 로그인 실패
         throw new Error(response.message || "로그인에 실패했습니다");
@@ -67,6 +81,13 @@ export default function LoginScreen() {
     navigate("/signup")
   }
 
+  // Enter 키 처리
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && isFormValid && !isLoading) {
+      handleLogin();
+    }
+  };
+
   return (
     <div className="mobile-app">
       <div className="main-content">
@@ -80,6 +101,7 @@ export default function LoginScreen() {
             placeholder="ID 입력"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
+            onKeyPress={handleKeyPress}
             className="input-field"
             disabled={isLoading}
           />
@@ -89,6 +111,7 @@ export default function LoginScreen() {
             placeholder="비밀번호 입력"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            onKeyPress={handleKeyPress}
             className="input-field"
             disabled={isLoading}
           />
