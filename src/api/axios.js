@@ -1,7 +1,8 @@
 import axios from "axios";
 
 const instance = axios.create({
-  baseURL: "http://192.168.2.100:30801", // API Gateway 주소
+  // nginx 프록시를 사용하는 경우 - 현재 도메인 사용
+  baseURL: window.location.origin, // 프론트엔드와 같은 도메인
   withCredentials: false,
   timeout: 30000, // 30초 타임아웃
 });
@@ -13,6 +14,10 @@ instance.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // 요청 로그 (개발 시에만)
+    console.log(`API 요청: ${config.method?.toUpperCase()} ${config.url}`, config.data);
+    
     return config;
   },
   (error) => {
@@ -23,10 +28,14 @@ instance.interceptors.request.use(
 // 응답 인터셉터 - 에러 처리 및 토큰 만료 처리
 instance.interceptors.response.use(
   (response) => {
+    // 응답 로그 (개발 시에만)
+    console.log(`API 응답: ${response.config.url}`, response.data);
     return response;
   },
   async (error) => {
     const originalRequest = error.config;
+
+    console.error(`API 에러: ${error.config?.url}`, error.response?.data || error.message);
 
     // 401 에러이고 토큰 재발급을 시도하지 않은 경우
     if (error.response?.status === 401 && !originalRequest._retry) {
@@ -35,8 +44,8 @@ instance.interceptors.response.use(
       try {
         const refreshToken = localStorage.getItem('refreshToken');
         if (refreshToken) {
-          // 토큰 재발급 API 호출
-          const response = await axios.post(`${instance.defaults.baseURL}/auth/api/v1/user/refresh`, {
+          // 토큰 재발급 API 호출 - nginx 프록시를 통해
+          const response = await axios.post('/auth/api/v1/user/refresh', {
             refreshToken
           });
 
@@ -54,6 +63,7 @@ instance.interceptors.response.use(
         }
       } catch (refreshError) {
         // 토큰 재발급 실패 시 로그아웃 처리
+        console.error('토큰 재발급 실패:', refreshError);
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         window.location.href = '/login';
