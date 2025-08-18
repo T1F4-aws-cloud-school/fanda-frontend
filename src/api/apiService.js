@@ -5,7 +5,7 @@ class ApiService {
   auth = {
     // 회원가입
     signup: async (userData) => {
-      const response = await axios.post('/user/join', {
+      const response = await axios.post('/auth/api/v1/user/join', {
         username: userData.username,
         password: userData.password,
         nickname: userData.nickname
@@ -15,7 +15,7 @@ class ApiService {
 
     // 로그인
     login: async (credentials) => {
-      const response = await axios.post('/user/login', {
+      const response = await axios.post('/auth/api/v1/user/login', {
         username: credentials.username,
         password: credentials.password
       });
@@ -24,7 +24,7 @@ class ApiService {
 
     // 토큰 새로고침 
     refreshToken: async (refreshToken) => {
-      const response = await axios.post('/user/refresh', {
+      const response = await axios.post('/auth/api/v1/user/refresh', {
         refreshToken
       });
       return response.data;
@@ -35,38 +35,37 @@ class ApiService {
   products = {
     // 상품 상세 조회 (리뷰 포함)
     getDetail: async (productId) => {
-      const response = await axios.get(`/products/${productId}`);
+      const response = await axios.get(`/shop/api/v1/products/${productId}`);
       return response.data;
     },
 
     // 개인별 추천 상품
     getRecommended: async () => {
-      const response = await axios.get('/products/recommended');
+      const response = await axios.get('/shop/api/v1/products/recommended');
       return response.data;
     },
 
     // 상품 목록 조회 
     getList: async (category = 'all', page = 1) => {
-      // 백엔드에서 API 구현 후 연동
-      const response = await axios.get(`/products?category=${category}&page=${page}`);
+      const response = await axios.get(`/shop/api/v1/products?category=${category}&page=${page}`);
       return response.data;
     }
   };
 
-  // 리뷰 관련 API
+  // 리뷰 관련 API - Banner 서비스 통해서
   reviews = {
-    // 수집 되지 않은 리뷰만 수집 (사용자 토큰 필요)
+    // 수집되지 않은 리뷰만 수집 (사용자 토큰 필요)
     collect: async () => {
-      const response = await axios.post('/reviews/collect');
+      const response = await axios.post('/banner/api/v1/reviews/collect');
       return response.data;
     }
   };
 
-  // 리포트 및 배너 관련 API
+  // 리포트 및 배너 관련 API - Banner 서비스 통해서
   reports = {
     // 긍/부정 리포트 생성 및 배너 이미지 생성 (관리자 토큰 필요)
     generate: async () => {
-      const response = await axios.get('/reports/generate');
+      const response = await axios.post('/banner/api/v1/reports/generate');
       return response.data;
     }
   }
@@ -83,9 +82,12 @@ class ApiService {
           chatPhrase: response.chatPhraseKo
         };
       } catch (error) {
-        // 실패 시 기존 API 시도
-        const response = await axios.get('/banner/latest');
-        return response.data;
+        // 실패 시 기본값 사용
+        console.log("Banner 생성 실패, 기본값 사용:", error.message);
+        return {
+          imageUrl: null,
+          chatPhrase: "인기 최고 판매율 1위 닭가슴살을 만나보세요!"
+        };
       }
     },
 
