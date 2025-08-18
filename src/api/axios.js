@@ -1,9 +1,9 @@
 import axios from "axios";
 
 const instance = axios.create({
-  baseURL: "http://192.168.2.100:30803/api/v1", // 백엔드 실제 주소
+  baseURL: "http://192.168.2.100:30801", // API Gateway 주소
   withCredentials: false,
-  timeout: 30000, // 10초 타임아웃
+  timeout: 30000, // 30초 타임아웃
 });
 
 // 요청 인터셉터 - 토큰 자동 추가
@@ -36,7 +36,7 @@ instance.interceptors.response.use(
         const refreshToken = localStorage.getItem('refreshToken');
         if (refreshToken) {
           // 토큰 재발급 API 호출
-          const response = await axios.post(`${instance.defaults.baseURL}/user/refresh`, {
+          const response = await axios.post(`${instance.defaults.baseURL}/auth/api/v1/user/refresh`, {
             refreshToken
           });
 
