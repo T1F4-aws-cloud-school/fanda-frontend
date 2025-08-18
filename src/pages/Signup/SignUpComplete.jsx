@@ -15,7 +15,7 @@ export default function SignUpComplete() {
       </p>
       <button
         className="next-button"
-        onClick={() => navigate("/")}
+        onClick={() => navigate("/login")}
       >
         시작하기
       </button>
