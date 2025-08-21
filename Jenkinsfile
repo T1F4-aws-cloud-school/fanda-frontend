@@ -60,35 +60,10 @@ pipeline {
                         [ ! -f "$file" ] && echo "필수 파일 누락: $file" && exit 1
                     done
 
-                    # Node.js 및 npm 버전 확인
-                    node --version || echo "Node.js 없음"
-                    npm --version || echo "npm 없음"
+                    # Docker 버전 확인
+                    docker --version
 
                     echo "프론트엔드 환경 검증 완료"
-                '''
-            }
-        }
-
-        stage('의존성 설치 및 빌드') {
-            when { environment name: 'SKIP_ALL', value: 'false' }
-            steps {
-                sh '''
-                    echo "프론트엔드 의존성 설치 시작..."
-                    
-                    # npm 캐시 정리 (필요한 경우)
-                    npm cache clean --force || true
-                    
-                    # 의존성 설치
-                    npm ci --production=false --silent
-                    
-                    # React 앱 빌드
-                    echo "React 앱 빌드 시작..."
-                    npm run build
-                    
-                    # 빌드 결과 확인
-                    [ ! -d "build" ] && echo "빌드 디렉토리 생성 실패" && exit 1
-                    
-                    echo "프론트엔드 빌드 완료"
                 '''
             }
         }
@@ -245,12 +220,6 @@ pipeline {
                         docker logout ${HARBOR_URL} 2>/dev/null || true
                         docker rmi ${IMAGE_NAME}:${IMAGE_TAG} 2>/dev/null || true
                         docker system prune -f --volumes
-                        
-                        # npm 캐시 정리 (선택적)
-                        npm cache clean --force 2>/dev/null || true
-                        
-                        # 빌드 디렉토리 정리
-                        rm -rf build node_modules/.cache 2>/dev/null || true
                     '''
                 }
             }
