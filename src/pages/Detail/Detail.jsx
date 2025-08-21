@@ -12,7 +12,7 @@ import TabInfo from "./TabInfo"
 import TabReviews from "./TabReviews"
 import Tab from "./Tab"
 import BottomActions from "./BottomActions"
-
+import chickenImage from "../../assets/chicken.svg" // 기본 이미지
 import apiService from "../../api/apiService" // API Service 사용
 
 const Detail = () => {
