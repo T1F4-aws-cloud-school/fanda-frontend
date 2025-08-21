@@ -33,7 +33,7 @@ class ApiService {
 
   // 상품 관련 API
   products = {
-    // 상품 상세 조회 (리뷰 포함) - 새로운 API 엔드포인트
+    // 상품 상세 조회 (리뷰 포함)
     getDetail: async (productId) => {
       try {
         const response = await axios.get(`/shop/api/v1/products/${productId}`);
@@ -50,15 +50,46 @@ class ApiService {
       }
     },
 
+    // 상품별 리뷰 조회 (기간 지정 가능)
+    getReviews: async (productId, startAt = null, endAt = null) => {
+      try {
+        let url = `/shop/api/v1/reviews/by-product?productId=${productId}`;
+        
+        // 기간이 지정된 경우 파라미터 추가
+        if (startAt && endAt) {
+          url += `&startAt=${startAt}&endAt=${endAt}`;
+        }
+        
+        const response = await axios.get(url);
+        console.log(`상품 ${productId} 리뷰 조회 성공:`, response.data);
+        return response.data;
+      } catch (error) {
+        console.error(`상품 ${productId} 리뷰 조회 실패:`, error);
+        return [];
+      }
+    },
+
     // 개인별 추천 상품
     getRecommended: async () => {
       try {
+        // 먼저 추천 API 시도
         const response = await axios.get('/shop/api/v1/products/recommended');
         console.log('추천 상품 조회 성공:', response.data);
         return response.data;
       } catch (error) {
-        console.log('추천 상품 API 미구현 또는 에러, 목업 데이터 사용:', error.message);
-        return null;
+        console.log('추천 상품 API 실패, 전체 상품에서 일부 추천:', error.message);
+        
+        try {
+          // 추천 API 실패 시 전체 상품 목록에서 일부를 추천으로 사용
+          const response = await axios.get('/shop/api/v1/products');
+          console.log('전체 상품 목록 조회 성공:', response.data);
+          
+          // 처음 6개를 추천 상품으로 반환
+          return response.data ? response.data.slice(0, 6) : null;
+        } catch (listError) {
+          console.log('상품 목록 조회도 실패, 목업 데이터 사용:', listError.message);
+          return null;
+        }
       }
     },
 
@@ -74,7 +105,7 @@ class ApiService {
     }
   };
 
-  // 관리자 전용 - 기간별 리뷰 수집 API
+  // 관리자 전용 API
   admin = {
     // 기간별 리뷰 수집 (관리자 전용)
     collectReviewsByPeriod: async (productId, startAt, endAt) => {
@@ -113,8 +144,13 @@ class ApiService {
     }
   };
 
-  // 리뷰 관련 API - Banner 서비스 통해서 (기존 유지)
+  // 리뷰 관련 API
   reviews = {
+    // 상품별 리뷰 조회
+    getByProduct: async (productId, startAt = null, endAt = null) => {
+      return await apiService.products.getReviews(productId, startAt, endAt);
+    },
+
     // 수집되지 않은 리뷰만 수집 (사용자 토큰 필요)
     collect: async () => {
       try {
@@ -132,7 +168,7 @@ class ApiService {
     }
   };
 
-  // 리포트 및 배너 관련 API - Banner 서비스 통해서
+  // 리포트 및 배너 관련 API
   reports = {
     // 긍/부정 리포트 생성 및 배너 이미지 생성 (관리자 토큰 필요)
     generate: async () => {
@@ -218,12 +254,12 @@ class ApiService {
       return updatedBanners;
     },
 
-    // 기본 배너들 생성 (초기 로드용)
+    // 기본 배너들 생성 (초기 로드용) - placeholder 이미지 사용
     getDefaultBanners: function() {
       return [
         {
           id: 1,
-          url: "/assets/home-banner.png",
+          url: "https://via.placeholder.com/298x298/006AFF/FFFFFF?text=Banner+1",
           chatPhrase: "인기 최고 판매율 1위 닭가슴살을 만나보세요!",
           createdAt: new Date().toISOString(),
           reviewInfo: {
@@ -235,7 +271,7 @@ class ApiService {
         },
         {
           id: 2,
-          url: "/assets/test-banner-1.png",
+          url: "https://via.placeholder.com/298x298/FF6B35/FFFFFF?text=Banner+2",
           chatPhrase: "신선한 닭가슴살로 건강한 다이어트!",
           createdAt: new Date().toISOString(),
           reviewInfo: {
@@ -247,7 +283,7 @@ class ApiService {
         },
         {
           id: 3,
-          url: "/assets/test-banner-2.png",
+          url: "https://via.placeholder.com/298x298/28A745/FFFFFF?text=Banner+3",
           chatPhrase: "부드럽고 맛있는 프리미엄 닭가슴살",
           createdAt: new Date().toISOString(),
           reviewInfo: {
