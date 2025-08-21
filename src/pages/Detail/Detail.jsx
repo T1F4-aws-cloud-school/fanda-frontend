@@ -58,8 +58,11 @@ const Detail = () => {
       const response = await apiService.products.getDetail(id);
       
       console.log("상품 상세 API 응답:", response);
-
+      console.log("response 타입:", typeof response);
+      console.log("response가 존재하는가?", !!response);
+      
       if (response) {
+        console.log("if문 진입");
         // 새로운 API 응답 구조에 맞게 데이터 변환
         const apiData = {
           id: response.id,
