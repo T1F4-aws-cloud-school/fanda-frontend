@@ -15,8 +15,8 @@ import chicken from "../assets/chicken.png"
 import heart from "../assets/heart.png"        
 import heartGrey from "../assets/heart_grey.png" 
 import apiService from "../api/apiService"
-import { useAuth } from "../context/AuthContext" // AuthContext 사용
-import BottomNavigation from "./BottomNavigation" // 추가된 import
+import { useAuth } from "../context/AuthContext"
+import BottomNavigation from "./BottomNavigation"
 
 // 목업 데이터 (API 없을 때 사용)
 const mockRecommendedProducts = [
@@ -45,24 +45,11 @@ function HomeLoggedIn() {
   const [likedRecommended, setLikedRecommended] = useState([])
   const [likedCategory, setLikedCategory] = useState([])
   
-  // 배너 슬라이드를 위한 상태 (HomeGuest와 동일)
-  const [banners, setBanners] = useState([
-    { 
-      url: bannerlast, 
-      chatPhrase: "인기 최고 판매율 1위 닭가슴살을 만나보세요!" 
-    },
-    { 
-      url: testBanner1, 
-      chatPhrase: "신선한 닭가슴살로 건강한 다이어트!" 
-    },
-    { 
-      url: testBanner2, 
-      chatPhrase: "부드럽고 맛있는 프리미엄 닭가슴살" 
-    }
-  ])
+  // 새로운 배너 시스템 - 메타데이터 포함
+  const [banners, setBanners] = useState([])
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0)
   
-  // 스와이프 기능을 위한 상태 (HomeGuest와 동일)
+  // 스와이프 기능을 위한 상태
   const [isDragging, setIsDragging] = useState(false)
   const [startX, setStartX] = useState(0)
   const [currentX, setCurrentX] = useState(0)
@@ -71,21 +58,21 @@ function HomeLoggedIn() {
   const bannerSlidesRef = useRef(null)
   const autoSlideRef = useRef(null)
   
-  // API 연동을 위한 상태 추가
+  // API 연동을 위한 상태
   const [recommendedProducts, setRecommendedProducts] = useState(mockRecommendedProducts)
   const [loading, setLoading] = useState(false)
 
   const categories = ["전체", "베스트", "오늘특가", "대량구매", "신상품"]
 
-  // 사용자 이름 처리 (AuthContext에서 가져온 정보 사용)
+  // 사용자 이름 처리
   const displayName = userInfo?.nickname || userInfo?.username || "사용자"
 
-  // 컴포넌트 마운트 시 API 데이터 로드
+  // 컴포넌트 마운트 시 초기 데이터 로드
   useEffect(() => {
-    loadApiData()
+    loadInitialData()
   }, [])
 
-  // 자동 슬라이드 (5초마다) - 스와이프 중일 때는 멈춤 (HomeGuest와 동일)
+  // 자동 슬라이드 (5초마다) - 스와이프 중일 때는 멈춤
   useEffect(() => {
     if (banners.length > 1 && autoSlideEnabled && !isDragging) {
       autoSlideRef.current = setInterval(() => {
@@ -108,82 +95,90 @@ function HomeLoggedIn() {
     }
   }, [banners.length, autoSlideEnabled, isDragging])
 
-  // API 데이터 로드 함수
-  const loadApiData = async () => {
+  // 초기 데이터 로드
+  const loadInitialData = async () => {
     setLoading(true)
     try {
-      // 1. 배너 이미지 및 리포트 생성
-      await loadBannerWithReport()
+      // 1. 배너 목록 로드 (캐시된 배너들 또는 기본 배너들)
+      await loadInitialBanners()
       
-      // 2. 개인별 추천 상품 로드 시도
+      // 2. 개인별 추천 상품 로드
       await loadRecommendedProducts()
       
       // 3. 리뷰 수집 (백그라운드에서)
       await collectReviews()
       
     } catch (error) {
-      console.error("API 데이터 로드 실패:", error)
-      // 에러 시 목업 데이터 유지
+      console.error("초기 데이터 로드 실패:", error)
     } finally {
       setLoading(false)
     }
   }
 
-  // 배너 이미지 및 리포트 생성
-  const loadBannerWithReport = async () => {
+  // 초기 배너들 로드
+  const loadInitialBanners = async () => {
     try {
-      const response = await apiService.reports.generate();
-      
-      if (response) {
-        const newBanner = {
-          url: response.imageBannerUrl || bannerlast,
-          chatPhrase: response.chatPhraseKo || "인기 최고 판매율 1위 닭가슴살을 만나보세요!"
-        }
-        
-        // 새로운 배너를 맨 앞에 추가
-        setBanners(prev => {
-          const filteredPrev = prev.filter(banner => banner.url !== newBanner.url)
-          return [newBanner, ...filteredPrev].slice(0, 3)
-        })
-        
-        setCurrentBannerIndex(0)
-        console.log("배너 및 리포트 생성 성공:", response);
-      }
+      const bannerList = await apiService.banner.getBannerList()
+      setBanners(bannerList)
+      setCurrentBannerIndex(0)
+      console.log("초기 배너들 로드 완료:", bannerList)
     } catch (error) {
-      console.log("배너 API 호출 실패, 기본 배너 사용:", error.message);
+      console.error("배너 로드 실패:", error)
+      // 에러 시 기본 배너들 사용
+      const defaultBanners = apiService.banner.getDefaultBanners()
+      setBanners(defaultBanners)
+    }
+  }
+
+  // 새 배너 생성 (관리자용 또는 자동 생성용)
+  const generateNewBanner = async (additionalData = {}) => {
+    try {
+      const updatedBanners = await apiService.banner.generateAndAddBanner(banners, additionalData)
+      setBanners(updatedBanners)
+      setCurrentBannerIndex(0) // 새 배너를 첫 번째로 표시
+      console.log("새 배너 생성 완료")
+    } catch (error) {
+      console.error("새 배너 생성 실패:", error)
     }
   }
 
   // 리뷰 수집
   const collectReviews = async () => {
     try {
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem('accessToken')
       if (!token) {
-        console.log("토큰 없음, 리뷰 수집 건너뛰기");
-        return;
+        console.log("토큰 없음, 리뷰 수집 건너뛰기")
+        return
       }
 
-      const response = await apiService.reviews.collect();
-      console.log("리뷰 수집 완료:", response);
+      const response = await apiService.reviews.collect()
+      console.log("리뷰 수집 완료:", response)
       
       if (response && Array.isArray(response) && response.length > 0) {
-        console.log(`${response.length}개의 새로운 리뷰가 수집되었습니다.`);
+        console.log(`${response.length}개의 새로운 리뷰가 수집되었습니다.`)
+        
+        // 새 리뷰가 수집되면 새 배너 생성
+        await generateNewBanner({
+          productName: "닭가슴살",
+          reviewCount: response.length,
+          sentiment: "새로 분석됨"
+        })
       }
     } catch (error) {
-      console.log("리뷰 수집 실패 (정상적인 경우일 수 있음):", error.message);
+      console.log("리뷰 수집 실패 (정상적인 경우일 수 있음):", error.message)
     }
   }
 
   // 개인별 추천 상품 로드
   const loadRecommendedProducts = async () => {
     try {
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem('accessToken')
       if (!token) {
-        console.log("토큰 없음, 목업 데이터 사용");
-        return;
+        console.log("토큰 없음, 목업 데이터 사용")
+        return
       }
 
-      const response = await apiService.products.getRecommended();
+      const response = await apiService.products.getRecommended()
       
       if (response && Array.isArray(response)) {
         const formattedProducts = response.map(product => ({
@@ -191,15 +186,15 @@ function HomeLoggedIn() {
           name: product.name,
           price: `${product.price.toLocaleString()}원`,
           image: product.imageUrl || chicken
-        }));
-        setRecommendedProducts(formattedProducts);
+        }))
+        setRecommendedProducts(formattedProducts)
       }
     } catch (error) {
-      console.log("추천 상품 API 아직 미구현, 목업 데이터 사용:", error.message);
+      console.log("추천 상품 API 아직 미구현, 목업 데이터 사용:", error.message)
     }
   }
 
-  // 배너 슬라이드 제어 (HomeGuest와 동일)
+  // 배너 슬라이드 제어
   const goToPrevBanner = () => {
     setCurrentBannerIndex((prev) => {
       const newIndex = (prev - 1 + banners.length) % banners.length
@@ -221,7 +216,7 @@ function HomeLoggedIn() {
     setCurrentBannerIndex(index)
   }
 
-  // 스와이프 이벤트 핸들러들 (HomeGuest와 동일)
+  // 스와이프 이벤트 핸들러들
   const handleTouchStart = (e) => {
     if (banners.length <= 1) return
     
@@ -271,7 +266,7 @@ function HomeLoggedIn() {
     }, 100)
   }
 
-  // 마우스 이벤트 핸들러들 (HomeGuest와 동일)
+  // 마우스 이벤트 핸들러들
   const handleMouseDown = (e) => {
     if (banners.length <= 1) return
     
@@ -337,7 +332,7 @@ function HomeLoggedIn() {
     <div className="app">
       {/* 헤더 */}
       <header className="header">
-        <h1 className="logo">세 라 통 살</h1>
+        <h1 className="logo">세 끼 통 살</h1>
         <div className="header-icons">
           <img src={cartIcon || "/placeholder.svg"} alt="장바구니" className="header-icon cart-icon" />
           <img src={notificationIcon || "/placeholder.svg"} alt="알림" className="header-icon" />
@@ -348,7 +343,7 @@ function HomeLoggedIn() {
       <div className="search-container">
         <div className="search-bar">
           <img src={searchIcon || "/placeholder.svg"} alt="검색" className="search-icon" />
-          <input type="text" placeholder="세라통살에서 검색해보세요!" className="search-input" />
+          <input type="text" placeholder="세끼통살에서 검색해보세요!" className="search-input" />
         </div>
       </div>
 
@@ -357,12 +352,12 @@ function HomeLoggedIn() {
         * 고객님들의 리뷰를 기반으로 상품을 추천드립니다.
       </div>
 
-      {/* 배너 존 - 스와이프 기능 (HomeGuest와 동일) */}
+      {/* 배너 존 - 호버 오버레이 포함 */}
       <div className={`home-banner-zone ${banners.length > 1 ? 'multiple-banners' : ''}`}>
         <div className="banner-slider">
           <div 
             ref={bannerSlidesRef}
-            className="banner-slides"
+            className={`banner-slides ${isDragging ? 'dragging' : ''}`}
             style={{
               cursor: isDragging ? 'grabbing' : 'grab',
               userSelect: 'none'
@@ -405,7 +400,7 @@ function HomeLoggedIn() {
               
               return (
                 <div 
-                  key={`${banner.url}-${index}`}
+                  key={banner.id || `${banner.url}-${index}`}
                   className={className}
                   style={{
                     transform: `translateX(${translateX}px) scale(${scale})`,
@@ -432,12 +427,24 @@ function HomeLoggedIn() {
                     }}
                     draggable={false}
                   />
+                  
+                  {/* 호버 오버레이 */}
+                  <div className="banner-overlay">
+                    <div className="banner-overlay-content">
+                      <div className="banner-overlay-title">
+                        {banner.reviewInfo?.productName} 리뷰 기반
+                      </div>
+                      <div className="banner-overlay-details">
+                        {banner.reviewInfo?.reviewCount}개 리뷰 • {banner.reviewInfo?.sentiment} • {banner.reviewInfo?.generatedAt}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )
             })}
           </div>
           
-          {/* 배너가 여러 개일 때만 인디케이터 표시 */}
+          {/* 인디케이터 */}
           {banners.length > 1 && (
             <div className="banner-indicators">
               {banners.map((_, index) => (
@@ -547,7 +554,7 @@ function HomeLoggedIn() {
         </div>
       </section>
 
-      {/* 하단 네비게이션 - 공통 컴포넌트로 교체 */}
+      {/* 하단 네비게이션 */}
       <BottomNavigation />
     </div>
   )

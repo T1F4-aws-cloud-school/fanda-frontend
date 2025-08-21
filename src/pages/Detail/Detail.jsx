@@ -25,8 +25,8 @@ const Detail = () => {
     name: "수비드 닭가슴살",
     price: 43800,
     images: ["/placeholder.svg?height=400&width=400"],
-    averageRating: 4.8, // API에는 averageRating으로 옴
-    reviewCount: 2430,
+    averageRating: 4.8,
+    reviewCount: 0,
     discountRate: 35, // 하드코딩 (API에 없음)
     category: "닭가슴살 > 수비드", // 하드코딩 (API에 없음)
     description: "손쉬운 단백질 충전",
@@ -52,19 +52,21 @@ const Detail = () => {
       setLoading(true)
       setError(null)
 
-      // API Service를 통한 상품 상세정보 조회
+      console.log("상품 상세 정보 요청 - 상품 ID:", id);
+
+      // 새로운 API 엔드포인트 사용: /shop/api/v1/products/{id}
       const response = await apiService.products.getDetail(id);
       
       console.log("상품 상세 API 응답:", response);
 
       if (response) {
-        // 백엔드 API 응답 구조에 맞게 데이터 변환
+        // 새로운 API 응답 구조에 맞게 데이터 변환
         const apiData = {
           id: response.id,
           name: response.name,
           description: response.description,
           price: response.price,
-          averageRating: response.averageRating || 4.0, // API 명세에 있음
+          averageRating: response.averageRating || 0,
           reviewCount: response.reviews ? response.reviews.length : 0,
           reviews: response.reviews || [],
           
@@ -74,13 +76,23 @@ const Detail = () => {
           category: "닭가슴살 > 수비드", // 하드코딩
         }
 
+        console.log("변환된 상품 데이터:", apiData);
         setProductData(apiData)
       } else {
         throw new Error("상품 데이터가 없습니다")
       }
     } catch (error) {
       console.error("상품 데이터 로드 실패:", error)
-      setError("상품 정보를 불러오는데 실패했습니다")
+      
+      // 에러 상세 정보 표시
+      let errorMessage = "상품 정보를 불러오는데 실패했습니다";
+      if (error.response?.status === 404) {
+        errorMessage = "상품을 찾을 수 없습니다";
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      
+      setError(errorMessage)
       
       // 에러 시 기본 데이터 유지하되 ID는 URL에서 가져온 것으로 설정
       setProductData(prev => ({ ...prev, id: id || "1" }))
@@ -117,9 +129,54 @@ const Detail = () => {
           alignItems: 'center', 
           height: '50vh',
           fontSize: '16px',
-          color: '#666'
+          color: '#666',
+          flexDirection: 'column',
+          gap: '10px'
         }}>
-          상품 정보를 불러오는 중...
+          <div>상품 정보를 불러오는 중...</div>
+          <div style={{ fontSize: '14px', color: '#999' }}>
+            상품 ID: {id}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // 에러 상태 표시
+  if (error) {
+    return (
+      <div className="mobile-app">
+        <ProductHeader />
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'center', 
+          alignItems: 'center', 
+          height: '50vh',
+          fontSize: '16px',
+          color: '#666',
+          flexDirection: 'column',
+          gap: '10px',
+          textAlign: 'center',
+          padding: '20px'
+        }}>
+          <div style={{ color: '#ff4444' }}>{error}</div>
+          <div style={{ fontSize: '14px', color: '#999' }}>
+            상품 ID: {id}
+          </div>
+          <button 
+            onClick={loadProductData}
+            style={{
+              marginTop: '20px',
+              padding: '10px 20px',
+              backgroundColor: '#006aff',
+              color: 'white',
+              border: 'none',
+              borderRadius: '5px',
+              cursor: 'pointer'
+            }}
+          >
+            다시 시도
+          </button>
         </div>
       </div>
     )
@@ -148,7 +205,7 @@ const Detail = () => {
       <ProductMainInfo
         category={productData.category}
         productData={productData}
-        rating={productData.averageRating} // API 필드명 수정
+        rating={productData.averageRating}
         reviewCount={productData.reviewCount}
         discountRate={productData.discountRate}
       />
