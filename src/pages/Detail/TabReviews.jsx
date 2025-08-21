@@ -61,74 +61,51 @@ const TabReviews = ({ productId, productData }) => {
     try {
       console.log("리뷰 데이터 로드 시작 - productId:", productId);
 
-      // 1. productData가 props로 넘어온 경우 (Detail.jsx에서 이미 API 호출함)
-      if (productData && productData.reviews !== undefined) {
-        console.log("Props에서 받은 productData 사용:", productData);
+      // 새로운 리뷰 API 사용: /shop/api/v1/reviews/by-product?productId=1
+      const reviewsData = await apiService.reviews.getByProduct(productId);
+      console.log("리뷰 API 응답:", reviewsData);
+
+      if (reviewsData && reviewsData.length > 0) {
+        // API 응답 구조에 맞게 데이터 변환
+        const formattedReviews = reviewsData.map((review, index) => ({
+          id: review.id || index + 1,
+          username: review.nickname || review.username || "익명",
+          date: formatDate(review.createdAt),
+          rating: review.rating || 0,
+          content: review.content || "",
+          images: review.images ? review.images.map(img => img.imageUrl || img) : []
+        }));
         
+        console.log("변환된 리뷰 데이터:", formattedReviews);
+        setReviews(formattedReviews);
+        
+        // 평균 평점과 리뷰 수 계산
         setCurrentProductData({
-          rating: productData.averageRating || 0,
-          reviewCount: productData.reviews.length || 0
+          rating: calculateAverageRating(formattedReviews),
+          reviewCount: formattedReviews.length
         });
-
-        if (productData.reviews && productData.reviews.length > 0) {
-          // 새로운 API 구조에 맞게 리뷰 데이터 변환
-          const formattedReviews = productData.reviews.map((review, index) => ({
-            id: review.userId || index + 1,
-            username: review.nickname || "익명",
-            date: formatDate(review.createdAt),
-            rating: review.rating || 0,
-            content: review.content || "",
-            images: review.images ? review.images.map(img => img.imageUrl || img) : []
-          }));
-          
-          console.log("변환된 리뷰 데이터:", formattedReviews);
-          setReviews(formattedReviews);
-        } else {
-          console.log("리뷰가 없음, 목업 데이터 사용");
-          setReviews(mockReviews);
-        }
       } else {
-        // 2. productData가 없으면 직접 API 호출 시도
-        console.log("직접 API 호출 시도");
-        try {
-          const response = await apiService.products.getDetail(productId);
-          console.log("직접 호출 API 응답:", response);
-          
-          if (response) {
-            setCurrentProductData({
-              rating: response.averageRating || 0,
-              reviewCount: response.reviews ? response.reviews.length : 0
-            });
-
-            if (response.reviews && response.reviews.length > 0) {
-              const formattedReviews = response.reviews.map((review, index) => ({
-                id: review.userId || index + 1,
-                username: review.nickname || "익명",
-                date: formatDate(review.createdAt),
-                rating: review.rating || 0,
-                content: review.content || "",
-                images: review.images ? review.images.map(img => img.imageUrl || img) : []
-              }));
-              
-              setReviews(formattedReviews);
-            } else {
-              console.log("API에서 리뷰 없음, 목업 데이터 사용");
-              setReviews(mockReviews);
-            }
-          } else {
-            throw new Error("API 응답이 없음");
-          }
-        } catch (apiError) {
-          console.log("API 호출 실패, 목업 데이터 사용:", apiError.message);
-          setReviews(mockReviews);
-        }
+        console.log("API에서 리뷰가 없음, 목업 데이터 사용");
+        setReviews(mockReviews);
+        setCurrentProductData(mockProduct);
       }
+
     } catch (error) {
-      console.error("리뷰 데이터 로드 실패, 목업 데이터 사용:", error);
+      console.error("리뷰 데이터 로드 실패:", error);
+      console.log("에러로 인해 목업 데이터 사용");
       setReviews(mockReviews);
+      setCurrentProductData(mockProduct);
     } finally {
       setLoading(false);
     }
+  };
+
+  // 평균 평점 계산 함수
+  const calculateAverageRating = (reviews) => {
+    if (!reviews || reviews.length === 0) return 0;
+    
+    const sum = reviews.reduce((acc, review) => acc + (review.rating || 0), 0);
+    return parseFloat((sum / reviews.length).toFixed(1));
   };
 
   // 도움돼요 버튼 클릭 핸들러
