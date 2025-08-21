@@ -14,7 +14,7 @@ import chicken from "../assets/chicken.png"
 import heart from "../assets/heart.png"
 import heartGrey from "../assets/heart_grey.png"
 import apiService from "../api/apiService"
-import BottomNavigation from "./BottomNavigation" // 추가된 import
+import BottomNavigation from "./BottomNavigation"
 
 import { useNavigate } from "react-router-dom"
 
@@ -97,28 +97,13 @@ const mockCategoryProducts = [
   },
 ]
 
-function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [userName, setUserName] = useState("소정소정")
+function HomeGuest() {
   const [activeCategory, setActiveCategory] = useState("전체")
   const [likedRecommended, setLikedRecommended] = useState([])
   const [likedCategory, setLikedCategory] = useState([])
   
-  // 배너 슬라이드를 위한 상태
-  const [banners, setBanners] = useState([
-    { 
-      url: bannerlast, 
-      chatPhrase: "인기 최고 판매율 1위 닭가슴살을 만나보세요!" 
-    },
-    { 
-      url: testBanner1, 
-      chatPhrase: "신선한 닭가슴살로 건강한 다이어트!" 
-    },
-    { 
-      url: testBanner2, 
-      chatPhrase: "부드럽고 맛있는 프리미엄 닭가슴살" 
-    }
-  ])
+  // 새로운 배너 시스템 - 메타데이터 포함
+  const [banners, setBanners] = useState([])
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0)
   
   // 스와이프 기능을 위한 상태
@@ -133,9 +118,9 @@ function App() {
   const navigate = useNavigate()
   const categories = ["전체", "베스트", "오늘특가", "대량구매", "신상품"]
 
-  // 컴포넌트 마운트 시 배너만 로드
+  // 컴포넌트 마운트 시 초기 데이터 로드
   useEffect(() => {
-    loadBanner()
+    loadInitialData()
   }, [])
 
   // 자동 슬라이드 (5초마다) - 스와이프 중일 때는 멈춤
@@ -161,27 +146,58 @@ function App() {
     }
   }, [banners.length, autoSlideEnabled, isDragging])
 
-  // 배너 이미지 로드
-  const loadBanner = async () => {
+  // 초기 데이터 로드
+  const loadInitialData = async () => {
+    try {
+      // 배너 목록 로드 (캐시된 배너들 또는 기본 배너들)
+      await loadInitialBanners()
+      
+      // 게스트도 새 배너 생성 시도 (권한 없으면 기본 배너 사용)
+      await tryGenerateNewBanner()
+      
+    } catch (error) {
+      console.error("초기 데이터 로드 실패:", error)
+    }
+  }
+
+  // 초기 배너들 로드
+  const loadInitialBanners = async () => {
+    try {
+      const bannerList = await apiService.banner.getBannerList()
+      setBanners(bannerList)
+      setCurrentBannerIndex(0)
+      console.log("게스트 초기 배너들 로드 완료:", bannerList)
+    } catch (error) {
+      console.error("배너 로드 실패:", error)
+      // 에러 시 기본 배너들 사용
+      const defaultBanners = apiService.banner.getDefaultBanners()
+      setBanners(defaultBanners)
+    }
+  }
+
+  // 새 배너 생성 시도 (게스트용 - 권한 없으면 무시)
+  const tryGenerateNewBanner = async () => {
     try {
       const response = await apiService.reports.generate()
       
       if (response) {
-        const newBanner = {
-          url: response.imageBannerUrl || bannerlast,
-          chatPhrase: response.chatPhraseKo || "인기 최고 판매율 1위 닭가슴살을 만나보세요!"
+        const additionalData = {
+          productName: "닭가슴살",
+          reviewCount: "최신",
+          sentiment: "긍정적"
         }
         
-        setBanners(prev => {
-          const filteredPrev = prev.filter(banner => banner.url !== newBanner.url)
-          return [newBanner, ...filteredPrev].slice(0, 3)
+        const updatedBanners = await apiService.banner.generateAndAddBanner(banners, {
+          ...response,
+          ...additionalData
         })
         
+        setBanners(updatedBanners)
         setCurrentBannerIndex(0)
-        console.log("게스트 배너 로드 성공:", response)
+        console.log("게스트 새 배너 생성 성공:", response)
       }
     } catch (error) {
-      console.log("배너 API 호출 실패, 기본 배너 사용:", error.message)
+      console.log("게스트 배너 생성 실패 (정상적인 경우), 기본 배너 사용:", error.message)
     }
   }
 
@@ -229,7 +245,7 @@ function App() {
   const handleTouchMove = (e) => {
     if (!isDragging || banners.length <= 1) return
     
-    e.preventDefault() // 페이지 스크롤 방지
+    e.preventDefault()
     const touch = e.touches[0]
     setCurrentX(touch.clientX)
     const offset = touch.clientX - startX
@@ -243,29 +259,26 @@ function App() {
     
     setIsDragging(false)
     const offset = currentX - startX
-    const threshold = 80 // 스와이프 감도 (픽셀)
+    const threshold = 80
     
     console.log('Touch end, offset:', offset)
     
     if (Math.abs(offset) > threshold) {
       if (offset > 0) {
-        // 오른쪽 스와이프 - 이전 슬라이드
         goToPrevBanner()
       } else {
-        // 왼쪽 스와이프 - 다음 슬라이드
         goToNextBanner()
       }
     }
     
     setDragOffset(0)
     
-    // 자동 슬라이드 재개
     setTimeout(() => {
       setAutoSlideEnabled(true)
     }, 100)
   }
 
-  // 마우스 이벤트 핸들러들 (데스크톱 지원)
+  // 마우스 이벤트 핸들러들
   const handleMouseDown = (e) => {
     if (banners.length <= 1) return
     
@@ -351,12 +364,12 @@ function App() {
         * 고객님들의 리뷰를 기반으로 상품을 추천드립니다.
       </div>
 
-      {/* 배너 존 - 스와이프 기능 추가 */}
+      {/* 배너 존 - 호버 오버레이 포함 */}
       <div className={`home-banner-zone ${banners.length > 1 ? 'multiple-banners' : ''}`}>
         <div className="banner-slider">
           <div 
             ref={bannerSlidesRef}
-            className="banner-slides"
+            className={`banner-slides ${isDragging ? 'dragging' : ''}`}
             style={{
               cursor: isDragging ? 'grabbing' : 'grab',
               userSelect: 'none'
@@ -367,13 +380,11 @@ function App() {
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp} // 마우스가 영역을 벗어날 때도 드래그 종료
+            onMouseLeave={handleMouseUp}
           >
             {banners.map((banner, index) => {
-              // 현재 인덱스를 기준으로 위치 계산
               let position = index - currentBannerIndex
               
-              // 순환 배열을 위한 조정
               if (position > banners.length / 2) {
                 position -= banners.length
               } else if (position < -banners.length / 2) {
@@ -387,7 +398,6 @@ function App() {
                 className += ' side'
               }
               
-              // 스와이프 중일 때 드래그 오프셋 적용
               const SLIDE = 298
               const GAP = 20      
               const STEP = SLIDE + GAP
@@ -402,7 +412,7 @@ function App() {
               
               return (
                 <div 
-                  key={`${banner.url}-${index}`}
+                  key={banner.id || `${banner.url}-${index}`}
                   className={className}
                   style={{
                     transform: `translateX(${translateX}px) scale(${scale})`,
@@ -411,7 +421,6 @@ function App() {
                     transition: isDragging ? 'none' : 'transform 420ms cubic-bezier(.22,.61,.36,1), opacity 300ms ease'
                   }}
                   onClick={(e) => {
-                    // 드래그 중이거나 스와이프가 감지되면 클릭 무시
                     if (isDragging || Math.abs(dragOffset) > 10) {
                       e.preventDefault()
                       return
@@ -428,14 +437,26 @@ function App() {
                     onError={(e) => {
                       e.target.src = bannerlast
                     }}
-                    draggable={false} // 이미지 드래그 방지
+                    draggable={false}
                   />
+                  
+                  {/* 호버 오버레이 */}
+                  <div className="banner-overlay">
+                    <div className="banner-overlay-content">
+                      <div className="banner-overlay-title">
+                        {banner.reviewInfo?.productName} 리뷰 기반
+                      </div>
+                      <div className="banner-overlay-details">
+                        {banner.reviewInfo?.reviewCount}개 리뷰 • {banner.reviewInfo?.sentiment} • {banner.reviewInfo?.generatedAt}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )
             })}
           </div>
           
-          {/* 배너가 여러 개일 때만 인디케이터 표시 */}
+          {/* 인디케이터 */}
           {banners.length > 1 && (
             <div className="banner-indicators">
               {banners.map((_, index) => (
@@ -538,10 +559,10 @@ function App() {
         </div>
       </section>
 
-      {/* 하단 네비게이션 - 공통 컴포넌트로 교체 */}
+      {/* 하단 네비게이션 */}
       <BottomNavigation />
     </div>
   )
 }
 
-export default App
+export default HomeGuest

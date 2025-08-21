@@ -146,7 +146,7 @@ body {
 
 /* 개별 배너 슬라이드 */
 .banner-slide {
-  position: absolute;
+  position: relative;
   width: 298px;
   height: 298px;
   display: flex;
@@ -160,6 +160,39 @@ body {
   margin-top: -149px;
   transition: transform 420ms cubic-bezier(.22,.61,.36,1), opacity 300ms ease;
   will-change: transform, opacity; 
+}
+
+/* 배너 오버레이 */
+.banner-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 20%;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.3));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 8px 12px;
+  text-align: center;
+  line-height: 1.3;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 15;
+}
+
+/* 호버 시 오버레이 표시 */
+.banner-slide:hover .banner-overlay {
+  opacity: 1;
+}
+
+/* 드래그 중일 때는 호버 효과 비활성화 */
+.banner-slides.dragging .banner-overlay {
+  opacity: 0 !important;
 }
 
 /* 현재 배너 (가운데) */
@@ -324,6 +357,8 @@ body {
 .login-button:hover {
   background-color: #0056cc;
 }
+
+
 
 /* 배너 (로그인 후 버전용) */
 .banner {

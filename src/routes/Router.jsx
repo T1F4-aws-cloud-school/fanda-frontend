@@ -1,4 +1,3 @@
-// routes/Router.jsx 수정
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
 import Login from "../pages/Login"
 import SignUp from "../pages/Signup/SignUp.jsx"
@@ -11,11 +10,12 @@ import SignUpComplete from "../pages/Signup/SignUpComplete.jsx";
 import Detail from "../pages/Detail/Detail.jsx";
 import HomeGuest from "../pages/HomeGuest.jsx";
 import HomeLoggedIn from "../pages/HomeLoggedIn.jsx";
-import Manager from "../pages/Manager/Manager.jsx"; // 관리자 페이지 추가
-import { useAuth } from "../context/AuthContext"; // 새로 추가
+import Manager from "../pages/Manager/Manager.jsx"; // 관리자 페이지
+import ReviewCollectionResult from "../pages/Manager/ReviewCollectionResult.jsx"; // 리뷰 수집 결과 페이지
+import { useAuth } from "../context/AuthContext";
 
 const Router = () => {
-  const { isLoggedIn, isLoading } = useAuth(); // userType 제거
+  const { isLoggedIn, isLoading } = useAuth();
 
   // 로딩 중일 때 스피너 표시
   if (isLoading) {
@@ -42,10 +42,16 @@ const Router = () => {
           element={isLoggedIn ? <HomeLoggedIn /> : <HomeGuest />} 
         />
         
-        {/* 관리자 페이지 - 임시로 조건 제거 */}
+        {/* 관리자 페이지들 */}
         <Route 
           path="/manager" 
           element={<Manager />} 
+        />
+        
+        {/* 리뷰 수집 결과 페이지 - 새로 추가 */}
+        <Route 
+          path="/admin/review-result" 
+          element={<ReviewCollectionResult />} 
         />
         
         {/* 로그인/회원가입 - 이미 로그인된 경우 홈으로 리다이렉트 */}
@@ -91,6 +97,9 @@ const Router = () => {
         
         {/* 기존 homelogin 라우트는 제거 (이제 /에서 자동 처리) */}
         <Route path="/homelogin" element={<Navigate to="/" replace />} />
+        
+        {/* 404 페이지 - 존재하지 않는 경로일 때 홈으로 리다이렉트 */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   )

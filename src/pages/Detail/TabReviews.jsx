@@ -44,9 +44,9 @@ const mockReviews = [
 ];
 
 const TabReviews = ({ productId, productData }) => {
-  const [reviews, setReviews] = useState(mockReviews); // 기본적으로 목업 데이터 사용
+  const [reviews, setReviews] = useState([]); // 빈 배열로 시작
   const [currentProductData, setCurrentProductData] = useState(mockProduct);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // 로딩 시작
   
   // 도움돼요 버튼 상태 관리 (리뷰 ID를 키로 사용)
   const [helpfulClicked, setHelpfulClicked] = useState({});
@@ -59,61 +59,73 @@ const TabReviews = ({ productId, productData }) => {
   const loadReviewData = async () => {
     setLoading(true);
     try {
+      console.log("리뷰 데이터 로드 시작 - productId:", productId);
+
       // 1. productData가 props로 넘어온 경우 (Detail.jsx에서 이미 API 호출함)
-      if (productData && productData.reviews && productData.reviews.length > 0) {
+      if (productData && productData.reviews !== undefined) {
+        console.log("Props에서 받은 productData 사용:", productData);
+        
         setCurrentProductData({
-          rating: productData.averageRating || mockProduct.rating,
-          reviewCount: productData.reviewCount || mockProduct.reviewCount
+          rating: productData.averageRating || 0,
+          reviewCount: productData.reviews.length || 0
         });
 
-        // 리뷰 데이터 변환
-        const formattedReviews = productData.reviews.map((review, index) => ({
-          id: review.userId || index + 1,
-          username: review.nickname || "익명",
-          date: formatDate(review.createdAt),
-          rating: review.rating || 5,
-          content: review.content || "",
-          images: review.images ? review.images.map(img => img.imageUrl) : []
-        }));
-        
-        setReviews(formattedReviews);
-      } else if (productData) {
-        // productData는 있지만 리뷰가 없는 경우 - 상품 정보만 업데이트
-        setCurrentProductData({
-          rating: productData.averageRating || mockProduct.rating,
-          reviewCount: productData.reviewCount || mockProduct.reviewCount
-        });
-        // 리뷰는 목업 데이터 유지
+        if (productData.reviews && productData.reviews.length > 0) {
+          // 새로운 API 구조에 맞게 리뷰 데이터 변환
+          const formattedReviews = productData.reviews.map((review, index) => ({
+            id: review.userId || index + 1,
+            username: review.nickname || "익명",
+            date: formatDate(review.createdAt),
+            rating: review.rating || 0,
+            content: review.content || "",
+            images: review.images ? review.images.map(img => img.imageUrl || img) : []
+          }));
+          
+          console.log("변환된 리뷰 데이터:", formattedReviews);
+          setReviews(formattedReviews);
+        } else {
+          console.log("리뷰가 없음, 목업 데이터 사용");
+          setReviews(mockReviews);
+        }
       } else {
         // 2. productData가 없으면 직접 API 호출 시도
+        console.log("직접 API 호출 시도");
         try {
           const response = await apiService.products.getDetail(productId);
-          if (response && response.reviews && response.reviews.length > 0) {
+          console.log("직접 호출 API 응답:", response);
+          
+          if (response) {
             setCurrentProductData({
-              rating: response.averageRating || mockProduct.rating,
-              reviewCount: response.reviews.length
+              rating: response.averageRating || 0,
+              reviewCount: response.reviews ? response.reviews.length : 0
             });
 
-            const formattedReviews = response.reviews.map((review, index) => ({
-              id: review.userId || index + 1,
-              username: review.nickname || "익명",
-              date: formatDate(review.createdAt),
-              rating: review.rating || 5,
-              content: review.content || "",
-              images: review.images ? review.images.map(img => img.imageUrl) : []
-            }));
-            
-            setReviews(formattedReviews);
+            if (response.reviews && response.reviews.length > 0) {
+              const formattedReviews = response.reviews.map((review, index) => ({
+                id: review.userId || index + 1,
+                username: review.nickname || "익명",
+                date: formatDate(review.createdAt),
+                rating: review.rating || 0,
+                content: review.content || "",
+                images: review.images ? review.images.map(img => img.imageUrl || img) : []
+              }));
+              
+              setReviews(formattedReviews);
+            } else {
+              console.log("API에서 리뷰 없음, 목업 데이터 사용");
+              setReviews(mockReviews);
+            }
+          } else {
+            throw new Error("API 응답이 없음");
           }
-          // API에 리뷰가 없으면 목업 데이터 그대로 사용
         } catch (apiError) {
           console.log("API 호출 실패, 목업 데이터 사용:", apiError.message);
-          // API 실패 시 목업 데이터 유지
+          setReviews(mockReviews);
         }
       }
     } catch (error) {
       console.error("리뷰 데이터 로드 실패, 목업 데이터 사용:", error);
-      // 에러 시 목업 데이터 유지
+      setReviews(mockReviews);
     } finally {
       setLoading(false);
     }
@@ -138,6 +150,7 @@ const TabReviews = ({ productId, productData }) => {
       const day = String(date.getDate()).padStart(2, '0');
       return `${year}.${month}.${day}`;
     } catch (error) {
+      console.log("날짜 변환 실패:", error);
       return "2025.01.01";
     }
   };
@@ -184,56 +197,65 @@ const TabReviews = ({ productId, productData }) => {
 
       {/* 리뷰 목록 */}
       <div className="review-list">
-        {reviews.map((review) => (
-          <div key={review.id} className="review-item">
-            {/* 사용자 정보 레이아웃 */}
-            <div className="review-user-horizontal">
-              <div className="user-avatar">👤</div>
-              <div className="user-info-vertical">
-                {/* 이름과 날짜를 가로로 */}
-                <div className="user-name-date">
-                  <span className="username">{review.username}</span>
-                  <span className="review-date">{review.date}</span>
-                </div>
-                {/* 별점을 그 아래에 - API 연동 */}
-                <div className="review-rating">{renderStars(review.rating)}</div>
-              </div>
+        {!loading && reviews.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px', color: '#999' }}>
+            <div>아직 등록된 리뷰가 없습니다.</div>
+            <div style={{ fontSize: '14px', marginTop: '8px' }}>
+              첫 번째 리뷰를 작성해보세요!
             </div>
-
-            {/* 상품명 - 하드코딩 */}
-            <div className="product-purchase-info">부드러운 수비드 닭가슴살 | 매운맛 구매</div>
-
-            {/* 리뷰 내용 - API 연동 */}
-            <p className="review-text">{review.content}</p>
-
-            {/* 리뷰 이미지 - API 연동 (최대 2장만 표시) */}
-            {review.images && review.images.length > 0 && (
-              <div className="review-images">
-                {review.images.slice(0, 2).map((image, index) => (
-                  <img
-                    key={index}
-                    src={image}
-                    alt={`리뷰 이미지 ${index + 1}`}
-                    className="review-image"
-                    onError={(e) => {
-                      // 이미지 로드 실패 시 기본 이미지로 대체
-                      e.target.src = "https://via.placeholder.com/80x80?text=IMG"
-                    }}
-                  />
-                ))}
-              </div>
-            )}
-
-            {/* 도움돼요 버튼 - 클릭 가능 */}
-            <button 
-              className={`helpful-btn ${helpfulClicked[review.id] ? 'active' : ''}`}
-              onClick={() => handleHelpfulClick(review.id)}
-            >
-              <img src={GoodIcon} alt="도움돼요" className="good-icon" />
-              도움돼요
-            </button>
           </div>
-        ))}
+        ) : (
+          reviews.map((review) => (
+            <div key={review.id} className="review-item">
+              {/* 사용자 정보 레이아웃 */}
+              <div className="review-user-horizontal">
+                <div className="user-avatar">👤</div>
+                <div className="user-info-vertical">
+                  {/* 이름과 날짜를 가로로 */}
+                  <div className="user-name-date">
+                    <span className="username">{review.username}</span>
+                    <span className="review-date">{review.date}</span>
+                  </div>
+                  {/* 별점을 그 아래에 - API 연동 */}
+                  <div className="review-rating">{renderStars(review.rating)}</div>
+                </div>
+              </div>
+
+              {/* 상품명 - 하드코딩 */}
+              <div className="product-purchase-info">부드러운 수비드 닭가슴살 | 매운맛 구매</div>
+
+              {/* 리뷰 내용 - API 연동 */}
+              <p className="review-text">{review.content}</p>
+
+              {/* 리뷰 이미지 - API 연동 (최대 2장만 표시) */}
+              {review.images && review.images.length > 0 && (
+                <div className="review-images">
+                  {review.images.slice(0, 2).map((image, index) => (
+                    <img
+                      key={index}
+                      src={image}
+                      alt={`리뷰 이미지 ${index + 1}`}
+                      className="review-image"
+                      onError={(e) => {
+                        // 이미지 로드 실패 시 기본 이미지로 대체
+                        e.target.src = "https://via.placeholder.com/80x80?text=IMG"
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* 도움돼요 버튼 - 클릭 가능 */}
+              <button 
+                className={`helpful-btn ${helpfulClicked[review.id] ? 'active' : ''}`}
+                onClick={() => handleHelpfulClick(review.id)}
+              >
+                <img src={GoodIcon} alt="도움돼요" className="good-icon" />
+                도움돼요
+              </button>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );
