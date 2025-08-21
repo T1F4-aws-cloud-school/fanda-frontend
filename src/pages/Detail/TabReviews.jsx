@@ -45,7 +45,10 @@ const mockReviews = [
 
 const TabReviews = ({ productId, productData }) => {
   const [reviews, setReviews] = useState([]); // 빈 배열로 시작
-  const [currentProductData, setCurrentProductData] = useState(mockProduct);
+  const [currentProductData, setCurrentProductData] = useState({
+    rating: 0,
+    reviewCount: 0
+  });
   const [loading, setLoading] = useState(true); // 로딩 시작
   
   // 도움돼요 버튼 상태 관리 (리뷰 ID를 키로 사용)
@@ -62,50 +65,41 @@ const TabReviews = ({ productId, productData }) => {
       console.log("리뷰 데이터 로드 시작 - productId:", productId);
 
       // 새로운 리뷰 API 사용: /shop/api/v1/reviews/by-product?productId=1
-      const reviewsData = await apiService.reviews.getByProduct(productId);
-      console.log("리뷰 API 응답:", reviewsData);
+      const response = await apiService.products.getDetail(productId);
+      console.log("리뷰 API 응답:", response);
 
-      if (reviewsData && reviewsData.length > 0) {
-        // API 응답 구조에 맞게 데이터 변환
-        const formattedReviews = reviewsData.map((review, index) => ({
-          id: review.id || index + 1,
-          username: review.nickname || review.username || "익명",
+      if (response && response.reviews) {
+        // 새 API 구조에 맞게 리뷰 데이터 변환
+        const formattedReviews = response.reviews.map((review, index) => ({
+          id: review.userId || index + 1,
+          username: review.nickname,
           date: formatDate(review.createdAt),
-          rating: review.rating || 0,
-          content: review.content || "",
-          images: review.images ? review.images.map(img => img.imageUrl || img) : []
+          rating: review.rating,
+          content: review.content,
+          // 새 이미지 구조 처리: [{ imageUrl: "..." }] → ["url1", "url2"]
+          images: review.images ? review.images.map(img => img.imageUrl) : []
         }));
         
         console.log("변환된 리뷰 데이터:", formattedReviews);
         setReviews(formattedReviews);
         
-        // 평균 평점과 리뷰 수 계산
+        // 평균 평점과 리뷰 수는 API에서 받은 값 사용
         setCurrentProductData({
-          rating: calculateAverageRating(formattedReviews),
-          reviewCount: formattedReviews.length
+          rating: response.averageRating || 0,
+          reviewCount: response.reviews.length
         });
       } else {
-        console.log("API에서 리뷰가 없음, 목업 데이터 사용");
-        setReviews(mockReviews);
-        setCurrentProductData(mockProduct);
+        setReviews([]);
+        setCurrentProductData({ rating: 0, reviewCount: 0 });
       }
 
     } catch (error) {
       console.error("리뷰 데이터 로드 실패:", error);
-      console.log("에러로 인해 목업 데이터 사용");
-      setReviews(mockReviews);
-      setCurrentProductData(mockProduct);
+      setReviews([]);
+      setCurrentProductData({ rating: 0, reviewCount: 0 });
     } finally {
       setLoading(false);
     }
-  };
-
-  // 평균 평점 계산 함수
-  const calculateAverageRating = (reviews) => {
-    if (!reviews || reviews.length === 0) return 0;
-    
-    const sum = reviews.reduce((acc, review) => acc + (review.rating || 0), 0);
-    return parseFloat((sum / reviews.length).toFixed(1));
   };
 
   // 도움돼요 버튼 클릭 핸들러

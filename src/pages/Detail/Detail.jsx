@@ -69,9 +69,8 @@ const Detail = () => {
           averageRating: response.averageRating || 0,
           reviewCount: response.reviews ? response.reviews.length : 0,
           reviews: response.reviews || [],
-          
+          images: response.imageUrl ? [response.imageUrl] : [chicken], // API imageUrl 사용
           // API에 없는 필드들은 하드코딩으로 유지
-          images: ["/placeholder.svg?height=400&width=400"], // API에 상품 이미지 필드 없음
           discountRate: 35, // 하드코딩
           category: "닭가슴살 > 수비드", // 하드코딩
         }

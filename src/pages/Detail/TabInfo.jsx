@@ -56,27 +56,12 @@ const TabInfo = ({ productData }) => {
     <div className="tab-content">
       <div className="product-info">
         {/* API 연동 - 상품 설명 */}
-        <h3 className="product-description">{productDetails.description}</h3>
+        <h3 className="product-description">{productData.description}</h3>
         <div className="protein-info">
           <p className="protein-text">
             고단백질 <span className="highlight">20g</span>까지!
           </p>
-          {/* API 연동 - 상세 정보 텍스트 */}
-          <p className="detail-text">{productDetails.detailInfo}</p>
         </div>
-      </div>
-
-      {/* 상품 상세 이미지 */}
-      <div className="product-image-container">
-        <img
-          src={productDetails.detailImage || "/placeholder.svg?height=300&width=400&text=상품 상세 이미지"}
-          alt="상품 상세 이미지"
-          className="product-detail-image"
-          onError={(e) => {
-            // 이미지 로드 실패 시 placeholder로 대체
-            e.target.src = "/placeholder.svg?height=300&width=400&text=상품 상세 이미지"
-          }}
-        />
       </div>
 
       {/* 영양 성분 - 하드코딩 */}
