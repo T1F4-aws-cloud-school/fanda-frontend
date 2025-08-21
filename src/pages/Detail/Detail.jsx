@@ -188,20 +188,27 @@ const Detail = () => {
     <div className="mobile-app">
       <ProductHeader />
 
-      {/* 상품 대표 이미지 - 현재 API에 이미지 필드 없어서 기본 이미지 */}
+      {/* 상품 대표 이미지 - API 이미지를 가득 차게 표시 */}
       <div className="main-product-image">
-        {productData.images?.[0] ? (
+        {productData.images?.[0] && productData.images[0] !== chickenImage ? (
           <img
             src={productData.images[0]}
             alt={productData.name}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              display: 'block'
+            }}
             onError={(e) => {
-              // 이미지 로드 실패 시 MUSINSA 로고 표시
+              console.log("이미지 로드 실패:", e.target.src);
               e.target.style.display = 'none'
               e.target.nextSibling.style.display = 'flex'
             }}
           />
-        ) : null}
-        <span className="brand-logo">세 끼 통 살</span>
+        ) : (
+          <span className="brand-logo">세 끼 통 살</span>
+        )}
       </div>
 
       <ProductMainInfo
