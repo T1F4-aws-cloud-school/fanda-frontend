@@ -119,42 +119,42 @@ class ApiService {
 
     // 개선 비교 리포트 생성 및 슬랙 전송 (관리자 전용)
     generateCompareReport: async (productId, baselineKey, startAt, endAt) => {
-  try {
-    // ✅ URLSearchParams를 사용해서 안전하게 파라미터 인코딩
-    const params = new URLSearchParams({
-      productId: productId.toString(),
-      baselineKey: baselineKey, // 자동으로 URL 인코딩됨
-      startAt: startAt,
-      endAt: endAt
-    });
-    
-    const url = `/feedback/api/v1/reports/feedback/compare?${params.toString()}`;
-    
-    console.log('비교 리포트 생성 요청:', {
-      '최종 URL': url,
-      '파라미터들': { productId, baselineKey, startAt, endAt },
-      'baselineKey 원본': baselineKey,
-      'baselineKey 인코딩됨': encodeURIComponent(baselineKey)
-    });
+      try {
+        // ✅ URLSearchParams를 사용해서 안전하게 파라미터 인코딩
+        const params = new URLSearchParams({
+          productId: productId.toString(),
+          baselineKey: baselineKey, // 자동으로 URL 인코딩됨
+          startAt: startAt,
+          endAt: endAt
+        });
+        
+        const url = `/feedback/api/v1/reports/feedback/compare?${params.toString()}`;
+        
+        console.log('비교 리포트 생성 요청:', {
+          '최종 URL': url,
+          '파라미터들': { productId, baselineKey, startAt, endAt },
+          'baselineKey 원본': baselineKey,
+          'baselineKey 인코딩됨': encodeURIComponent(baselineKey)
+        });
 
-    const response = await axios.post(url);
-    console.log('개선 비교 리포트 생성 성공:', response.data);
-    return response.data;
-  } catch (error) {
-    console.error('개선 비교 리포트 생성 실패:', {
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      data: error.response?.data,
-      message: error.message,
-      config: {
-        url: error.config?.url,
-        method: error.config?.method,
-        headers: error.config?.headers
+        const response = await axios.post(url);
+        console.log('개선 비교 리포트 생성 성공:', response.data);
+        return response.data;
+      } catch (error) {
+        console.error('개선 비교 리포트 생성 실패:', {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: error.response?.data,
+          message: error.message,
+          config: {
+            url: error.config?.url,
+            method: error.config?.method,
+            headers: error.config?.headers
+          }
+        });
+        throw error;
       }
-    });
-    throw error;
-  }
-},
+    },
 
     // 리뷰 수집과 동시에 비교 리포트 생성 (통합 메소드)
     collectAndGenerateReport: async (productId, startAt, endAt, baselineKey = null) => {
@@ -340,79 +340,87 @@ class ApiService {
       }
     },
 
-    // 새 배너(=이미지) 생성 후 목록을 최신화(4→3→2로 자연 치환)
+    // 🎯 새 배너 생성 후 기존 이미지 유지 + 캐치프레이즈만 업데이트
     async generateAndAddBanner(currentBanners, additionalData = {}) {
-  console.log('새 배너 생성 시작:', additionalData);
-  
-  // 서버에서 리포트+배너 생성 실행
-  const reportResult = await apiService.reports.generate();
-  console.log('🔍 리포트 생성 결과 (RAW):', reportResult);
-  console.log('🔍 리포트 결과 타입:', typeof reportResult);
-  console.log('🔍 리포트 결과 배열 여부:', Array.isArray(reportResult));
-  
-  if (Array.isArray(reportResult)) {
-    console.log('🔍 각 배너별 캐치프레이즈:');
-    reportResult.forEach((item, index) => {
-      console.log(`  배너 ${index}:`, {
-        chatPhraseKo: item.chatPhraseKo,
-        imageBannerUrl: item.imageBannerUrl
-      });
-    });
-  }
-  
-  if (!reportResult || !Array.isArray(reportResult) || reportResult.length === 0) {
-    console.log('❌ 새 배너 생성 결과가 없음 또는 잘못된 형식');
-    return currentBanners;
-  }
+      console.log('새 배너 생성 시작:', additionalData);
+      
+      // 서버에서 리포트+배너 생성 실행 (새 캐치프레이즈만 받기 위해)
+      const reportResult = await apiService.reports.generate();
+      console.log('🔍 리포트 생성 결과 (RAW):', reportResult);
+      console.log('🔍 리포트 결과 타입:', typeof reportResult);
+      console.log('🔍 리포트 결과 배열 여부:', Array.isArray(reportResult));
+      
+      if (Array.isArray(reportResult)) {
+        console.log('🔍 각 배너별 캐치프레이즈:');
+        reportResult.forEach((item, index) => {
+          console.log(`  배너 ${index}:`, {
+            chatPhraseKo: item.chatPhraseKo,
+            imageBannerUrl: item.imageBannerUrl
+          });
+        });
+      }
+      
+      if (!reportResult || !Array.isArray(reportResult) || reportResult.length === 0) {
+        console.log('⚠ 새 배너 생성 결과가 없음 또는 잘못된 형식');
+        return currentBanners;
+      }
 
-  // 새 presigned가 발급되므로 전체 목록을 다시 가져오기
-  const fresh = await this._fetchFromServer();
-  console.log('🔍 서버에서 가져온 새 배너 목록:', fresh);
-  
-  // 추가 메타(문구 등)가 있으면 첫 항목에 병합
-  if (fresh.length && reportResult.length) {
-    // 최대 3개 배너와 3개 캐치프레이즈 매칭
-    const maxBanners = Math.min(fresh.length, reportResult.length, 3);
-    
-    console.log('🔍 매칭할 배너 수:', maxBanners);
-    
-    for (let i = 0; i < maxBanners; i++) {
-      const bannerData = reportResult[i];
-      const oldPhrase = fresh[i].chatPhrase;
-      const newPhrase = bannerData.chatPhraseKo;
-      
-      console.log(`🔍 배너 ${i} 캐치프레이즈 매칭:`, {
-        기존: oldPhrase,
-        새로운: newPhrase,
-        적용될값: newPhrase || oldPhrase || "맛있는 수비드 닭가슴살!"
+      // ✅ 핵심: 기존 배너 이미지는 그대로 유지하고 캐치프레이즈만 업데이트
+      const updatedBanners = currentBanners.map((banner, index) => {
+        // 해당 인덱스의 새 캐치프레이즈가 있으면 사용, 없으면 기존 것 유지
+        const newCatchPhrase = reportResult[index]?.chatPhraseKo;
+        
+        console.log(`🔄 배너 ${index} 업데이트:`, {
+          기존이미지: banner.url,
+          기존캐치프레이즈: banner.chatPhrase,
+          새캐치프레이즈: newCatchPhrase,
+          최종캐치프레이즈: newCatchPhrase || banner.chatPhrase
+        });
+
+        return {
+          ...banner, // 기존 배너 정보(이미지 URL 포함) 모두 유지
+          // 캐치프레이즈만 새걸로 업데이트 (없으면 기존 것 유지)
+          chatPhrase: newCatchPhrase || banner.chatPhrase,
+          reviewInfo: {
+            ...(banner.reviewInfo || {}),
+            ...additionalData,
+            generatedAt: new Date().toLocaleString('ko-KR'),
+            updatedAt: new Date().toLocaleString('ko-KR') // 업데이트 시간 추가
+          }
+        };
       });
-      
-      fresh[i] = {
-        ...fresh[i],
-        // ⭐ 핵심: 각 배너마다 해당하는 캐치프레이즈 할당
-        chatPhrase: bannerData.chatPhraseKo || fresh[i].chatPhrase || "맛있는 수비드 닭가슴살!", 
-        reviewInfo: {
-          ...(fresh[i].reviewInfo || {}),
-          ...additionalData,
-          generatedAt: new Date().toLocaleString('ko-KR')
+
+      console.log('🎯 최종 업데이트된 배너들:', updatedBanners.map(b => ({
+        id: b.id,
+        url: b.url, // 기존 이미지 URL 유지됨
+        chatPhrase: b.chatPhrase // 새 캐치프레이즈
+      })));
+
+      // ✅ 캐시도 업데이트 (기존 이미지 URL 기반으로)
+      if (updatedBanners.length > 0) {
+        // 기존 배너들의 만료시간 중 가장 짧은 것 사용 (또는 기본값)
+        const defaultExpiry = Date.now() + 10 * 60 * 1000; // 10분
+        let cacheExpiry = defaultExpiry;
+        
+        // 기존 배너 중에 presigned URL이 있다면 그 만료시간 사용
+        try {
+          const expiryTimes = updatedBanners
+            .filter(banner => banner.url && banner.url.includes('amazonaws.com'))
+            .map(banner => this._computeExpiry(banner.url))
+            .filter(time => time > Date.now()); // 유효한 시간만
+          
+          if (expiryTimes.length > 0) {
+            cacheExpiry = Math.min(...expiryTimes);
+          }
+        } catch (error) {
+          console.log('만료시간 계산 실패, 기본값 사용:', error.message);
         }
-      };
+        
+        this.cacheBanners(updatedBanners, cacheExpiry);
+      }
       
-      console.log(`✅ 배너 ${i} 최종 캐치프레이즈:`, fresh[i].chatPhrase);
-    }
-    
-    console.log('🔍 모든 배너 업데이트 완료:', fresh.map(b => ({
-      id: b.id,
-      chatPhrase: b.chatPhrase
-    })));
-    
-    // 캐시 갱신 
-    const expiresAt = Math.min(...fresh.map(i => this._computeExpiry(i.url)));
-    this.cacheBanners(fresh, expiresAt);
-  }
-  
-  return fresh;
-},
+      return updatedBanners;
+    },
 
     // 기본 배너들 (초기 로드/장애 대비)
     getDefaultBanners() {
