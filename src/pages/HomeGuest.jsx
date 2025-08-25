@@ -106,23 +106,22 @@ function HomeGuest() {
   const [banners, setBanners] = useState([])
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0)
   const [catchPhraseHighlight, setCatchPhraseHighlight] = useState(false)
-  const [previousCatchPhrase, setPreviousCatchPhrase] = useState("")
   const [displayCatchPhrase, setDisplayCatchPhrase] = useState("인기 최고 판매율 1위 닭가슴살을 만나보세요!")
 
   // 스와이프 기능을 위한 상태
   const [isDragging, setIsDragging] = useState(false)
-  const [dragStarted, setDragStarted] = useState(false) // 드래그 시작 여부
+  const [dragStarted, setDragStarted] = useState(false)
   const [startX, setStartX] = useState(0)
   const [currentX, setCurrentX] = useState(0)
   const [dragOffset, setDragOffset] = useState(0)
   const bannerSlidesRef = useRef(null)
   
   // 뒤집기 관련 새로운 상태 추가
-  const [flippedBanners, setFlippedBanners] = useState({}) // 배너별 뒤집기 상태
-  const [flipProgress, setFlipProgress] = useState({}) // 배너별 진행률
-  const [isHovering, setIsHovering] = useState(false) // 호버 상태
-  const flipTimeouts = useRef({}) // 배너별 타이머
-  const progressIntervals = useRef({}) // 진행률 타이머
+  const [flippedBanners, setFlippedBanners] = useState({})
+  const [flipProgress, setFlipProgress] = useState({})
+  const [isHovering, setIsHovering] = useState(false)
+  const flipTimeouts = useRef({})
+  const progressIntervals = useRef({})
   
   const navigate = useNavigate()
   const categories = ["전체", "베스트", "오늘특가", "대량구매", "신상품"]
@@ -132,110 +131,105 @@ function HomeGuest() {
     loadInitialData()
   }, [])
 
-
+  // 🎯 핵심 수정: 캐치프레이즈 업데이트 useEffect
   useEffect(() => {
-  if (banners.length === 0) return
+    if (banners.length === 0) return
 
-  const currentCatchPhrase = banners[currentBannerIndex]?.chatPhrase || "인기 최고 판매율 1위 닭가슴살을 만나보세요!"
-  
-  console.log('🎯 배너 인덱스 변경으로 인한 캐치프레이즈 업데이트:', {
-    bannerIndex: currentBannerIndex,
-    bannerId: banners[currentBannerIndex]?.id,
-    oldPhrase: displayCatchPhrase,
-    newPhrase: currentCatchPhrase,
-    allPhrases: banners.map(b => ({ id: b.id, phrase: b.chatPhrase }))
-  })
+    const currentBanner = banners[currentBannerIndex]
+    if (!currentBanner) return
 
-  // 캐치프레이즈가 실제로 변경된 경우에만 업데이트 및 효과 적용
-  if (currentCatchPhrase !== displayCatchPhrase) {
-    setDisplayCatchPhrase(currentCatchPhrase)
+    const newCatchPhrase = currentBanner.chatPhrase || "인기 최고 판매율 1위 닭가슴살을 만나보세요!"
     
-    // 하이라이트 효과
-    setCatchPhraseHighlight(true)
-    setTimeout(() => setCatchPhraseHighlight(false), 1000)
-    
-    console.log('✨ 캐치프레이즈 변경 완료:', currentCatchPhrase)
-  }
-}, [currentBannerIndex, banners, displayCatchPhrase])
+    console.log('🎯 배너 인덱스 변경으로 인한 캐치프레이즈 업데이트:', {
+      bannerIndex: currentBannerIndex,
+      bannerId: currentBanner.id,
+      oldPhrase: displayCatchPhrase,
+      newPhrase: newCatchPhrase,
+      bannerInfo: {
+        id: currentBanner.id,
+        chatPhrase: currentBanner.chatPhrase,
+        url: currentBanner.url
+      }
+    })
 
+    // 캐치프레이즈가 실제로 변경된 경우에만 업데이트
+    if (newCatchPhrase !== displayCatchPhrase) {
+      console.log('✨ 캐치프레이즈 변경 시작:', { from: displayCatchPhrase, to: newCatchPhrase })
+      
+      // 하이라이트 효과와 함께 즉시 업데이트
+      setCatchPhraseHighlight(true)
+      setDisplayCatchPhrase(newCatchPhrase)
+      
+      // 하이라이트 효과 종료
+      const highlightTimer = setTimeout(() => {
+        setCatchPhraseHighlight(false)
+      }, 1000)
 
+      return () => clearTimeout(highlightTimer)
+    }
+  }, [currentBannerIndex, banners, displayCatchPhrase]) // ✅ displayCatchPhrase 다시 추가하되 조건부 업데이트로 무한루프 방지
 
-  // 배너 인덱스 변경 시 다른 배너들을 앞면으로 리셋하는 useEffect 추가
+  // 배너 인덱스 변경 시 다른 배너들을 앞면으로 리셋하는 useEffect
   useEffect(() => {
     if (banners.length === 0) return;
 
-    // 현재 활성 배너가 아닌 모든 배너들을 앞면으로 리셋
-    const resetOtherBanners = () => {
-      const currentBannerId = banners[currentBannerIndex]?.id || `banner-${currentBannerIndex}`;
-      
-      // 새로운 flippedBanners 객체 생성
-      const newFlippedBanners = {};
-      banners.forEach((banner, index) => {
-        const bannerId = banner.id || `banner-${index}`;
-        // 현재 활성 배너가 아닌 경우 false로 리셋, 현재 배너는 기존 상태 유지
-        if (bannerId !== currentBannerId) {
-          newFlippedBanners[bannerId] = false;
-          
-          // 해당 배너의 모든 타이머 정리
-          if (flipTimeouts.current[bannerId]) {
-            clearTimeout(flipTimeouts.current[bannerId]);
-            delete flipTimeouts.current[bannerId];
-          }
-          if (flipTimeouts.current[`${bannerId}-back`]) {
-            clearTimeout(flipTimeouts.current[`${bannerId}-back`]);
-            delete flipTimeouts.current[`${bannerId}-back`];
-          }
-          if (flipTimeouts.current[`${bannerId}-manual`]) {
-            clearTimeout(flipTimeouts.current[`${bannerId}-manual`]);
-            delete flipTimeouts.current[`${bannerId}-manual`];
-          }
-          if (progressIntervals.current[bannerId]) {
-            clearInterval(progressIntervals.current[bannerId]);
-            delete progressIntervals.current[bannerId];
-          }
-        } else {
-          // 현재 배너는 기존 상태 유지
-          newFlippedBanners[bannerId] = flippedBanners[bannerId] || false;
+    const currentBannerId = banners[currentBannerIndex]?.id || `banner-${currentBannerIndex}`;
+    
+    // 새로운 flippedBanners 객체 생성
+    const newFlippedBanners = {};
+    banners.forEach((banner, index) => {
+      const bannerId = banner.id || `banner-${index}`;
+      if (bannerId !== currentBannerId) {
+        newFlippedBanners[bannerId] = false;
+        
+        // 해당 배너의 모든 타이머 정리
+        if (flipTimeouts.current[bannerId]) {
+          clearTimeout(flipTimeouts.current[bannerId]);
+          delete flipTimeouts.current[bannerId];
         }
-      });
-
-      // 상태 업데이트
-      setFlippedBanners(newFlippedBanners);
-      
-      // 진행률도 리셋 (현재 배너 제외)
-      const newFlipProgress = {};
-      banners.forEach((banner, index) => {
-        const bannerId = banner.id || `banner-${index}`;
-        if (bannerId !== currentBannerId) {
-          newFlipProgress[bannerId] = 0;
-        } else {
-          newFlipProgress[bannerId] = flipProgress[bannerId] || 0;
+        if (flipTimeouts.current[`${bannerId}-back`]) {
+          clearTimeout(flipTimeouts.current[`${bannerId}-back`]);
+          delete flipTimeouts.current[`${bannerId}-back`];
         }
-      });
-      setFlipProgress(newFlipProgress);
-      
-      console.log('배너 변경으로 인한 다른 배너들 리셋 완료, 현재 배너:', currentBannerId);
-    };
+        if (flipTimeouts.current[`${bannerId}-manual`]) {
+          clearTimeout(flipTimeouts.current[`${bannerId}-manual`]);
+          delete flipTimeouts.current[`${bannerId}-manual`];
+        }
+        if (progressIntervals.current[bannerId]) {
+          clearInterval(progressIntervals.current[bannerId]);
+          delete progressIntervals.current[bannerId];
+        }
+      } else {
+        newFlippedBanners[bannerId] = flippedBanners[bannerId] || false;
+      }
+    });
 
-    // 약간의 지연을 두어 배너 전환이 완료된 후 리셋
-    const resetTimer = setTimeout(resetOtherBanners, 100);
-
-    return () => clearTimeout(resetTimer);
+    setFlippedBanners(newFlippedBanners);
+    
+    // 진행률도 리셋
+    const newFlipProgress = {};
+    banners.forEach((banner, index) => {
+      const bannerId = banner.id || `banner-${index}`;
+      if (bannerId !== currentBannerId) {
+        newFlipProgress[bannerId] = 0;
+      } else {
+        newFlipProgress[bannerId] = flipProgress[bannerId] || 0;
+      }
+    });
+    setFlipProgress(newFlipProgress);
+    
+    console.log('배너 변경으로 인한 다른 배너들 리셋 완료, 현재 배너:', currentBannerId);
   }, [currentBannerIndex, banners]);
 
-  
-  // 배너 뒤집기 관리 useEffect 추가 (자동 슬라이드 대신)
+  // 배너 뒤집기 관리 useEffect
   useEffect(() => {
     if (banners.length === 0 || isDragging) return
-    // 모바일에서는 호버 체크하지 않음 (isHovering 제거)
 
-    // 현재 활성 배너에 대해서만 뒤집기 타이머 설정
     const currentBanner = banners[currentBannerIndex]
     if (!currentBanner) return
 
     const bannerId = currentBanner.id || `banner-${currentBannerIndex}`
 
-    // 이미 수동으로 뒤집어져 있으면 자동 타이머 설정하지 않음
     if (flippedBanners[bannerId]) return
 
     // 기존 타이머들 정리
@@ -253,7 +247,7 @@ function HomeGuest() {
     const progressInterval = setInterval(() => {
       setFlipProgress(prev => {
         const current = prev[bannerId] || 0
-        const newProgress = Math.min(current + 2, 100) // 5초 = 5000ms, 100ms마다 2%씩 증가
+        const newProgress = Math.min(current + 2, 100)
         return { ...prev, [bannerId]: newProgress }
       })
     }, 100)
@@ -272,17 +266,14 @@ function HomeGuest() {
         setFlipProgress(prev => ({ ...prev, [bannerId]: 0 }))
       }, 3000)
       
-      // backToFrontTimeout도 관리하기 위해 저장
       flipTimeouts.current[`${bannerId}-back`] = backToFrontTimeout
     }, 5000)
 
     flipTimeouts.current[bannerId] = flipTimeout
 
-    // 정리 함수
     return () => {
       clearTimeout(flipTimeout)
       clearInterval(progressInterval)
-      // 추가 타이머도 정리
       if (flipTimeouts.current[`${bannerId}-back`]) {
         clearTimeout(flipTimeouts.current[`${bannerId}-back`])
       }
@@ -300,90 +291,144 @@ function HomeGuest() {
   // 배너 최대 3개 유지하는 함수
   const maintainMaxBanners = (bannerList) => {
     if (bannerList.length > 3) {
-      return bannerList.slice(0, 3) // 최신 3개만 유지
+      return bannerList.slice(0, 3)
     }
     return bannerList
   }
 
-  // 초기 데이터 로드
-  const loadInitialData = async () => {
-    try {
-      // 배너 목록 로드 (캐시된 배너들 또는 기본 배너들)
-      await loadInitialBanners()
-      
-      
-    } catch (error) {
-      console.error("초기 데이터 로드 실패:", error)
+  // 🎯 캐치프레이즈 업데이트 헬퍼 함수 추가
+  const updateCatchPhraseFromBanner = (bannerIndex, bannerList) => {
+    if (!bannerList || bannerList.length === 0 || bannerIndex < 0 || bannerIndex >= bannerList.length) {
+      return
+    }
+    
+    const targetBanner = bannerList[bannerIndex]
+    const newPhrase = targetBanner?.chatPhrase || "인기 최고 판매율 1위 닭가슴살을 만나보세요!"
+    
+    console.log('🎯 캐치프레이즈 헬퍼 함수 호출:', {
+      bannerIndex,
+      newPhrase,
+      currentPhrase: displayCatchPhrase
+    })
+    
+    if (newPhrase !== displayCatchPhrase) {
+      setDisplayCatchPhrase(newPhrase)
+      setCatchPhraseHighlight(true)
+      setTimeout(() => setCatchPhraseHighlight(false), 1000)
     }
   }
 
-  // 초기 배너들 로드
-  const loadInitialBanners = async () => {
-  try {
-    const bannerList = await apiService.banner.getBannerList()
-    const limitedBanners = maintainMaxBanners(bannerList)
+  // 🎯 수정된 초기 데이터 로드
+  const loadInitialData = async () => {
+    console.log('🚀 초기 데이터 로드 시작...')
     
-    console.log('🎪 초기 배너 목록 로드:', limitedBanners.map(b => ({
-      id: b.id,
-      chatPhrase: b.chatPhrase,
-      url: b.url?.substring(0, 50) + '...'
-    })))
-    
-    setBanners(limitedBanners)
-    setCurrentBannerIndex(0)
-    
-    // ✅ 추가: 첫 번째 배너의 캐치프레이즈로 초기값 설정
-    if (limitedBanners.length > 0 && limitedBanners[0].chatPhrase) {
-      setDisplayCatchPhrase(limitedBanners[0].chatPhrase)
-      console.log('🎯 초기 캐치프레이즈 설정:', limitedBanners[0].chatPhrase)
-    }
-    
-  } catch (error) {
-    console.error("배너 로드 실패:", error)
-    const defaultBanners = apiService.banner.getDefaultBanners()
-    const limitedDefaults = maintainMaxBanners(defaultBanners)
-    setBanners(limitedDefaults)
-    setCurrentBannerIndex(0)
-    
-    // ✅ 추가: 기본 배너의 캐치프레이즈로 설정
-    if (limitedDefaults.length > 0) {
-      setDisplayCatchPhrase(limitedDefaults[0].chatPhrase)
+    try {
+      // 1. 먼저 기본 배너들로 초기화
+      const defaultBanners = apiService.banner.getDefaultBanners()
+      const limitedDefaults = maintainMaxBanners(defaultBanners)
+      setBanners(limitedDefaults)
+      setCurrentBannerIndex(0)
+      
+      // 첫 번째 배너의 캐치프레이즈 즉시 설정
+      if (limitedDefaults.length > 0) {
+        const firstPhrase = limitedDefaults[0].chatPhrase || "인기 최고 판매율 1위 닭가슴살을 만나보세요!"
+        setDisplayCatchPhrase(firstPhrase)
+        console.log('🎯 초기 캐치프레이즈 설정:', firstPhrase)
+      }
+      
+      // 2. 백그라운드에서 실제 배너들 로드 시도
+      try {
+        await loadInitialBanners()
+      } catch (bannerError) {
+        console.log('백그라운드 배너 로드 실패, 기본 배너 유지')
+      }
+      
+      // 3. 새 배너 생성 시도 (실패해도 계속 진행)
+      try {
+        await tryGenerateNewBanner()
+      } catch (bannerError) {
+        console.log('배너 생성은 실패했지만 앱 로드는 계속 진행')
+      }
+      
+      console.log('✅ 초기 데이터 로드 완료')
+      
+    } catch (error) {
+      console.error('⚠ 초기 데이터 로드 중 치명적 오류:', error)
     }
   }
-}
+
+  // 🎯 수정된 초기 배너 로드
+  const loadInitialBanners = async () => {
+    try {
+      const bannerList = await apiService.banner.getBannerList()
+      if (bannerList && bannerList.length > 0) {
+        const limitedBanners = maintainMaxBanners(bannerList)
+        setBanners(limitedBanners)
+        setCurrentBannerIndex(0)
+        
+        // 🎯 헬퍼 함수 사용
+        updateCatchPhraseFromBanner(0, limitedBanners)
+        console.log('🎯 초기 배너 로드 후 캐치프레이즈 업데이트 완료')
+      }
+    } catch (error) {
+      console.log('초기 배너 로드 실패:', error.message)
+    }
+  }
 
   // 새 배너 생성 시도 (게스트용 - 권한 없으면 무시)
   const tryGenerateNewBanner = async () => {
+    console.log('🎪 게스트용 새 배너 생성 시도...')
+    
     try {
+      const hasToken = localStorage.getItem('accessToken')
+      if (!hasToken) {
+        console.log('🔑 토큰이 없어서 배너 생성을 건너뜁니다 (게스트 모드)')
+        return
+      }
+
       const response = await apiService.reports.generate()
+      console.log('📋 배너 생성 API 응답:', response)
       
-      if (response) {
+      if (!response) {
+        console.log('⚠️ 배너 생성 권한이 없거나 오류 발생 - 기존 배너 유지')
+        return
+      }
+      
+      if (response && Array.isArray(response) && response.length > 0) {
         const additionalData = {
           productName: "닭가슴살",
           reviewCount: "최신",
           sentiment: "긍정적"
         }
         
+        console.log('🔄 새 배너 목록 생성 중...')
         const updatedBanners = await apiService.banner.generateAndAddBanner(banners, {
-          ...response,
           ...additionalData
         })
         
         const limitedBanners = maintainMaxBanners(updatedBanners)
         setBanners(limitedBanners)
-        setCurrentBannerIndex(0) // 새 배너를 첫 번째로 설정
+        setCurrentBannerIndex(0)
         
-        // 🎯 새 캐치프레이즈 하이라이트 효과
-        if (limitedBanners[0]?.chatPhrase) {
-          console.log("새 캐치프레이즈 적용:", limitedBanners[0].chatPhrase)
-          setCatchPhraseHighlight(true)
-          setTimeout(() => setCatchPhraseHighlight(false), 1000)
-        }
-        
-        console.log("게스트 새 배너 생성 성공:", response)
+        // 🎯 헬퍼 함수 사용
+        updateCatchPhraseFromBanner(0, limitedBanners)
+        console.log("🎉 게스트 새 배너 생성 성공!")
       }
     } catch (error) {
-      console.log("게스트 배너 생성 실패 (정상적인 경우), 기본 배너 사용:", error.message)
+      console.log("⚠️ 게스트 배너 생성 실패 (정상적인 경우일 수 있음):", {
+        message: error.message,
+        status: error.response?.status
+      })
+      
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        console.log('🔑 권한 부족으로 기본 배너 사용 (정상)')
+        return
+      }
+      
+      if (error.message.includes('JSON') || error.message.includes('Unexpected end')) {
+        console.log('🔑 서버 응답 파싱 오류 - 기본 배너 유지')
+        return
+      }
     }
   }
 
@@ -392,11 +437,15 @@ function HomeGuest() {
     navigate("/login")
   }
 
-  // 배너 슬라이드 제어 (수동 슬라이드만)
+  // 🎯 수정된 배너 슬라이드 제어 함수들 - 헬퍼 함수 사용
   const goToPrevBanner = () => {
     setCurrentBannerIndex((prev) => {
       const newIndex = (prev - 1 + banners.length) % banners.length
       console.log(`Manual prev: ${prev} -> ${newIndex}`)
+      
+      // 🎯 캐치프레이즈 즉시 업데이트
+      setTimeout(() => updateCatchPhraseFromBanner(newIndex, banners), 0)
+      
       return newIndex
     })
   }
@@ -405,6 +454,10 @@ function HomeGuest() {
     setCurrentBannerIndex((prev) => {
       const newIndex = (prev + 1) % banners.length
       console.log(`Manual next: ${prev} -> ${newIndex}`)
+      
+      // 🎯 캐치프레이즈 즉시 업데이트  
+      setTimeout(() => updateCatchPhraseFromBanner(newIndex, banners), 0)
+      
       return newIndex
     })
   }
@@ -412,28 +465,9 @@ function HomeGuest() {
   const goToBanner = (index) => {
     console.log(`Direct go to banner: ${currentBannerIndex} -> ${index}`)
     setCurrentBannerIndex(index)
-  }
-
-  // 통합된 포인터 이벤트 핸들러 (터치와 마우스 모두 처리)
-  const handlePointerStart = (e) => {
-    if (banners.length <= 1) return
     
-    // 터치와 마우스 이벤트 구분
-    const isTouch = e.type === 'touchstart'
-    const clientX = isTouch ? e.touches[0].clientX : e.clientX
-    
-    setIsDragging(true)
-    setDragStarted(false)
-    setStartX(clientX)
-    setCurrentX(clientX)
-    setDragOffset(0)
-    
-    console.log('Pointer start:', clientX, 'isTouch:', isTouch)
-    
-    // 마우스 이벤트의 경우 기본 동작 방지
-    if (!isTouch) {
-      e.preventDefault()
-    }
+    // 🎯 캐치프레이즈 즉시 업데이트
+    setTimeout(() => updateCatchPhraseFromBanner(index, banners), 0)
   }
 
   const handlePointerMove = (e) => {
@@ -446,17 +480,13 @@ function HomeGuest() {
     const offset = clientX - startX
     setDragOffset(offset)
     
-    // 드래그가 일정 거리 이상이면 드래그 시작으로 표시
     if (Math.abs(offset) > 10) {
       setDragStarted(true)
     }
     
-    // 터치 이벤트에서는 기본 스크롤 방지
     if (isTouch && Math.abs(offset) > 10) {
       e.preventDefault()
     }
-    
-    console.log('Pointer move:', offset, 'dragStarted:', Math.abs(offset) > 10)
   }
 
   const handlePointerEnd = (e) => {
@@ -464,11 +494,8 @@ function HomeGuest() {
     
     setIsDragging(false)
     const offset = currentX - startX
-    const threshold = 80 // 스와이프 인식 임계값
+    const threshold = 80
     
-    console.log('Pointer end, offset:', offset, 'dragStarted:', dragStarted)
-    
-    // 드래그가 충분히 이루어졌고 임계값을 넘었으면 슬라이드 변경
     if (dragStarted && Math.abs(offset) > threshold) {
       if (offset > 0) {
         goToPrevBanner()
@@ -481,7 +508,6 @@ function HomeGuest() {
     setDragStarted(false)
   }
 
-  // 마우스 호버 이벤트 핸들러 추가
   const handleBannerMouseEnter = () => {
     setIsHovering(true)
   }
@@ -490,21 +516,28 @@ function HomeGuest() {
     setIsHovering(false)
   }
 
+  const handlePointerStart = (e) => {
+    if (banners.length <= 1) return
+    
+    const isTouch = e.type === 'touchstart'
+    const clientX = isTouch ? e.touches[0].clientX : e.clientX
+    
+    setIsDragging(true)
+    setDragStarted(false)
+    setStartX(clientX)
+    setCurrentX(clientX)
+    setDragOffset(0)
+    
+    if (!isTouch) {
+      e.preventDefault()
+    }
+  }
+
   // 배너 클릭/탭 핸들러 (뒤집기용)
   const handleBannerClick = (e, bannerId, position) => {
-    console.log('=== BANNER CLICK DEBUG ===')
-    console.log('Event type:', e.type)
-    console.log('Banner ID:', bannerId)
-    console.log('Position:', position)
-    console.log('Is dragging:', isDragging)
-    console.log('Drag started:', dragStarted)
-    console.log('Drag offset:', dragOffset)
-    console.log('Current flipped state:', flippedBanners[bannerId])
-    
     // 다른 배너를 클릭하면 해당 배너로 이동
     if (position !== 0) {
       e.preventDefault()
-      console.log('Switching to banner at position:', position)
       const index = banners.findIndex((banner, idx) => (banner.id || `banner-${idx}`) === bannerId)
       if (index !== -1) {
         goToBanner(index)
@@ -513,25 +546,17 @@ function HomeGuest() {
     }
     
     // 현재 배너 클릭 시 - 드래그가 아닐 때만 뒤집기
-    const touchThreshold = 30 // 더욱 관대하게 증가
+    const touchThreshold = 30
     const shouldFlip = !dragStarted && Math.abs(dragOffset) < touchThreshold
-    
-    console.log('Should flip:', shouldFlip)
-    console.log('Touch threshold:', touchThreshold)
-    console.log('Drag offset abs:', Math.abs(dragOffset))
     
     if (shouldFlip) {
       e.preventDefault()
       e.stopPropagation()
       
-      // 현재 뒤집기 상태 확인
       const currentFlipped = flippedBanners[bannerId] || false
       const newFlippedState = !currentFlipped
       
-      console.log('Flipping banner from', currentFlipped, 'to', newFlippedState)
-      
       // 모든 기존 타이머들 정리
-      console.log('Clearing all existing timers for banner:', bannerId)
       if (flipTimeouts.current[bannerId]) {
         clearTimeout(flipTimeouts.current[bannerId])
         delete flipTimeouts.current[bannerId]
@@ -549,46 +574,25 @@ function HomeGuest() {
         delete progressIntervals.current[bannerId]
       }
       
-      // 뒤집기 상태 업데이트
-      setFlippedBanners(prev => {
-        const updated = { ...prev, [bannerId]: newFlippedState }
-        console.log('Updated flipped banners:', updated)
-        return updated
-      })
+      setFlippedBanners(prev => ({ ...prev, [bannerId]: newFlippedState }))
       
-      // 수동 뒤집기 후 타이머 설정
       if (newFlippedState) {
-        // 뒤집을 때: 7초 후 자동으로 앞면으로
-        console.log('Setting 7-second timer to flip back to front')
         const backToFrontTimeout = setTimeout(() => {
-          console.log('Manual flip timer: flipping back to front for banner:', bannerId)
           setFlippedBanners(prev => ({ ...prev, [bannerId]: false }))
           setFlipProgress(prev => ({ ...prev, [bannerId]: 0 }))
         }, 7000)
         
         flipTimeouts.current[`${bannerId}-manual`] = backToFrontTimeout
       } else {
-        // 앞면으로 뒤집을 때: 진행바 재시작하고 새로운 자동 사이클 시작
-        console.log('Manual flip to front - restarting auto cycle')
         setFlipProgress(prev => ({ ...prev, [bannerId]: 0 }))
       }
-      
-      console.log('Banner flip completed for:', bannerId)
-    } else {
-      console.log('Banner flip blocked - drag detected or threshold exceeded')
-      console.log('Drag started:', dragStarted)
-      console.log('Drag offset:', dragOffset)
-      console.log('Threshold:', touchThreshold)
     }
-    
-    console.log('=== END BANNER CLICK DEBUG ===')
   }
 
   // 배너 이미지 에러 처리 함수
   const handleBannerImageError = (e, banner) => {
     console.error(`배너 이미지 로드 실패: ${banner.url}`)
     
-    // S3 URL이 실패하면 기본 이미지로 대체
     if (banner.url && banner.url.includes('s3.amazonaws.com')) {
       console.log('S3 이미지 실패, 기본 이미지로 대체')
       e.target.src = bannerlast
@@ -634,7 +638,7 @@ function HomeGuest() {
     )
   }
 
-  // 배너 렌더링 함수 - 수정된 위치 계산
+  // 배너 렌더링 함수
   const renderBanners = () => {
     return banners.map((banner, index) => {
       let position = index - currentBannerIndex
@@ -679,7 +683,6 @@ function HomeGuest() {
           key={bannerId}
           className={className}
           style={{
-            // 수정된 transform - 중앙 정렬 + X축 이동
             transform: `translateX(calc(-50% + ${translateX}px)) translateY(-50%) scale(${scale})`,
             opacity: opacity,
             zIndex: position === 0 ? 10 : 5,
@@ -705,14 +708,14 @@ function HomeGuest() {
                 리뷰 기반
               </div>
 
-              {/* 배너 번호 표시 (오른쪽 상단) */}
+              {/* 배너 번호 표시 */}
               {position === 0 && (
                 <div className="banner-number">
                   {currentBannerIndex + 1}/{banners.length}
                 </div>
               )}
 
-              {/* 진행률 표시 (현재 활성 배너에서만) */}
+              {/* 진행률 표시 */}
               {position === 0 && !isDragging && (
                 <div className="flip-progress">
                   <span>리뷰 보기</span>
@@ -726,7 +729,7 @@ function HomeGuest() {
               )}
             </div>
             
-            {/* 배너 뒷면 - 감성적인 하얀 배경의 리뷰 정보 */}
+            {/* 배너 뒷면 */}
             <div className="banner-back">
               <div className="review-info-header">
                 <div className="review-info-title">
@@ -763,7 +766,7 @@ function HomeGuest() {
     <div className="app">
       {/* 헤더 */}
       <header className="header">
-        <h1 className="logo">세 끼 통 살</h1>
+        <h1 className="logo">세 라 통 살</h1>
         <div className="header-icons">
           <img src={cartIcon || "/placeholder.svg"} alt="장바구니" className="header-icon cart-icon" />
           <img src={notificationIcon || "/placeholder.svg"} alt="알림" className="header-icon" />
@@ -774,7 +777,7 @@ function HomeGuest() {
       <div className="search-container">
         <div className="search-bar">
           <img src={searchIcon || "/placeholder.svg"} alt="검색" className="search-icon" />
-          <input type="text" placeholder="세끼통살에서 검색해보세요!" className="search-input" />
+          <input type="text" placeholder="세라통살에서 검색해보세요!" className="search-input" />
         </div>
       </div>
       
@@ -819,7 +822,7 @@ function HomeGuest() {
         </div>
       </div>
 
-      {/* 수정된 캐치프레이즈 */}
+      {/* 🎯 수정된 캐치프레이즈 */}
       <div className={`catch-phrase ${catchPhraseHighlight ? 'highlight' : ''}`}>
         {displayCatchPhrase}
       </div>
