@@ -317,29 +317,51 @@ class ApiService {
 
     // 새 배너(=이미지) 생성 후 목록을 최신화(4→3→2로 자연 치환)
     async generateAndAddBanner(currentBanners, additionalData = {}) {
-      // 서버에서 ‘리포트+배너 생성’ 실행
-      const r = await apiService.reports.generate();
-      if (!r?.imageBannerUrl) return currentBanners;
+  console.log('새 배너 생성 시작:', additionalData);
+  
+  // 서버에서 리포트+배너 생성 실행
+  const reportResult = await apiService.reports.generate();
+  console.log('리포트 생성 결과:', reportResult);
+  
+  if (!reportResult?.imageBannerUrl) {
+    console.log('새 배너 이미지 URL이 없음');
+    return currentBanners;
+  }
 
-      // 새 presigned가 발급되므로 전체 목록을 다시 가져오면 자동으로 [새, 3, 2] 형태가 됨
-      const fresh = await this._fetchFromServer();
-      // 추가 메타(문구 등)가 있으면 첫 항목에 병합
-      if (fresh.length) {
-        fresh[0] = {
-          ...fresh[0],
-          chatPhrase: r.chatPhraseKo || fresh[0].chatPhrase,
-          reviewInfo: {
-            ...(fresh[0].reviewInfo || {}),
-            ...additionalData,
-            generatedAt: new Date().toLocaleString('ko-KR')
-          }
-        };
-        // 캐시 갱신(만료는 _fetchFromServer에서 이미 반영)
-        const expiresAt = Math.min(...fresh.map(i => this._computeExpiry(i.url)));
-        this.cacheBanners(fresh, expiresAt);
+  // 새 presigned가 발급되므로 전체 목록을 다시 가져오기
+  const fresh = await this._fetchFromServer();
+  console.log('서버에서 가져온 새 배너 목록:', fresh);
+  
+  // 추가 메타(문구 등)가 있으면 첫 항목에 병합
+  if (fresh.length) {
+    // 핵심: API 응답의 캐치프레이즈를 확실히 적용
+    const newCatchPhrase = reportResult.chatPhraseKo || additionalData.chatPhrase;
+    
+    console.log('적용할 캐치프레이즈:', {
+      fromAPI: reportResult.chatPhraseKo,
+      fromAdditional: additionalData.chatPhrase,
+      final: newCatchPhrase
+    });
+
+    fresh[0] = {
+      ...fresh[0],
+      chatPhrase: newCatchPhrase, // API 응답의 캐치프레이즈 우선 적용
+      reviewInfo: {
+        ...(fresh[0].reviewInfo || {}),
+        ...additionalData,
+        generatedAt: new Date().toLocaleString('ko-KR')
       }
-      return fresh;
-    },
+    };
+    
+    console.log('첫 번째 배너 업데이트 완료:', fresh[0]);
+    
+    // 캐시 갱신
+    const expiresAt = Math.min(...fresh.map(i => this._computeExpiry(i.url)));
+    this.cacheBanners(fresh, expiresAt);
+  }
+  
+  return fresh;
+},
 
     // 기본 배너들 (초기 로드/장애 대비)
     getDefaultBanners() {
