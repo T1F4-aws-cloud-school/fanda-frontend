@@ -121,6 +121,55 @@ class ApiService {
       }
     },
 
+    // 개선 비교 리포트 생성 및 슬랙 전송 (관리자 전용)
+    generateCompareReport: async (productId, baselineKey, startAt, endAt) => {
+      try {
+        const response = await axios.post(
+          `/api/v1/reports/feedback/compare?productId=${productId}&baselineKey=${encodeURIComponent(baselineKey)}&startAt=${startAt}&endAt=${endAt}`
+        );
+        console.log('개선 비교 리포트 생성 성공:', response.data);
+        return response.data;
+      } catch (error) {
+        console.error('개선 비교 리포트 생성 실패:', error);
+        throw error;
+      }
+    },
+
+    // 리뷰 수집과 동시에 비교 리포트 생성 (통합 메소드)
+    collectAndGenerateReport: async (productId, startAt, endAt, baselineKey = null) => {
+      try {
+        console.log('리뷰 수집 및 비교 리포트 생성 시작:', {
+          productId,
+          startAt,
+          endAt,
+          baselineKey
+        });
+
+        // 1단계: 기간별 리뷰 수집
+        const collectResult = await apiService.admin.collectReviewsByPeriod(productId, startAt, endAt);
+        
+        // 2단계: 비교 리포트 생성 (baselineKey가 제공된 경우에만)
+        let reportResult = null;
+        if (baselineKey) {
+          try {
+            reportResult = await apiService.admin.generateCompareReport(productId, baselineKey, startAt, endAt);
+          } catch (reportError) {
+            console.warn('비교 리포트 생성은 실패했지만 리뷰 수집은 성공:', reportError);
+            // 리포트 생성 실패해도 리뷰 수집은 성공했으므로 계속 진행
+          }
+        }
+
+        return {
+          collect: collectResult,
+          report: reportResult,
+          success: true
+        };
+      } catch (error) {
+        console.error('리뷰 수집 및 비교 리포트 생성 실패:', error);
+        throw error;
+      }
+    },
+
     // 관리자 권한 체크
     checkAdminAuth: () => {
       const token = localStorage.getItem('accessToken');

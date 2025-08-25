@@ -108,12 +108,18 @@ function HomeGuest() {
   
   // 스와이프 기능을 위한 상태
   const [isDragging, setIsDragging] = useState(false)
+  const [dragStarted, setDragStarted] = useState(false) // 드래그 시작 여부
   const [startX, setStartX] = useState(0)
   const [currentX, setCurrentX] = useState(0)
   const [dragOffset, setDragOffset] = useState(0)
-  const [autoSlideEnabled, setAutoSlideEnabled] = useState(true)
   const bannerSlidesRef = useRef(null)
-  const autoSlideRef = useRef(null)
+  
+  // 뒤집기 관련 새로운 상태 추가
+  const [flippedBanners, setFlippedBanners] = useState({}) // 배너별 뒤집기 상태
+  const [flipProgress, setFlipProgress] = useState({}) // 배너별 진행률
+  const [isHovering, setIsHovering] = useState(false) // 호버 상태
+  const flipTimeouts = useRef({}) // 배너별 타이머
+  const progressIntervals = useRef({}) // 진행률 타이머
   
   const navigate = useNavigate()
   const categories = ["전체", "베스트", "오늘특가", "대량구매", "신상품"]
@@ -123,28 +129,150 @@ function HomeGuest() {
     loadInitialData()
   }, [])
 
-  // 자동 슬라이드 (5초마다) - 스와이프 중일 때는 멈춤
-  useEffect(() => {
-    if (banners.length > 1 && autoSlideEnabled && !isDragging) {
-      autoSlideRef.current = setInterval(() => {
-        setCurrentBannerIndex((prev) => {
-          const nextIndex = (prev + 1) % banners.length
-          console.log(`Auto slide: ${prev} -> ${nextIndex}`)
-          return nextIndex
-        })
-      }, 5000)
-      
-      return () => {
-        if (autoSlideRef.current) {
-          clearInterval(autoSlideRef.current)
+  // 배너 인덱스 변경 시 다른 배너들을 앞면으로 리셋하는 useEffect 추가
+useEffect(() => {
+  if (banners.length === 0) return;
+
+  // 현재 활성 배너가 아닌 모든 배너들을 앞면으로 리셋
+  const resetOtherBanners = () => {
+    const currentBannerId = banners[currentBannerIndex]?.id || `banner-${currentBannerIndex}`;
+    
+    // 새로운 flippedBanners 객체 생성
+    const newFlippedBanners = {};
+    banners.forEach((banner, index) => {
+      const bannerId = banner.id || `banner-${index}`;
+      // 현재 활성 배너가 아닌 경우 false로 리셋, 현재 배너는 기존 상태 유지
+      if (bannerId !== currentBannerId) {
+        newFlippedBanners[bannerId] = false;
+        
+        // 해당 배너의 모든 타이머 정리
+        if (flipTimeouts.current[bannerId]) {
+          clearTimeout(flipTimeouts.current[bannerId]);
+          delete flipTimeouts.current[bannerId];
         }
+        if (flipTimeouts.current[`${bannerId}-back`]) {
+          clearTimeout(flipTimeouts.current[`${bannerId}-back`]);
+          delete flipTimeouts.current[`${bannerId}-back`];
+        }
+        if (flipTimeouts.current[`${bannerId}-manual`]) {
+          clearTimeout(flipTimeouts.current[`${bannerId}-manual`]);
+          delete flipTimeouts.current[`${bannerId}-manual`];
+        }
+        if (progressIntervals.current[bannerId]) {
+          clearInterval(progressIntervals.current[bannerId]);
+          delete progressIntervals.current[bannerId];
+        }
+      } else {
+        // 현재 배너는 기존 상태 유지
+        newFlippedBanners[bannerId] = flippedBanners[bannerId] || false;
       }
-    } else {
-      if (autoSlideRef.current) {
-        clearInterval(autoSlideRef.current)
+    });
+
+    // 상태 업데이트
+    setFlippedBanners(newFlippedBanners);
+    
+    // 진행률도 리셋 (현재 배너 제외)
+    const newFlipProgress = {};
+    banners.forEach((banner, index) => {
+      const bannerId = banner.id || `banner-${index}`;
+      if (bannerId !== currentBannerId) {
+        newFlipProgress[bannerId] = 0;
+      } else {
+        newFlipProgress[bannerId] = flipProgress[bannerId] || 0;
       }
+    });
+    setFlipProgress(newFlipProgress);
+    
+    console.log('배너 변경으로 인한 다른 배너들 리셋 완료, 현재 배너:', currentBannerId);
+  };
+
+  // 약간의 지연을 두어 배너 전환이 완료된 후 리셋
+  const resetTimer = setTimeout(resetOtherBanners, 100);
+
+  return () => clearTimeout(resetTimer);
+}, [currentBannerIndex, banners]); // flippedBanners와 flipProgress는 의존성에서 제외하여 무한 루프 방지
+
+
+  // 배너 뒤집기 관리 useEffect 추가 (자동 슬라이드 대신)
+  useEffect(() => {
+  if (banners.length === 0 || isDragging) return
+  // 모바일에서는 호버 체크하지 않음 (isHovering 제거)
+
+  // 현재 활성 배너에 대해서만 뒤집기 타이머 설정
+  const currentBanner = banners[currentBannerIndex]
+  if (!currentBanner) return
+
+  const bannerId = currentBanner.id || `banner-${currentBannerIndex}`
+
+  // 이미 수동으로 뒤집어져 있으면 자동 타이머 설정하지 않음
+  if (flippedBanners[bannerId]) return
+
+  // 기존 타이머들 정리
+  Object.values(flipTimeouts.current).forEach(timeout => clearTimeout(timeout))
+  Object.values(progressIntervals.current).forEach(interval => clearInterval(interval))
+  flipTimeouts.current = {}
+  progressIntervals.current = {}
+
+  // 진행률 초기화
+  setFlipProgress(prev => ({ ...prev, [bannerId]: 0 }))
+
+  console.log('Starting auto flip timer for banner:', bannerId)
+
+  // 진행률 업데이트 (100ms마다)
+  const progressInterval = setInterval(() => {
+    setFlipProgress(prev => {
+      const current = prev[bannerId] || 0
+      const newProgress = Math.min(current + 2, 100) // 5초 = 5000ms, 100ms마다 2%씩 증가
+      return { ...prev, [bannerId]: newProgress }
+    })
+  }, 100)
+  
+  progressIntervals.current[bannerId] = progressInterval
+
+  // 5초 후 뒤집기
+  const flipTimeout = setTimeout(() => {
+    console.log('Auto flipping banner to back:', bannerId)
+    setFlippedBanners(prev => ({ ...prev, [bannerId]: true }))
+    
+    // 3초 후 다시 앞면으로
+    const backToFrontTimeout = setTimeout(() => {
+      console.log('Auto flipping banner to front:', bannerId)
+      setFlippedBanners(prev => ({ ...prev, [bannerId]: false }))
+      setFlipProgress(prev => ({ ...prev, [bannerId]: 0 }))
+    }, 3000)
+    
+    // backToFrontTimeout도 관리하기 위해 저장
+    flipTimeouts.current[`${bannerId}-back`] = backToFrontTimeout
+  }, 5000)
+
+  flipTimeouts.current[bannerId] = flipTimeout
+
+  // 정리 함수
+  return () => {
+    clearTimeout(flipTimeout)
+    clearInterval(progressInterval)
+    // 추가 타이머도 정리
+    if (flipTimeouts.current[`${bannerId}-back`]) {
+      clearTimeout(flipTimeouts.current[`${bannerId}-back`])
     }
-  }, [banners.length, autoSlideEnabled, isDragging])
+  }
+}, [currentBannerIndex, banners, isDragging, flippedBanners])
+  
+// 컴포넌트 언마운트 시 타이머 정리
+  useEffect(() => {
+    return () => {
+      Object.values(flipTimeouts.current).forEach(timeout => clearTimeout(timeout))
+      Object.values(progressIntervals.current).forEach(interval => clearInterval(interval))
+    }
+  }, [])
+
+  // 배너 최대 3개 유지하는 함수
+  const maintainMaxBanners = (bannerList) => {
+    if (bannerList.length > 3) {
+      return bannerList.slice(0, 3) // 최신 3개만 유지
+    }
+    return bannerList
+  }
 
   // 초기 데이터 로드
   const loadInitialData = async () => {
@@ -164,14 +292,16 @@ function HomeGuest() {
   const loadInitialBanners = async () => {
     try {
       const bannerList = await apiService.banner.getBannerList()
-      setBanners(bannerList)
-      setCurrentBannerIndex(0)
-      console.log("게스트 초기 배너들 로드 완료:", bannerList)
+      const limitedBanners = maintainMaxBanners(bannerList)
+      setBanners(limitedBanners)
+      setCurrentBannerIndex(0) // 첫 번째 배너로 설정
+      console.log("게스트 초기 배너들 로드 완료:", limitedBanners)
     } catch (error) {
       console.error("배너 로드 실패:", error)
       // 에러 시 기본 배너들 사용
       const defaultBanners = apiService.banner.getDefaultBanners()
-      setBanners(defaultBanners)
+      setBanners(maintainMaxBanners(defaultBanners))
+      setCurrentBannerIndex(0) // 첫 번째 배너로 설정
     }
   }
 
@@ -192,8 +322,9 @@ function HomeGuest() {
           ...additionalData
         })
         
-        setBanners(updatedBanners)
-        setCurrentBannerIndex(0)
+        const limitedBanners = maintainMaxBanners(updatedBanners)
+        setBanners(limitedBanners)
+        setCurrentBannerIndex(0) // 새 배너를 첫 번째로 설정
         console.log("게스트 새 배너 생성 성공:", response)
       }
     } catch (error) {
@@ -206,7 +337,7 @@ function HomeGuest() {
     navigate("/login")
   }
 
-  // 배너 슬라이드 제어
+  // 배너 슬라이드 제어 (수동 슬라이드만)
   const goToPrevBanner = () => {
     setCurrentBannerIndex((prev) => {
       const newIndex = (prev - 1 + banners.length) % banners.length
@@ -228,101 +359,195 @@ function HomeGuest() {
     setCurrentBannerIndex(index)
   }
 
-  // 스와이프 이벤트 핸들러들
-  const handleTouchStart = (e) => {
+  // 통합된 포인터 이벤트 핸들러 (터치와 마우스 모두 처리)
+  const handlePointerStart = (e) => {
     if (banners.length <= 1) return
     
+    // 터치와 마우스 이벤트 구분
+    const isTouch = e.type === 'touchstart'
+    const clientX = isTouch ? e.touches[0].clientX : e.clientX
+    
     setIsDragging(true)
-    setAutoSlideEnabled(false)
-    const touch = e.touches[0]
-    setStartX(touch.clientX)
-    setCurrentX(touch.clientX)
+    setDragStarted(false)
+    setStartX(clientX)
+    setCurrentX(clientX)
     setDragOffset(0)
     
-    console.log('Touch start:', touch.clientX)
+    console.log('Pointer start:', clientX, 'isTouch:', isTouch)
+    
+    // 마우스 이벤트의 경우 기본 동작 방지
+    if (!isTouch) {
+      e.preventDefault()
+    }
   }
 
-  const handleTouchMove = (e) => {
+  const handlePointerMove = (e) => {
     if (!isDragging || banners.length <= 1) return
     
+    const isTouch = e.type === 'touchmove'
+    const clientX = isTouch ? e.touches[0].clientX : e.clientX
+    
+    setCurrentX(clientX)
+    const offset = clientX - startX
+    setDragOffset(offset)
+    
+    // 드래그가 일정 거리 이상이면 드래그 시작으로 표시
+    if (Math.abs(offset) > 10) {
+      setDragStarted(true)
+    }
+    
+    // 터치 이벤트에서는 기본 스크롤 방지
+    if (isTouch && Math.abs(offset) > 10) {
+      e.preventDefault()
+    }
+    
+    console.log('Pointer move:', offset, 'dragStarted:', Math.abs(offset) > 10)
+  }
+
+  const handlePointerEnd = (e) => {
+    if (!isDragging || banners.length <= 1) return
+    
+    setIsDragging(false)
+    const offset = currentX - startX
+    const threshold = 80 // 스와이프 인식 임계값
+    
+    console.log('Pointer end, offset:', offset, 'dragStarted:', dragStarted)
+    
+    // 드래그가 충분히 이루어졌고 임계값을 넘었으면 슬라이드 변경
+    if (dragStarted && Math.abs(offset) > threshold) {
+      if (offset > 0) {
+        goToPrevBanner()
+      } else {
+        goToNextBanner()
+      }
+    }
+    
+    setDragOffset(0)
+    setDragStarted(false)
+  }
+
+  // 마우스 호버 이벤트 핸들러 추가
+  const handleBannerMouseEnter = () => {
+    setIsHovering(true)
+  }
+
+  const handleBannerMouseLeave = () => {
+    setIsHovering(false)
+  }
+
+  // 배너 클릭/탭 핸들러 (뒤집기용)
+  const handleBannerClick = (e, bannerId, position) => {
+  console.log('=== BANNER CLICK DEBUG ===')
+  console.log('Event type:', e.type)
+  console.log('Banner ID:', bannerId)
+  console.log('Position:', position)
+  console.log('Is dragging:', isDragging)
+  console.log('Drag started:', dragStarted)
+  console.log('Drag offset:', dragOffset)
+  console.log('Current flipped state:', flippedBanners[bannerId])
+  
+  // 다른 배너를 클릭하면 해당 배너로 이동
+  if (position !== 0) {
     e.preventDefault()
-    const touch = e.touches[0]
-    setCurrentX(touch.clientX)
-    const offset = touch.clientX - startX
-    setDragOffset(offset)
-    
-    console.log('Touch move:', offset)
+    console.log('Switching to banner at position:', position)
+    const index = banners.findIndex((banner, idx) => (banner.id || `banner-${idx}`) === bannerId)
+    if (index !== -1) {
+      goToBanner(index)
+    }
+    return
   }
-
-  const handleTouchEnd = (e) => {
-    if (!isDragging || banners.length <= 1) return
+  
+  // 현재 배너 클릭 시 - 드래그가 아닐 때만 뒤집기
+  const touchThreshold = 30 // 더욱 관대하게 증가
+  const shouldFlip = !dragStarted && Math.abs(dragOffset) < touchThreshold
+  
+  console.log('Should flip:', shouldFlip)
+  console.log('Touch threshold:', touchThreshold)
+  console.log('Drag offset abs:', Math.abs(dragOffset))
+  
+  if (shouldFlip) {
+    e.preventDefault()
+    e.stopPropagation()
     
-    setIsDragging(false)
-    const offset = currentX - startX
-    const threshold = 80
+    // 현재 뒤집기 상태 확인
+    const currentFlipped = flippedBanners[bannerId] || false
+    const newFlippedState = !currentFlipped
     
-    console.log('Touch end, offset:', offset)
+    console.log('Flipping banner from', currentFlipped, 'to', newFlippedState)
     
-    if (Math.abs(offset) > threshold) {
-      if (offset > 0) {
-        goToPrevBanner()
-      } else {
-        goToNextBanner()
-      }
+    // 모든 기존 타이머들 정리
+    console.log('Clearing all existing timers for banner:', bannerId)
+    if (flipTimeouts.current[bannerId]) {
+      clearTimeout(flipTimeouts.current[bannerId])
+      delete flipTimeouts.current[bannerId]
+    }
+    if (flipTimeouts.current[`${bannerId}-back`]) {
+      clearTimeout(flipTimeouts.current[`${bannerId}-back`])
+      delete flipTimeouts.current[`${bannerId}-back`]
+    }
+    if (progressIntervals.current[bannerId]) {
+      clearInterval(progressIntervals.current[bannerId])
+      delete progressIntervals.current[bannerId]
     }
     
-    setDragOffset(0)
+    // 뒤집기 상태 업데이트
+    setFlippedBanners(prev => {
+      const updated = { ...prev, [bannerId]: newFlippedState }
+      console.log('Updated flipped banners:', updated)
+      return updated
+    })
     
-    setTimeout(() => {
-      setAutoSlideEnabled(true)
-    }, 100)
-  }
-
-  // 마우스 이벤트 핸들러들
-  const handleMouseDown = (e) => {
-    if (banners.length <= 1) return
-    
-    setIsDragging(true)
-    setAutoSlideEnabled(false)
-    setStartX(e.clientX)
-    setCurrentX(e.clientX)
-    setDragOffset(0)
-    
-    console.log('Mouse down:', e.clientX)
-  }
-
-  const handleMouseMove = (e) => {
-    if (!isDragging || banners.length <= 1) return
-    
-    setCurrentX(e.clientX)
-    const offset = e.clientX - startX
-    setDragOffset(offset)
-    
-    console.log('Mouse move:', offset)
-  }
-
-  const handleMouseUp = (e) => {
-    if (!isDragging || banners.length <= 1) return
-    
-    setIsDragging(false)
-    const offset = currentX - startX
-    const threshold = 80
-    
-    console.log('Mouse up, offset:', offset)
-    
-    if (Math.abs(offset) > threshold) {
-      if (offset > 0) {
-        goToPrevBanner()
-      } else {
-        goToNextBanner()
-      }
+    // 수동 뒤집기 후 타이머 설정
+    if (newFlippedState) {
+      // 뒤집을 때: 7초 후 자동으로 앞면으로
+      console.log('Setting 7-second timer to flip back to front')
+      const backToFrontTimeout = setTimeout(() => {
+        console.log('Manual flip timer: flipping back to front for banner:', bannerId)
+        setFlippedBanners(prev => ({ ...prev, [bannerId]: false }))
+        setFlipProgress(prev => ({ ...prev, [bannerId]: 0 }))
+      }, 7000)
+      
+      flipTimeouts.current[`${bannerId}-manual`] = backToFrontTimeout
+    } else {
+      // 앞면으로 뒤집을 때: 진행바 재시작하고 새로운 자동 사이클 시작
+      console.log('Manual flip to front - restarting auto cycle')
+      setFlipProgress(prev => ({ ...prev, [bannerId]: 0 }))
     }
     
-    setDragOffset(0)
-    
-    setTimeout(() => {
-      setAutoSlideEnabled(true)
-    }, 100)
+    console.log('Banner flip completed for:', bannerId)
+  } else {
+    console.log('Banner flip blocked - drag detected or threshold exceeded')
+    console.log('Drag started:', dragStarted)
+    console.log('Drag offset:', dragOffset)
+    console.log('Threshold:', touchThreshold)
+  }
+  
+  console.log('=== END BANNER CLICK DEBUG ===')
+}
+
+  // 모의 리뷰 데이터 생성 함수
+  const getMockReviewsForBanner = (banner) => {
+    const mockReviews = [
+      {
+        id: 1,
+        rating: 5,
+        text: "정말 부드럽고 맛있어요! 다이어트에 최고",
+        author: "김**님"
+      },
+      {
+        id: 2,
+        rating: 5,
+        text: "단백질 함량 높고 맛도 좋아서 계속 주문해요",
+        author: "이**님"
+      },
+      {
+        id: 3,
+        rating: 4,
+        text: "배송도 빠르고 포장도 깔끔해서 만족!",
+        author: "박**님"
+      }
+    ]
+    return mockReviews
   }
 
   const toggleRecommendedLike = (productId) => {
@@ -340,11 +565,138 @@ function HomeGuest() {
   // 현재 배너의 캐치프레이즈
   const currentCatchPhrase = banners[currentBannerIndex]?.chatPhrase || "인기 최고 판매율 1위 닭가슴살을 만나보세요!"
 
+  // 배너 렌더링 함수 - 수정된 위치 계산
+  const renderBanners = () => {
+    return banners.map((banner, index) => {
+      let position = index - currentBannerIndex
+      
+      if (position > banners.length / 2) {
+        position -= banners.length
+      } else if (position < -banners.length / 2) {
+        position += banners.length
+      }
+      
+      let className = 'banner-slide'
+      if (position === 0) {
+        className += ' active'
+      } else {
+        className += ' side'
+      }
+      
+      const bannerId = banner.id || `banner-${index}`
+      const isFlipped = flippedBanners[bannerId] || false
+      const progress = flipProgress[bannerId] || 0
+      
+      if (isFlipped) {
+        className += ' flipped'
+      }
+      
+      const SLIDE = 298
+      const GAP = 20      
+      const STEP = SLIDE + GAP
+      let translateX = position * STEP
+      
+      if (isDragging) {
+        translateX += dragOffset
+      }
+      
+      const scale = 1
+      const opacity = position === 0 ? 1 : 0.7
+
+      const mockReviews = getMockReviewsForBanner(banner)
+      
+      return (
+        <div 
+          key={bannerId}
+          className={className}
+          style={{
+            // 수정된 transform - 중앙 정렬 + X축 이동
+            transform: `translateX(calc(-50% + ${translateX}px)) translateY(-50%) scale(${scale})`,
+            opacity: opacity,
+            zIndex: position === 0 ? 10 : 5,
+            transition: isDragging ? 'none' : 'transform 420ms cubic-bezier(.22,.61,.36,1), opacity 300ms ease'
+          }}
+          onMouseEnter={handleBannerMouseEnter}
+          onMouseLeave={handleBannerMouseLeave}
+          onClick={(e) => handleBannerClick(e, bannerId, position)}
+        >
+          <div className="banner-slide-inner">
+            {/* 배너 앞면 */}
+            <div className="banner-front">
+              <img
+                src={banner.url}
+                alt={banner.chatPhrase}
+                className="home-banner-image"
+                onError={(e) => {
+                  e.target.src = bannerlast
+                }}
+                draggable={false}
+              />
+              
+              {/* 리뷰 기반 배지 */}
+              <div className="review-based-badge">
+                리뷰 기반
+              </div>
+
+              {/* 배너 번호 표시 (오른쪽 상단) */}
+              {position === 0 && (
+                <div className="banner-number">
+                  {currentBannerIndex + 1}/{banners.length}
+                </div>
+              )}
+
+              {/* 진행률 표시 (현재 활성 배너에서만) */}
+              {position === 0 && !isDragging && (
+                <div className="flip-progress">
+                  <span>리뷰 보기</span>
+                  <div className="flip-progress-bar">
+                    <div 
+                      className="flip-progress-fill"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            {/* 배너 뒷면 - 감성적인 하얀 배경의 리뷰 정보 */}
+            <div className="banner-back">
+              <div className="review-info-header">
+                <div className="review-info-title">
+                  🔥 {banner.reviewInfo?.productName || "수비드 닭가슴살"}
+                </div>
+                <div className="review-info-meta">
+                  <span>⭐ 4.8점</span>
+                  <span>📝 {banner.reviewInfo?.reviewCount || "1,247"}개</span>
+                  <span>✨ AI 분석</span>
+                </div>
+              </div>
+              
+              <div className="reviews-display-container">
+                {mockReviews.map((review) => (
+                  <div key={review.id} className="review-display-item">
+                    <div className="review-display-rating">
+                      {"⭐".repeat(review.rating)}
+                    </div>
+                    <div className="review-display-text">
+                      "{review.text}"
+                    </div>
+                    <div className="review-display-author">- {review.author}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )
+    })
+  }
+
   return (
     <div className="app">
       {/* 헤더 */}
       <header className="header">
-        <h1 className="logo">세 끼 통 살</h1>
+        <h1 className="logo">세 라 통 살</h1>
         <div className="header-icons">
           <img src={cartIcon || "/placeholder.svg"} alt="장바구니" className="header-icon cart-icon" />
           <img src={notificationIcon || "/placeholder.svg"} alt="알림" className="header-icon" />
@@ -364,7 +716,7 @@ function HomeGuest() {
         * 고객님들의 리뷰를 기반으로 상품을 추천드립니다.
       </div>
 
-      {/* 배너 존 - 호버 오버레이 포함 */}
+      {/* 배너 존 - 새로운 뒤집기 시스템 */}
       <div className={`home-banner-zone ${banners.length > 1 ? 'multiple-banners' : ''}`}>
         <div className="banner-slider">
           <div 
@@ -374,86 +726,15 @@ function HomeGuest() {
               cursor: isDragging ? 'grabbing' : 'grab',
               userSelect: 'none'
             }}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
+            onTouchStart={handlePointerStart}
+            onTouchMove={handlePointerMove}
+            onTouchEnd={handlePointerEnd}
+            onMouseDown={handlePointerStart}
+            onMouseMove={handlePointerMove}
+            onMouseUp={handlePointerEnd}
+            onMouseLeave={handlePointerEnd}
           >
-            {banners.map((banner, index) => {
-              let position = index - currentBannerIndex
-              
-              if (position > banners.length / 2) {
-                position -= banners.length
-              } else if (position < -banners.length / 2) {
-                position += banners.length
-              }
-              
-              let className = 'banner-slide'
-              if (position === 0) {
-                className += ' active'
-              } else {
-                className += ' side'
-              }
-              
-              const SLIDE = 298
-              const GAP = 20      
-              const STEP = SLIDE + GAP
-              let translateX = position * STEP
-              
-              if (isDragging) {
-                translateX += dragOffset
-              }
-              
-              const scale = 1
-              const opacity = position === 0 ? 1 : 0.7
-              
-              return (
-                <div 
-                  key={banner.id || `${banner.url}-${index}`}
-                  className={className}
-                  style={{
-                    transform: `translateX(${translateX}px) scale(${scale})`,
-                    opacity: opacity,
-                    zIndex: position === 0 ? 10 : 5,
-                    transition: isDragging ? 'none' : 'transform 420ms cubic-bezier(.22,.61,.36,1), opacity 300ms ease'
-                  }}
-                  onClick={(e) => {
-                    if (isDragging || Math.abs(dragOffset) > 10) {
-                      e.preventDefault()
-                      return
-                    }
-                    if (position !== 0) {
-                      goToBanner(index)
-                    }
-                  }}
-                >
-                  <img
-                    src={banner.url}
-                    alt={banner.chatPhrase}
-                    className="home-banner-image"
-                    onError={(e) => {
-                      e.target.src = bannerlast
-                    }}
-                    draggable={false}
-                  />
-                  
-                  {/* 호버 오버레이 */}
-                  <div className="banner-overlay">
-                    <div className="banner-overlay-content">
-                      <div className="banner-overlay-title">
-                        {banner.reviewInfo?.productName} 리뷰 기반
-                      </div>
-                      <div className="banner-overlay-details">
-                        {banner.reviewInfo?.reviewCount}개 리뷰 • {banner.reviewInfo?.sentiment} • {banner.reviewInfo?.generatedAt}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
+            {renderBanners()}
           </div>
           
           {/* 인디케이터 */}
@@ -495,30 +776,6 @@ function HomeGuest() {
         </button>
       </div>
 
-      {/* 추천상품 */}
-      <section className="recommended-section">
-        <h2 className="section-title">나를 위한 추천 상품</h2>
-        <div className="products-scroll">
-          {mockRecommendedProducts.map((product) => (
-            <div key={product.id} className="product-card">
-              <div className="product-image-container">
-                <img src={product.image} alt={product.name} className="product-image" />
-                <button className="heart-button" onClick={() => toggleRecommendedLike(product.id)}>
-                  <img 
-                    src={likedRecommended.includes(product.id) ? heart : heartGrey} 
-                    alt="찜하기" 
-                    className="heart-icon" 
-                  />
-                </button>
-              </div>
-              <div className="product-info">
-                <h4 className="product-name">{product.name}</h4>
-                <p className="product-price">{product.price}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
 
       {/* 카테고리 탭 */}
       <div className="category-tabs">
