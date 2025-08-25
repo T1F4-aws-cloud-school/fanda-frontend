@@ -277,7 +277,7 @@ export default function Manager() {
               disabled={isLoading}
               style={{ marginRight: '8px' }}
             />
-            개선 비교 리포트 생성 및 슬랙 전송
+            개선 비교 리포트 생성
           </label>
         </div>
         
@@ -311,7 +311,7 @@ export default function Manager() {
         disabled={!isFormValid}
       >
         {isLoading 
-          ? (generateReport ? "리뷰 수집 및 슬랙 전송 중..." : "수집 중...")
+          ? (generateReport ? "리뷰 수집" : "수집 중...")
           : (generateReport ? "리뷰 수집 및 비교 리포트 생성" : "리뷰 데이터 수집 시작")
         }
       </button>
