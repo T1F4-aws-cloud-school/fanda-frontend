@@ -160,6 +160,13 @@ function HomeGuest() {
       
       // 새로운 flippedBanners 객체 생성
       const newFlippedBanners = {};
+      console.log('=== 캐치프레이즈 디버깅 ===')
+      console.log('현재 배너 인덱스:', currentBannerIndex)
+      console.log('전체 배너 수:', banners.length)
+      console.log('현재 배너:', banners[currentBannerIndex])
+      console.log('현재 캐치프레이즈:', currentCatchPhrase)
+      console.log('이전 캐치프레이즈:', previousCatchPhrase)
+      console.log('배너별 캐치프레이즈 목록:')
       banners.forEach((banner, index) => {
         const bannerId = banner.id || `banner-${index}`;
         // 현재 활성 배너가 아닌 경우 false로 리셋, 현재 배너는 기존 상태 유지
