@@ -10,7 +10,7 @@ export default function ReviewCollectionResult() {
   // Manager.jsx에서 전달받은 결과 데이터
   const resultData = location.state?.resultData;
   const reportData = location.state?.reportData;
-  const slackMessage = location.state?.slackMessage;
+  const statusMessage = location.state?.statusMessage; // slackMessage → statusMessage로 변경
   const success = location.state?.success;
   const errorMessage = location.state?.errorMessage;
 
@@ -28,15 +28,15 @@ export default function ReviewCollectionResult() {
           <h2 style={{ color: '#ef4444' }}>작업이 실패했습니다</h2>
           <p>{errorMessage}</p>
           
-          {/* 슬랙 메시지 표시 */}
-          {slackMessage && (
+          {/* 상태 메시지 표시 */}
+          {statusMessage && (
             <div className="status-message">
               <div className="info-message" style={{ 
                 backgroundColor: '#fef2f2', 
                 borderColor: '#ef4444',
                 color: '#dc2626' 
               }}>
-                <p>📢 {slackMessage}</p>
+                <p>📄 {statusMessage}</p>
               </div>
             </div>
           )}
@@ -81,8 +81,6 @@ export default function ReviewCollectionResult() {
     navigate("/manager");
   };
 
-
-
   return (
     <div className="result-container">
       <div className="result-header">
@@ -90,12 +88,9 @@ export default function ReviewCollectionResult() {
       </div>
 
       <div className="result-content">
-        <div className="success-icon">
-          ✅
-        </div>
         
         <h2 className="result-title">
-          {reportData ? '리뷰 수집 및 비교 리포트{\'\\n\'}생성이 완료되었습니다!' : '리뷰 수집이{\'\\n\'}완료되었습니다!'}
+          {reportData ? '리뷰 수집 및 비교 리포트\n생성이 완료되었습니다!' : '리뷰 수집이\n완료되었습니다!'}
         </h2>
 
         {/* 결과 카드 */}
@@ -127,19 +122,19 @@ export default function ReviewCollectionResult() {
             }}>
               <span className="result-label">비교 리포트</span>
               <span className="result-value" style={{ color: '#2e7d32' }}>
-                생성 완료
+                S3에 저장 완료
               </span>
             </div>
           )}
         </div>
 
-        {/* 슬랙 메시지 표시 */}
-        {slackMessage && (
+        {/* 상태 메시지 표시 */}
+        {statusMessage && (
           <div className="status-message">
             <div className={reportData ? "success-message" : "info-message"}>
-              <p>📢 {slackMessage}</p>
+              <p>📄 {statusMessage}</p>
               {reportData && (
-                <p>생성된 비교 리포트가 슬랙으로 전송되었습니다.</p>
+                <p>생성된 비교 리포트가 S3에 저장되었습니다.</p>
               )}
             </div>
           </div>
@@ -149,7 +144,7 @@ export default function ReviewCollectionResult() {
         <div className="status-message">
           {resultData.savedCount > 0 ? (
             <div className="success-message">
-              <p>🎉 {resultData.savedCount}개의 새로운 리뷰가 수집되었습니다!</p>
+              <p> {resultData.savedCount}개의 새로운 리뷰가 수집되었습니다!</p>
               <p>상품 상세 페이지에서 확인해보세요.</p>
             </div>
           ) : (
