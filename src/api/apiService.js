@@ -119,39 +119,34 @@ class ApiService {
 
     // 개선 비교 리포트 생성 및 슬랙 전송 (관리자 전용)
     generateCompareReport: async (productId, baselineKey, startAt, endAt) => {
-  try {
-    // URL 파라미터 개별 인코딩 및 디버깅
-    const encodedProductId = encodeURIComponent(productId);
-    const encodedBaselineKey = encodeURIComponent(baselineKey);
-    const encodedStartAt = encodeURIComponent(startAt);
-    const encodedEndAt = encodeURIComponent(endAt);
-    
-    const url = `/feedback/api/v1/reports/feedback/compare?productId=${encodedProductId}&baselineKey=${encodedBaselineKey}&startAt=${encodedStartAt}&endAt=${encodedEndAt}`;
-    
-    console.log('비교 리포트 생성 요청:', {
-      원본파라미터: { productId, baselineKey, startAt, endAt },
-      인코딩된파라미터: { encodedProductId, encodedBaselineKey, encodedStartAt, encodedEndAt },
-      최종URL: url
-    });
+      try {
+        // URLSearchParams 대신 수동으로 파라미터 구성 (Postman과 동일하게)
+        const url = `/feedback/api/v1/reports/feedback/compare?productId=${productId}&baselineKey=${baselineKey}&startAt=${startAt}&endAt=${endAt}`;
+        
+        console.log('비교 리포트 생성 요청:', {
+          '최종 URL': url,
+          '파라미터들': { productId, baselineKey, startAt, endAt },
+          'baselineKey 원본': baselineKey
+        });
 
-    const response = await axios.post(url);
-    console.log('개선 비교 리포트 생성 성공:', response.data);
-    return response.data;
-  } catch (error) {
-    console.error('개선 비교 리포트 생성 실패:', {
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      data: error.response?.data,
-      message: error.message,
-      config: {
-        url: error.config?.url,
-        method: error.config?.method,
-        headers: error.config?.headers
+        const response = await axios.post(url);
+        console.log('개선 비교 리포트 생성 성공:', response.data);
+        return response.data;
+      } catch (error) {
+        console.error('개선 비교 리포트 생성 실패:', {
+          status: error.response?.status,
+          statusText: error.response?.statusText,
+          data: error.response?.data,
+          message: error.message,
+          config: {
+            url: error.config?.url,
+            method: error.config?.method,
+            headers: error.config?.headers
+          }
+        });
+        throw error;
       }
-    });
-    throw error;
-  }
-},
+    },
 
     // 리뷰 수집과 동시에 비교 리포트 생성 (통합 메소드)
     collectAndGenerateReport: async (productId, startAt, endAt, baselineKey = null) => {
@@ -339,51 +334,51 @@ class ApiService {
 
     // 새 배너(=이미지) 생성 후 목록을 최신화(4→3→2로 자연 치환)
     async generateAndAddBanner(currentBanners, additionalData = {}) {
-  console.log('새 배너 생성 시작:', additionalData);
-  
-  // 서버에서 리포트+배너 생성 실행
-  const reportResult = await apiService.reports.generate();
-  console.log('리포트 생성 결과:', reportResult);
-  
-  if (!reportResult?.imageBannerUrl) {
-    console.log('새 배너 이미지 URL이 없음');
-    return currentBanners;
-  }
-
-  // 새 presigned가 발급되므로 전체 목록을 다시 가져오기
-  const fresh = await this._fetchFromServer();
-  console.log('서버에서 가져온 새 배너 목록:', fresh);
-  
-  // 추가 메타(문구 등)가 있으면 첫 항목에 병합
-  if (fresh.length) {
-    // 핵심: API 응답의 캐치프레이즈를 확실히 적용
-    const newCatchPhrase = reportResult.chatPhraseKo || additionalData.chatPhrase;
-    
-    console.log('적용할 캐치프레이즈:', {
-      fromAPI: reportResult.chatPhraseKo,
-      fromAdditional: additionalData.chatPhrase,
-      final: newCatchPhrase
-    });
-
-    fresh[0] = {
-      ...fresh[0],
-      chatPhrase: newCatchPhrase, // API 응답의 캐치프레이즈 우선 적용
-      reviewInfo: {
-        ...(fresh[0].reviewInfo || {}),
-        ...additionalData,
-        generatedAt: new Date().toLocaleString('ko-KR')
+      console.log('새 배너 생성 시작:', additionalData);
+      
+      // 서버에서 리포트+배너 생성 실행
+      const reportResult = await apiService.reports.generate();
+      console.log('리포트 생성 결과:', reportResult);
+      
+      if (!reportResult?.imageBannerUrl) {
+        console.log('새 배너 이미지 URL이 없음');
+        return currentBanners;
       }
-    };
-    
-    console.log('첫 번째 배너 업데이트 완료:', fresh[0]);
-    
-    // 캐시 갱신
-    const expiresAt = Math.min(...fresh.map(i => this._computeExpiry(i.url)));
-    this.cacheBanners(fresh, expiresAt);
-  }
-  
-  return fresh;
-},
+
+      // 새 presigned가 발급되므로 전체 목록을 다시 가져오기
+      const fresh = await this._fetchFromServer();
+      console.log('서버에서 가져온 새 배너 목록:', fresh);
+      
+      // 추가 메타(문구 등)가 있으면 첫 항목에 병합
+      if (fresh.length) {
+        // 핵심: API 응답의 캐치프레이즈를 확실히 적용
+        const newCatchPhrase = reportResult.chatPhraseKo || additionalData.chatPhrase;
+        
+        console.log('적용할 캐치프레이즈:', {
+          fromAPI: reportResult.chatPhraseKo,
+          fromAdditional: additionalData.chatPhrase,
+          final: newCatchPhrase
+        });
+
+        fresh[0] = {
+          ...fresh[0],
+          chatPhrase: newCatchPhrase, // API 응답의 캐치프레이즈 우선 적용
+          reviewInfo: {
+            ...(fresh[0].reviewInfo || {}),
+            ...additionalData,
+            generatedAt: new Date().toLocaleString('ko-KR')
+          }
+        };
+        
+        console.log('첫 번째 배너 업데이트 완료:', fresh[0]);
+        
+        // 캐시 갱신
+        const expiresAt = Math.min(...fresh.map(i => this._computeExpiry(i.url)));
+        this.cacheBanners(fresh, expiresAt);
+      }
+      
+      return fresh;
+    },
 
     // 기본 배너들 (초기 로드/장애 대비)
     getDefaultBanners() {
