@@ -12,17 +12,18 @@ html, body {
 
 .manager-container {
   display: flex;
+  overflow-y: auto; 
   flex-direction: column;
-  justify-content: space-between;
   align-items: flex-start;
   width: 100%;
   max-width: 375px;
-  height: 100vh;
-  padding: 10px 35px;
+  min-height: 100vh; /* height 대신 min-height 사용 */
+  padding: 10px 20px;
   background-color: #F9FAFB; 
   border-radius: 20px;
   position: relative;
   margin: 0 auto;
+  box-sizing: border-box;
 }
 
 /* 헤더 */
@@ -60,6 +61,7 @@ html, body {
   padding: 15px;
   margin-bottom: 23px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-sizing: border-box;
 }
 
 /* 카드 타이틀 */
@@ -74,7 +76,8 @@ html, body {
 .product-name-container {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+  width: 100%;
 }
 
 .product-name-label {
@@ -82,10 +85,12 @@ html, body {
   font-weight: 500;
   color: #191C1F;
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .product-name-input {
-  width: 200px;
+  flex: 1;
+  min-width: 0; /* flexbox에서 텍스트 오버플로우 방지 */
   padding: 8px 14px;
   background-color: #F2F2F2;
   border: none;
@@ -94,6 +99,7 @@ html, body {
   font-weight: 500;
   color: #191C1F;
   cursor: text;
+  box-sizing: border-box;
 }
 
 .product-name-input:focus {
@@ -118,6 +124,7 @@ html, body {
   font-family: "Inter-Medium", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   color: #191C1F;
   cursor: pointer;
+  box-sizing: border-box;
 }
 
 .date-picker:focus {
@@ -151,9 +158,10 @@ html, body {
   color: white;
   border: none;
   cursor: pointer;
-  margin-top: auto; 
+  margin-top: 40px; /* auto 대신 고정 마진 */
   margin-bottom: 30px;
   transition: background-color 0.3s ease, color 0.3s ease;
+  box-sizing: border-box;
 }
 
 .start-button:disabled {
@@ -166,13 +174,28 @@ html, body {
 /* 반응형 디자인 */
 @media (max-width: 480px) {
   .manager-container {
-    padding: 30px 10px 90px 20px;
+    padding: 20px 15px 90px 15px;
   }
 
   .manager-title {
-    font-size: 22px;
-    margin-top: 30px;
-    margin-bottom: 30px;
+    font-size: 20px;
+    margin-top: 20px;
+    margin-bottom: 25px;
+  }
+
+  .white-card {
+    padding: 12px;
+    margin-bottom: 20px;
+  }
+
+  .product-name-container {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .product-name-input {
+    width: 100%;
   }
 }
 
@@ -200,18 +223,19 @@ html, body {
 @media (max-width: 767px) {
   .manager-container {
     width: 100%;
-    max-width: none;
+    max-width: 100%;
     height: 100vh;
-    padding: 30px 20px 60px;
+    padding: 20px 15px 60px 15px;
     border-radius: 0;
     box-shadow: none;
   }
   
   .manager-header {
     margin-top: 0px;
+    padding: 12px;
   }
 
   .start-button {
-    margin-bottom: 100px;
+    margin-bottom: 80px; /* 약간 줄임 */
   }
 }
