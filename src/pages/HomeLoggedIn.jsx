@@ -48,7 +48,9 @@ function HomeLoggedIn() {
   // 새로운 배너 시스템 - 메타데이터 포함 (HomeGuest와 동일)
   const [banners, setBanners] = useState([])
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0)
-  
+  const [catchPhraseHighlight, setCatchPhraseHighlight] = useState(false)
+  const [previousCatchPhrase, setPreviousCatchPhrase] = useState("")
+
   // 스와이프 기능을 위한 상태 (HomeGuest와 동일)
   const [isDragging, setIsDragging] = useState(false)
   const [dragStarted, setDragStarted] = useState(false) // 드래그 시작 여부
