@@ -119,17 +119,39 @@ class ApiService {
 
     // 개선 비교 리포트 생성 및 슬랙 전송 (관리자 전용)
     generateCompareReport: async (productId, baselineKey, startAt, endAt) => {
-      try {
-        const response = await axios.post(
-          `/feedback/api/v1/reports/feedback/compare?productId=${productId}&baselineKey=${encodeURIComponent(baselineKey)}&startAt=${startAt}&endAt=${endAt}`
-        );
-        console.log('개선 비교 리포트 생성 성공:', response.data);
-        return response.data;
-      } catch (error) {
-        console.error('개선 비교 리포트 생성 실패:', error);
-        throw error;
+  try {
+    // URL 파라미터 개별 인코딩 및 디버깅
+    const encodedProductId = encodeURIComponent(productId);
+    const encodedBaselineKey = encodeURIComponent(baselineKey);
+    const encodedStartAt = encodeURIComponent(startAt);
+    const encodedEndAt = encodeURIComponent(endAt);
+    
+    const url = `/feedback/api/v1/reports/feedback/compare?productId=${encodedProductId}&baselineKey=${encodedBaselineKey}&startAt=${encodedStartAt}&endAt=${encodedEndAt}`;
+    
+    console.log('비교 리포트 생성 요청:', {
+      원본파라미터: { productId, baselineKey, startAt, endAt },
+      인코딩된파라미터: { encodedProductId, encodedBaselineKey, encodedStartAt, encodedEndAt },
+      최종URL: url
+    });
+
+    const response = await axios.post(url);
+    console.log('개선 비교 리포트 생성 성공:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('개선 비교 리포트 생성 실패:', {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      message: error.message,
+      config: {
+        url: error.config?.url,
+        method: error.config?.method,
+        headers: error.config?.headers
       }
-    },
+    });
+    throw error;
+  }
+},
 
     // 리뷰 수집과 동시에 비교 리포트 생성 (통합 메소드)
     collectAndGenerateReport: async (productId, startAt, endAt, baselineKey = null) => {
