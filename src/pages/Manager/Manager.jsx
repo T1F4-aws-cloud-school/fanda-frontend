@@ -34,136 +34,155 @@ export default function Manager() {
   }, []);
 
   const handleStartCollection = async () => {
-    try {
-      setIsLoading(true);
-      
-      // 입력값 검증
-      if (!productId || !startDate || !endDate) {
-        alert("필수 필드를 모두 입력해주세요.");
-        return;
-      }
-
-      if (new Date(startDate) > new Date(endDate)) {
-        alert("시작 날짜가 종료 날짜보다 늦을 수 없습니다.");
-        return;
-      }
-
-      // 미래 날짜 체크
-      const today = new Date();
-      today.setHours(23, 59, 59, 999); // 오늘 끝까지
-      
-      if (new Date(endDate) > today) {
-        alert("종료 날짜는 오늘 날짜를 초과할 수 없습니다.");
-        return;
-      }
-
-      // 비교 리포트 생성이 체크되어 있는데 baselineKey가 없는 경우
-      if (generateReport && !baselineKey.trim()) {
-        alert("비교 리포트 생성을 위해서는 기준 리포트 파일명을 입력해주세요.");
-        return;
-      }
-
-      console.log("리뷰 수집 및 리포트 생성 시작:", {
-        productId: parseInt(productId),
-        startDate,
-        endDate,
-        generateReport,
-        baselineKey: generateReport ? baselineKey.trim() : null
-      });
-
-      let result;
-      let slackMessage = "";
-
-      if (generateReport && baselineKey.trim()) {
-        // 리뷰 수집 + 비교 리포트 생성 및 슬랙 전송
-        try {
-          result = await apiService.admin.collectAndGenerateReport(
-            parseInt(productId), 
-            startDate, 
-            endDate,
-            baselineKey.trim()
-          );
-          
-          console.log("리뷰 수집 및 비교 리포트 생성 성공:", result);
-          
-          if (result.report) {
-            slackMessage = "슬랙에 전송이 완료되었습니다";
-          } else {
-            slackMessage = "리뷰 수집은 완료되었지만, 슬랙 전송에 실패했습니다";
-          }
-          
-        } catch (error) {
-          console.error("리뷰 수집 및 비교 리포트 생성 실패:", error);
-          slackMessage = "슬랙 전송 실패했습니다";
-          throw error;
-        }
-      } else {
-        // 리뷰 수집만
-        try {
-          const collectResult = await apiService.admin.collectReviewsByPeriod(
-            parseInt(productId), 
-            startDate, 
-            endDate
-          );
-          
-          result = {
-            collect: collectResult,
-            report: null,
-            success: true
-          };
-          
-          console.log("리뷰 수집 성공:", collectResult);
-          slackMessage = "리뷰 수집이 완료되었습니다";
-          
-        } catch (error) {
-          console.error("리뷰 수집 실패:", error);
-          slackMessage = "리뷰 수집에 실패했습니다";
-          throw error;
-        }
-      }
-
-      // 성공 시 결과 페이지로 이동
-      navigate("/admin/review-result", { 
-        state: { 
-          resultData: result.collect,
-          reportData: result.report,
-          slackMessage: slackMessage,
-          success: true
-        } 
-      });
-
-    } catch (error) {
-      console.error("작업 실패:", error);
-      
-      // 에러 메시지 처리
-      let errorMessage = "작업에 실패했습니다.";
-      let slackMessage = "슬랙 전송 실패했습니다";
-      
-      if (error.response?.status === 401) {
-        errorMessage = "관리자 권한이 필요합니다. 로그인을 확인해주세요.";
-      } else if (error.response?.status === 404) {
-        errorMessage = "해당 상품 또는 기준 리포트를 찾을 수 없습니다.";
-      } else if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      // 실패 시에도 결과 페이지로 이동하여 실패 메시지 표시
-      navigate("/admin/review-result", { 
-        state: { 
-          resultData: null,
-          reportData: null,
-          slackMessage: slackMessage,
-          success: false,
-          errorMessage: errorMessage
-        } 
-      });
-      
-    } finally {
-      setIsLoading(false);
+  try {
+    setIsLoading(true);
+    
+    // 입력값 검증
+    if (!productId || !startDate || !endDate) {
+      alert("필수 필드를 모두 입력해주세요.");
+      return;
     }
-  };
+
+    // 🎯 상세한 파라미터 로깅
+    const requestParams = {
+      productId: parseInt(productId),
+      startDate,
+      endDate,
+      generateReport,
+      baselineKey: generateReport ? baselineKey.trim() : null
+    };
+    
+    console.log('🚀 리뷰 수집 및 리포트 생성 요청 파라미터:', requestParams);
+    console.log('🔑 현재 토큰 상태:', {
+      accessToken: localStorage.getItem('accessToken') ? '있음' : '없음',
+      refreshToken: localStorage.getItem('refreshToken') ? '있음' : '없음'
+    });
+
+    let result;
+    let slackMessage = "";
+
+    if (generateReport && baselineKey.trim()) {
+      // 🎯 비교 리포트 생성 전 추가 검증
+      console.log('📊 비교 리포트 생성 모드:', {
+        baselineKey: baselineKey.trim(),
+        baselineKeyLength: baselineKey.trim().length,
+        containsSlash: baselineKey.includes('/'),
+        containsPdf: baselineKey.includes('.pdf')
+      });
+
+      try {
+        result = await apiService.admin.collectAndGenerateReport(
+          parseInt(productId), 
+          startDate, 
+          endDate,
+          baselineKey.trim()
+        );
+        
+        console.log("✅ 리뷰 수집 및 비교 리포트 생성 성공:", result);
+        
+        if (result.report) {
+          slackMessage = "슬랙에 전송이 완료되었습니다";
+        } else {
+          slackMessage = "리뷰 수집은 완료되었지만, 슬랙 전송에 실패했습니다";
+        }
+        
+      } catch (error) {
+        console.error("❌ 리뷰 수집 및 비교 리포트 생성 실패:", {
+          error: error,
+          status: error.response?.status,
+          data: error.response?.data,
+          message: error.message
+        });
+        
+        // 🎯 구체적인 에러 메시지 분석
+        if (error.response?.status === 500) {
+          console.error('🔥 서버 내부 오류 상세:', {
+            url: error.config?.url,
+            method: error.config?.method,
+            requestData: error.config?.data,
+            responseData: error.response?.data
+          });
+        }
+        
+        slackMessage = "슬랙 전송 실패했습니다";
+        throw error;
+      }
+    } else {
+      // 리뷰 수집만
+      try {
+        console.log('📝 리뷰 수집 전용 모드');
+        const collectResult = await apiService.admin.collectReviewsByPeriod(
+          parseInt(productId), 
+          startDate, 
+          endDate
+        );
+        
+        result = {
+          collect: collectResult,
+          report: null,
+          success: true
+        };
+        
+        console.log("✅ 리뷰 수집 성공:", collectResult);
+        slackMessage = "리뷰 수집이 완료되었습니다";
+        
+      } catch (error) {
+        console.error("❌ 리뷰 수집 실패:", error);
+        slackMessage = "리뷰 수집에 실패했습니다";
+        throw error;
+      }
+    }
+
+    // 성공 시 결과 페이지로 이동
+    navigate("/admin/review-result", { 
+      state: { 
+        resultData: result.collect,
+        reportData: result.report,
+        slackMessage: slackMessage,
+        success: true
+      } 
+    });
+
+  } catch (error) {
+    console.error("💥 전체 작업 실패:", error);
+    
+    // 🎯 에러 상황별 상세 분석
+    let errorMessage = "작업에 실패했습니다.";
+    let slackMessage = "슬랙 전송 실패했습니다";
+    
+    if (error.response?.status === 401) {
+      errorMessage = "관리자 권한이 필요합니다. 로그인을 확인해주세요.";
+    } else if (error.response?.status === 404) {
+      errorMessage = "해당 상품 또는 기준 리포트를 찾을 수 없습니다.";
+    } else if (error.response?.status === 500) {
+      errorMessage = "서버 내부 오류가 발생했습니다. 관리자에게 문의하세요.";
+      console.error('🔥 500 에러 추가 정보:', {
+        requestURL: error.config?.url,
+        requestMethod: error.config?.method,
+        requestHeaders: error.config?.headers,
+        responseData: error.response?.data
+      });
+    } else if (error.response?.data?.message) {
+      errorMessage = error.response.data.message;
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+    
+    // 실패 시에도 결과 페이지로 이동하여 실패 메시지 표시
+    navigate("/admin/review-result", { 
+      state: { 
+        resultData: null,
+        reportData: null,
+        slackMessage: slackMessage,
+        success: false,
+        errorMessage: errorMessage
+      } 
+    });
+    
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   // 현재 날짜 최대값 설정 (미래 날짜 선택 방지)
   const today = new Date().toISOString().split('T')[0];
