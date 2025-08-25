@@ -130,135 +130,134 @@ function HomeGuest() {
   }, [])
 
   // 배너 인덱스 변경 시 다른 배너들을 앞면으로 리셋하는 useEffect 추가
-useEffect(() => {
-  if (banners.length === 0) return;
+  useEffect(() => {
+    if (banners.length === 0) return;
 
-  // 현재 활성 배너가 아닌 모든 배너들을 앞면으로 리셋
-  const resetOtherBanners = () => {
-    const currentBannerId = banners[currentBannerIndex]?.id || `banner-${currentBannerIndex}`;
-    
-    // 새로운 flippedBanners 객체 생성
-    const newFlippedBanners = {};
-    banners.forEach((banner, index) => {
-      const bannerId = banner.id || `banner-${index}`;
-      // 현재 활성 배너가 아닌 경우 false로 리셋, 현재 배너는 기존 상태 유지
-      if (bannerId !== currentBannerId) {
-        newFlippedBanners[bannerId] = false;
-        
-        // 해당 배너의 모든 타이머 정리
-        if (flipTimeouts.current[bannerId]) {
-          clearTimeout(flipTimeouts.current[bannerId]);
-          delete flipTimeouts.current[bannerId];
+    // 현재 활성 배너가 아닌 모든 배너들을 앞면으로 리셋
+    const resetOtherBanners = () => {
+      const currentBannerId = banners[currentBannerIndex]?.id || `banner-${currentBannerIndex}`;
+      
+      // 새로운 flippedBanners 객체 생성
+      const newFlippedBanners = {};
+      banners.forEach((banner, index) => {
+        const bannerId = banner.id || `banner-${index}`;
+        // 현재 활성 배너가 아닌 경우 false로 리셋, 현재 배너는 기존 상태 유지
+        if (bannerId !== currentBannerId) {
+          newFlippedBanners[bannerId] = false;
+          
+          // 해당 배너의 모든 타이머 정리
+          if (flipTimeouts.current[bannerId]) {
+            clearTimeout(flipTimeouts.current[bannerId]);
+            delete flipTimeouts.current[bannerId];
+          }
+          if (flipTimeouts.current[`${bannerId}-back`]) {
+            clearTimeout(flipTimeouts.current[`${bannerId}-back`]);
+            delete flipTimeouts.current[`${bannerId}-back`];
+          }
+          if (flipTimeouts.current[`${bannerId}-manual`]) {
+            clearTimeout(flipTimeouts.current[`${bannerId}-manual`]);
+            delete flipTimeouts.current[`${bannerId}-manual`];
+          }
+          if (progressIntervals.current[bannerId]) {
+            clearInterval(progressIntervals.current[bannerId]);
+            delete progressIntervals.current[bannerId];
+          }
+        } else {
+          // 현재 배너는 기존 상태 유지
+          newFlippedBanners[bannerId] = flippedBanners[bannerId] || false;
         }
-        if (flipTimeouts.current[`${bannerId}-back`]) {
-          clearTimeout(flipTimeouts.current[`${bannerId}-back`]);
-          delete flipTimeouts.current[`${bannerId}-back`];
+      });
+
+      // 상태 업데이트
+      setFlippedBanners(newFlippedBanners);
+      
+      // 진행률도 리셋 (현재 배너 제외)
+      const newFlipProgress = {};
+      banners.forEach((banner, index) => {
+        const bannerId = banner.id || `banner-${index}`;
+        if (bannerId !== currentBannerId) {
+          newFlipProgress[bannerId] = 0;
+        } else {
+          newFlipProgress[bannerId] = flipProgress[bannerId] || 0;
         }
-        if (flipTimeouts.current[`${bannerId}-manual`]) {
-          clearTimeout(flipTimeouts.current[`${bannerId}-manual`]);
-          delete flipTimeouts.current[`${bannerId}-manual`];
-        }
-        if (progressIntervals.current[bannerId]) {
-          clearInterval(progressIntervals.current[bannerId]);
-          delete progressIntervals.current[bannerId];
-        }
-      } else {
-        // 현재 배너는 기존 상태 유지
-        newFlippedBanners[bannerId] = flippedBanners[bannerId] || false;
-      }
-    });
+      });
+      setFlipProgress(newFlipProgress);
+      
+      console.log('배너 변경으로 인한 다른 배너들 리셋 완료, 현재 배너:', currentBannerId);
+    };
 
-    // 상태 업데이트
-    setFlippedBanners(newFlippedBanners);
-    
-    // 진행률도 리셋 (현재 배너 제외)
-    const newFlipProgress = {};
-    banners.forEach((banner, index) => {
-      const bannerId = banner.id || `banner-${index}`;
-      if (bannerId !== currentBannerId) {
-        newFlipProgress[bannerId] = 0;
-      } else {
-        newFlipProgress[bannerId] = flipProgress[bannerId] || 0;
-      }
-    });
-    setFlipProgress(newFlipProgress);
-    
-    console.log('배너 변경으로 인한 다른 배너들 리셋 완료, 현재 배너:', currentBannerId);
-  };
+    // 약간의 지연을 두어 배너 전환이 완료된 후 리셋
+    const resetTimer = setTimeout(resetOtherBanners, 100);
 
-  // 약간의 지연을 두어 배너 전환이 완료된 후 리셋
-  const resetTimer = setTimeout(resetOtherBanners, 100);
-
-  return () => clearTimeout(resetTimer);
-}, [currentBannerIndex, banners]); // flippedBanners와 flipProgress는 의존성에서 제외하여 무한 루프 방지
-
+    return () => clearTimeout(resetTimer);
+  }, [currentBannerIndex, banners]); // flippedBanners와 flipProgress는 의존성에서 제외하여 무한 루프 방지
 
   // 배너 뒤집기 관리 useEffect 추가 (자동 슬라이드 대신)
   useEffect(() => {
-  if (banners.length === 0 || isDragging) return
-  // 모바일에서는 호버 체크하지 않음 (isHovering 제거)
+    if (banners.length === 0 || isDragging) return
+    // 모바일에서는 호버 체크하지 않음 (isHovering 제거)
 
-  // 현재 활성 배너에 대해서만 뒤집기 타이머 설정
-  const currentBanner = banners[currentBannerIndex]
-  if (!currentBanner) return
+    // 현재 활성 배너에 대해서만 뒤집기 타이머 설정
+    const currentBanner = banners[currentBannerIndex]
+    if (!currentBanner) return
 
-  const bannerId = currentBanner.id || `banner-${currentBannerIndex}`
+    const bannerId = currentBanner.id || `banner-${currentBannerIndex}`
 
-  // 이미 수동으로 뒤집어져 있으면 자동 타이머 설정하지 않음
-  if (flippedBanners[bannerId]) return
+    // 이미 수동으로 뒤집어져 있으면 자동 타이머 설정하지 않음
+    if (flippedBanners[bannerId]) return
 
-  // 기존 타이머들 정리
-  Object.values(flipTimeouts.current).forEach(timeout => clearTimeout(timeout))
-  Object.values(progressIntervals.current).forEach(interval => clearInterval(interval))
-  flipTimeouts.current = {}
-  progressIntervals.current = {}
+    // 기존 타이머들 정리
+    Object.values(flipTimeouts.current).forEach(timeout => clearTimeout(timeout))
+    Object.values(progressIntervals.current).forEach(interval => clearInterval(interval))
+    flipTimeouts.current = {}
+    progressIntervals.current = {}
 
-  // 진행률 초기화
-  setFlipProgress(prev => ({ ...prev, [bannerId]: 0 }))
+    // 진행률 초기화
+    setFlipProgress(prev => ({ ...prev, [bannerId]: 0 }))
 
-  console.log('Starting auto flip timer for banner:', bannerId)
+    console.log('Starting auto flip timer for banner:', bannerId)
 
-  // 진행률 업데이트 (100ms마다)
-  const progressInterval = setInterval(() => {
-    setFlipProgress(prev => {
-      const current = prev[bannerId] || 0
-      const newProgress = Math.min(current + 2, 100) // 5초 = 5000ms, 100ms마다 2%씩 증가
-      return { ...prev, [bannerId]: newProgress }
-    })
-  }, 100)
-  
-  progressIntervals.current[bannerId] = progressInterval
-
-  // 5초 후 뒤집기
-  const flipTimeout = setTimeout(() => {
-    console.log('Auto flipping banner to back:', bannerId)
-    setFlippedBanners(prev => ({ ...prev, [bannerId]: true }))
+    // 진행률 업데이트 (100ms마다)
+    const progressInterval = setInterval(() => {
+      setFlipProgress(prev => {
+        const current = prev[bannerId] || 0
+        const newProgress = Math.min(current + 2, 100) // 5초 = 5000ms, 100ms마다 2%씩 증가
+        return { ...prev, [bannerId]: newProgress }
+      })
+    }, 100)
     
-    // 3초 후 다시 앞면으로
-    const backToFrontTimeout = setTimeout(() => {
-      console.log('Auto flipping banner to front:', bannerId)
-      setFlippedBanners(prev => ({ ...prev, [bannerId]: false }))
-      setFlipProgress(prev => ({ ...prev, [bannerId]: 0 }))
-    }, 3000)
-    
-    // backToFrontTimeout도 관리하기 위해 저장
-    flipTimeouts.current[`${bannerId}-back`] = backToFrontTimeout
-  }, 5000)
+    progressIntervals.current[bannerId] = progressInterval
 
-  flipTimeouts.current[bannerId] = flipTimeout
+    // 5초 후 뒤집기
+    const flipTimeout = setTimeout(() => {
+      console.log('Auto flipping banner to back:', bannerId)
+      setFlippedBanners(prev => ({ ...prev, [bannerId]: true }))
+      
+      // 3초 후 다시 앞면으로
+      const backToFrontTimeout = setTimeout(() => {
+        console.log('Auto flipping banner to front:', bannerId)
+        setFlippedBanners(prev => ({ ...prev, [bannerId]: false }))
+        setFlipProgress(prev => ({ ...prev, [bannerId]: 0 }))
+      }, 3000)
+      
+      // backToFrontTimeout도 관리하기 위해 저장
+      flipTimeouts.current[`${bannerId}-back`] = backToFrontTimeout
+    }, 5000)
 
-  // 정리 함수
-  return () => {
-    clearTimeout(flipTimeout)
-    clearInterval(progressInterval)
-    // 추가 타이머도 정리
-    if (flipTimeouts.current[`${bannerId}-back`]) {
-      clearTimeout(flipTimeouts.current[`${bannerId}-back`])
+    flipTimeouts.current[bannerId] = flipTimeout
+
+    // 정리 함수
+    return () => {
+      clearTimeout(flipTimeout)
+      clearInterval(progressInterval)
+      // 추가 타이머도 정리
+      if (flipTimeouts.current[`${bannerId}-back`]) {
+        clearTimeout(flipTimeouts.current[`${bannerId}-back`])
+      }
     }
-  }
-}, [currentBannerIndex, banners, isDragging, flippedBanners])
+  }, [currentBannerIndex, banners, isDragging, flippedBanners])
   
-// 컴포넌트 언마운트 시 타이머 정리
+  // 컴포넌트 언마운트 시 타이머 정리
   useEffect(() => {
     return () => {
       Object.values(flipTimeouts.current).forEach(timeout => clearTimeout(timeout))
@@ -437,93 +436,110 @@ useEffect(() => {
 
   // 배너 클릭/탭 핸들러 (뒤집기용)
   const handleBannerClick = (e, bannerId, position) => {
-  console.log('=== BANNER CLICK DEBUG ===')
-  console.log('Event type:', e.type)
-  console.log('Banner ID:', bannerId)
-  console.log('Position:', position)
-  console.log('Is dragging:', isDragging)
-  console.log('Drag started:', dragStarted)
-  console.log('Drag offset:', dragOffset)
-  console.log('Current flipped state:', flippedBanners[bannerId])
-  
-  // 다른 배너를 클릭하면 해당 배너로 이동
-  if (position !== 0) {
-    e.preventDefault()
-    console.log('Switching to banner at position:', position)
-    const index = banners.findIndex((banner, idx) => (banner.id || `banner-${idx}`) === bannerId)
-    if (index !== -1) {
-      goToBanner(index)
-    }
-    return
-  }
-  
-  // 현재 배너 클릭 시 - 드래그가 아닐 때만 뒤집기
-  const touchThreshold = 30 // 더욱 관대하게 증가
-  const shouldFlip = !dragStarted && Math.abs(dragOffset) < touchThreshold
-  
-  console.log('Should flip:', shouldFlip)
-  console.log('Touch threshold:', touchThreshold)
-  console.log('Drag offset abs:', Math.abs(dragOffset))
-  
-  if (shouldFlip) {
-    e.preventDefault()
-    e.stopPropagation()
-    
-    // 현재 뒤집기 상태 확인
-    const currentFlipped = flippedBanners[bannerId] || false
-    const newFlippedState = !currentFlipped
-    
-    console.log('Flipping banner from', currentFlipped, 'to', newFlippedState)
-    
-    // 모든 기존 타이머들 정리
-    console.log('Clearing all existing timers for banner:', bannerId)
-    if (flipTimeouts.current[bannerId]) {
-      clearTimeout(flipTimeouts.current[bannerId])
-      delete flipTimeouts.current[bannerId]
-    }
-    if (flipTimeouts.current[`${bannerId}-back`]) {
-      clearTimeout(flipTimeouts.current[`${bannerId}-back`])
-      delete flipTimeouts.current[`${bannerId}-back`]
-    }
-    if (progressIntervals.current[bannerId]) {
-      clearInterval(progressIntervals.current[bannerId])
-      delete progressIntervals.current[bannerId]
-    }
-    
-    // 뒤집기 상태 업데이트
-    setFlippedBanners(prev => {
-      const updated = { ...prev, [bannerId]: newFlippedState }
-      console.log('Updated flipped banners:', updated)
-      return updated
-    })
-    
-    // 수동 뒤집기 후 타이머 설정
-    if (newFlippedState) {
-      // 뒤집을 때: 7초 후 자동으로 앞면으로
-      console.log('Setting 7-second timer to flip back to front')
-      const backToFrontTimeout = setTimeout(() => {
-        console.log('Manual flip timer: flipping back to front for banner:', bannerId)
-        setFlippedBanners(prev => ({ ...prev, [bannerId]: false }))
-        setFlipProgress(prev => ({ ...prev, [bannerId]: 0 }))
-      }, 7000)
-      
-      flipTimeouts.current[`${bannerId}-manual`] = backToFrontTimeout
-    } else {
-      // 앞면으로 뒤집을 때: 진행바 재시작하고 새로운 자동 사이클 시작
-      console.log('Manual flip to front - restarting auto cycle')
-      setFlipProgress(prev => ({ ...prev, [bannerId]: 0 }))
-    }
-    
-    console.log('Banner flip completed for:', bannerId)
-  } else {
-    console.log('Banner flip blocked - drag detected or threshold exceeded')
+    console.log('=== BANNER CLICK DEBUG ===')
+    console.log('Event type:', e.type)
+    console.log('Banner ID:', bannerId)
+    console.log('Position:', position)
+    console.log('Is dragging:', isDragging)
     console.log('Drag started:', dragStarted)
     console.log('Drag offset:', dragOffset)
-    console.log('Threshold:', touchThreshold)
+    console.log('Current flipped state:', flippedBanners[bannerId])
+    
+    // 다른 배너를 클릭하면 해당 배너로 이동
+    if (position !== 0) {
+      e.preventDefault()
+      console.log('Switching to banner at position:', position)
+      const index = banners.findIndex((banner, idx) => (banner.id || `banner-${idx}`) === bannerId)
+      if (index !== -1) {
+        goToBanner(index)
+      }
+      return
+    }
+    
+    // 현재 배너 클릭 시 - 드래그가 아닐 때만 뒤집기
+    const touchThreshold = 30 // 더욱 관대하게 증가
+    const shouldFlip = !dragStarted && Math.abs(dragOffset) < touchThreshold
+    
+    console.log('Should flip:', shouldFlip)
+    console.log('Touch threshold:', touchThreshold)
+    console.log('Drag offset abs:', Math.abs(dragOffset))
+    
+    if (shouldFlip) {
+      e.preventDefault()
+      e.stopPropagation()
+      
+      // 현재 뒤집기 상태 확인
+      const currentFlipped = flippedBanners[bannerId] || false
+      const newFlippedState = !currentFlipped
+      
+      console.log('Flipping banner from', currentFlipped, 'to', newFlippedState)
+      
+      // 모든 기존 타이머들 정리
+      console.log('Clearing all existing timers for banner:', bannerId)
+      if (flipTimeouts.current[bannerId]) {
+        clearTimeout(flipTimeouts.current[bannerId])
+        delete flipTimeouts.current[bannerId]
+      }
+      if (flipTimeouts.current[`${bannerId}-back`]) {
+        clearTimeout(flipTimeouts.current[`${bannerId}-back`])
+        delete flipTimeouts.current[`${bannerId}-back`]
+      }
+      if (flipTimeouts.current[`${bannerId}-manual`]) {
+        clearTimeout(flipTimeouts.current[`${bannerId}-manual`])
+        delete flipTimeouts.current[`${bannerId}-manual`]
+      }
+      if (progressIntervals.current[bannerId]) {
+        clearInterval(progressIntervals.current[bannerId])
+        delete progressIntervals.current[bannerId]
+      }
+      
+      // 뒤집기 상태 업데이트
+      setFlippedBanners(prev => {
+        const updated = { ...prev, [bannerId]: newFlippedState }
+        console.log('Updated flipped banners:', updated)
+        return updated
+      })
+      
+      // 수동 뒤집기 후 타이머 설정
+      if (newFlippedState) {
+        // 뒤집을 때: 7초 후 자동으로 앞면으로
+        console.log('Setting 7-second timer to flip back to front')
+        const backToFrontTimeout = setTimeout(() => {
+          console.log('Manual flip timer: flipping back to front for banner:', bannerId)
+          setFlippedBanners(prev => ({ ...prev, [bannerId]: false }))
+          setFlipProgress(prev => ({ ...prev, [bannerId]: 0 }))
+        }, 7000)
+        
+        flipTimeouts.current[`${bannerId}-manual`] = backToFrontTimeout
+      } else {
+        // 앞면으로 뒤집을 때: 진행바 재시작하고 새로운 자동 사이클 시작
+        console.log('Manual flip to front - restarting auto cycle')
+        setFlipProgress(prev => ({ ...prev, [bannerId]: 0 }))
+      }
+      
+      console.log('Banner flip completed for:', bannerId)
+    } else {
+      console.log('Banner flip blocked - drag detected or threshold exceeded')
+      console.log('Drag started:', dragStarted)
+      console.log('Drag offset:', dragOffset)
+      console.log('Threshold:', touchThreshold)
+    }
+    
+    console.log('=== END BANNER CLICK DEBUG ===')
   }
-  
-  console.log('=== END BANNER CLICK DEBUG ===')
-}
+
+  // 배너 이미지 에러 처리 함수
+  const handleBannerImageError = (e, banner) => {
+    console.error(`배너 이미지 로드 실패: ${banner.url}`)
+    
+    // S3 URL이 실패하면 기본 이미지로 대체
+    if (banner.url && banner.url.includes('s3.amazonaws.com')) {
+      console.log('S3 이미지 실패, 기본 이미지로 대체')
+      e.target.src = bannerlast
+    } else {
+      e.target.src = bannerlast
+    }
+  }
 
   // 모의 리뷰 데이터 생성 함수
   const getMockReviewsForBanner = (banner) => {
@@ -627,9 +643,7 @@ useEffect(() => {
                 src={banner.url}
                 alt={banner.chatPhrase}
                 className="home-banner-image"
-                onError={(e) => {
-                  e.target.src = bannerlast
-                }}
+                onError={(e) => handleBannerImageError(e, banner)}
                 draggable={false}
               />
               
@@ -775,7 +789,6 @@ useEffect(() => {
           로그인 하러 가기
         </button>
       </div>
-
 
       {/* 카테고리 탭 */}
       <div className="category-tabs">

@@ -282,13 +282,13 @@ class ApiService {
     addNewBanner: function(currentBanners, newBannerData) {
       const newBanner = {
         id: Date.now(), // 고유 ID
-        url: newBannerData.imageBannerUrl || newBannerData.imageUrl,
-        chatPhrase: newBannerData.chatPhraseKo || newBannerData.chatPhrase,
+        url: newBannerData.imageBannerUrl,
+        chatPhrase: newBannerData.chatPhraseKo,
         createdAt: new Date().toISOString(),
         // 리뷰 기반 정보 추가
         reviewInfo: {
-          productName: newBannerData.productName || "닭가슴살",
-          reviewCount: newBannerData.reviewCount || "다수",
+          productName: newBannerData.productName || "수비드 닭가슴살",
+          reviewCount: newBannerData.reviewCount || "최신",
           sentiment: newBannerData.sentiment || "긍정적",
           generatedAt: new Date().toLocaleString('ko-KR')
         }
@@ -300,10 +300,11 @@ class ApiService {
       // 캐시에 저장
       this.cacheBanners(updatedBanners);
       
+      console.log('새 배너 추가 완료:', newBanner);
       return updatedBanners;
     },
 
-    // 기본 배너들 생성 (초기 로드용) - placeholder 이미지 사용
+    // 기본 배너들 생성 (초기 로드용)
     getDefaultBanners: function() {
       return [
         {
