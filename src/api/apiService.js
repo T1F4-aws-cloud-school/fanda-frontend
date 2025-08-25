@@ -54,12 +54,10 @@ class ApiService {
     getReviews: async (productId, startAt = null, endAt = null) => {
       try {
         let url = `/shop/api/v1/reviews/by-product?productId=${productId}`;
-        
         // 기간이 지정된 경우 파라미터 추가
         if (startAt && endAt) {
           url += `&startAt=${startAt}&endAt=${endAt}`;
         }
-        
         const response = await axios.get(url);
         console.log(`상품 ${productId} 리뷰 조회 성공:`, response.data);
         return response.data;
@@ -78,12 +76,10 @@ class ApiService {
         return response.data;
       } catch (error) {
         console.log('추천 상품 API 실패, 전체 상품에서 일부 추천:', error.message);
-        
         try {
           // 추천 API 실패 시 전체 상품 목록에서 일부를 추천으로 사용
           const response = await axios.get('/shop/api/v1/products');
           console.log('전체 상품 목록 조회 성공:', response.data);
-          
           // 처음 6개를 추천 상품으로 반환
           return response.data ? response.data.slice(0, 6) : null;
         } catch (listError) {
@@ -107,42 +103,39 @@ class ApiService {
 
   // 관리자 전용 API
   admin = {
-  // 기간별 리뷰 수집 (관리자 전용) - kubectl exec에서 확인한 경로
-  collectReviewsByPeriod: async (productId, startAt, endAt) => {
-    try {
-      const response = await axios.post(
-        `/feedback/api/v1/admin/products/${productId}/reviews/collect?startAt=${startAt}&endAt=${endAt}`
-      );
-      console.log('기간별 리뷰 수집 성공:', response.data);
-      return response.data;
-    } catch (error) {
-      console.error('기간별 리뷰 수집 실패:', error);
-      throw error;
-    }
-  },
+    // 기간별 리뷰 수집 (관리자 전용)
+    collectReviewsByPeriod: async (productId, startAt, endAt) => {
+      try {
+        const response = await axios.post(
+          `/feedback/api/v1/admin/products/${productId}/reviews/collect?startAt=${startAt}&endAt=${endAt}`
+        );
+        console.log('기간별 리뷰 수집 성공:', response.data);
+        return response.data;
+      } catch (error) {
+        console.error('기간별 리뷰 수집 실패:', error);
+        throw error;
+      }
+    },
 
-  // 개선 비교 리포트 생성 및 슬랙 전송 (관리자 전용) - 포트포워딩에서 확인한 경로
-  generateCompareReport: async (productId, baselineKey, startAt, endAt) => {
-    try {
-      const response = await axios.post(
-        `/feedback/api/v1/reports/feedback/compare?productId=${productId}&baselineKey=${encodeURIComponent(baselineKey)}&startAt=${startAt}&endAt=${endAt}`
-      );
-      console.log('개선 비교 리포트 생성 성공:', response.data);
-      return response.data;
-    } catch (error) {
-      console.error('개선 비교 리포트 생성 실패:', error);
-      throw error;
-    }
-  },
+    // 개선 비교 리포트 생성 및 슬랙 전송 (관리자 전용)
+    generateCompareReport: async (productId, baselineKey, startAt, endAt) => {
+      try {
+        const response = await axios.post(
+          `/feedback/api/v1/reports/feedback/compare?productId=${productId}&baselineKey=${encodeURIComponent(baselineKey)}&startAt=${startAt}&endAt=${endAt}`
+        );
+        console.log('개선 비교 리포트 생성 성공:', response.data);
+        return response.data;
+      } catch (error) {
+        console.error('개선 비교 리포트 생성 실패:', error);
+        throw error;
+      }
+    },
 
     // 리뷰 수집과 동시에 비교 리포트 생성 (통합 메소드)
     collectAndGenerateReport: async (productId, startAt, endAt, baselineKey = null) => {
       try {
         console.log('리뷰 수집 및 비교 리포트 생성 시작:', {
-          productId,
-          startAt,
-          endAt,
-          baselineKey
+          productId, startAt, endAt, baselineKey
         });
 
         // 1단계: 기간별 리뷰 수집
@@ -155,15 +148,10 @@ class ApiService {
             reportResult = await apiService.admin.generateCompareReport(productId, baselineKey, startAt, endAt);
           } catch (reportError) {
             console.warn('비교 리포트 생성은 실패했지만 리뷰 수집은 성공:', reportError);
-            // 리포트 생성 실패해도 리뷰 수집은 성공했으므로 계속 진행
           }
         }
 
-        return {
-          collect: collectResult,
-          report: reportResult,
-          success: true
-        };
+        return { collect: collectResult, report: reportResult, success: true };
       } catch (error) {
         console.error('리뷰 수집 및 비교 리포트 생성 실패:', error);
         throw error;
@@ -181,11 +169,9 @@ class ApiService {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
         const isAdmin = payload.role === 'ADMIN' || payload.authorities?.includes('ADMIN');
-        
         if (!isAdmin) {
           throw new Error('관리자 권한이 필요합니다');
         }
-        
         return true;
       } catch (error) {
         throw new Error('유효하지 않은 토큰입니다');
@@ -237,75 +223,126 @@ class ApiService {
     }
   };
 
-  // 배너 관련 API - 개선된 캐싱 및 관리 로직
+  // 배너 관련 API - (최대 3개 · 최신순 · presigned 만료 자동 갱신)
   banner = {
-    // 배너 캐시 키
     CACHE_KEY: 'banner_cache',
-    CACHE_DURATION: 30 * 60 * 1000, // 30분
 
-    // 캐시된 배너들 가져오기
-    getCachedBanners: function() {
+    // 캐시 읽기 (만료 60초 전이면 무효화)
+    getCachedBanners() {
       try {
-        const cached = localStorage.getItem(this.CACHE_KEY);
-        if (cached) {
-          const { banners, timestamp } = JSON.parse(cached);
-          if (Date.now() - timestamp < this.CACHE_DURATION) {
-            console.log('캐시된 배너들 사용:', banners);
-            return banners;
-          } else {
-            console.log('캐시 만료, 새 배너 요청 필요');
-            localStorage.removeItem(this.CACHE_KEY);
-          }
+        const raw = localStorage.getItem(this.CACHE_KEY);
+        if (!raw) return null;
+        const { banners, expiresAt } = JSON.parse(raw);
+        if (Date.now() < (expiresAt - 60 * 1000) && Array.isArray(banners) && banners.length) {
+          return banners;
         }
-      } catch (error) {
-        console.error('배너 캐시 읽기 실패:', error);
         localStorage.removeItem(this.CACHE_KEY);
+        return null;
+      } catch {
+        localStorage.removeItem(this.CACHE_KEY);
+        return null;
       }
-      return null;
     },
 
-    // 배너들 캐시에 저장
-    cacheBanners: function(banners) {
+    // 캐시 쓰기
+    cacheBanners(banners, expiresAt) {
       try {
-        const cacheData = {
-          banners,
-          timestamp: Date.now()
-        };
-        localStorage.setItem(this.CACHE_KEY, JSON.stringify(cacheData));
-        console.log('배너들 캐시 저장 완료');
-      } catch (error) {
-        console.error('배너 캐시 저장 실패:', error);
+        localStorage.setItem(this.CACHE_KEY, JSON.stringify({ banners, expiresAt }));
+      } catch {}
+    },
+
+    // presigned 쿼리에서 만료 시각 계산
+    _computeExpiry(urlStr) {
+      const u = new URL(urlStr);
+      const amzDate = u.searchParams.get('X-Amz-Date'); // e.g. 20250825T052139Z
+      const expires = parseInt(u.searchParams.get('X-Amz-Expires') || '900', 10) * 1000; // ms
+      if (!amzDate) return Date.now() + 5 * 60 * 1000; // 안전망: 5분
+      const y = amzDate.slice(0,4), m = amzDate.slice(4,6), d = amzDate.slice(6,8);
+      const hh = amzDate.slice(9,11), mm = amzDate.slice(11,13), ss = amzDate.slice(13,15);
+      const issuedAt = Date.UTC(+y, +m - 1, +d, +hh, +mm, +ss);
+      return issuedAt + expires;
+    },
+
+    // 파일명에서 생성시각 파싱 (banner_YYYYMMDD_HHMMSS.png)
+    _parseKeyTimestamp(urlStr) {
+      const key = decodeURIComponent(new URL(urlStr).pathname); // /.../banners/banner_20250807_160500.png
+      const m = key.match(/banner_(\d{8})_(\d{6})\./);
+      if (!m) return 0;
+      const [_, d8, t6] = m; // 20250807, 160500
+      const y = d8.slice(0,4), mo = d8.slice(4,6), da = d8.slice(6,8);
+      const hh = t6.slice(0,2), mi = t6.slice(2,4), ss = t6.slice(4,6);
+      return Date.UTC(+y, +mo - 1, +da, +hh, +mi, +ss);
+    },
+
+    // 서버에서 presigned URL 목록을 받아 최신 3개만 가공
+    async _fetchFromServer() {
+      const res = await axios.get('/banner/api/v1/images/urls'); // ADMIN 필요
+      const items = (res.data || [])
+        .map(({ url }) => ({
+          id: decodeURIComponent(new URL(url).pathname).split('/').pop(), // 파일명
+          url,
+          createdAtMs: this._parseKeyTimestamp(url)
+        }))
+        .sort((a, b) => b.createdAtMs - a.createdAtMs)
+        .slice(0, 3)
+        .map(x => ({
+          id: x.id,
+          url: x.url,
+          createdAt: new Date(x.createdAtMs).toISOString(),
+          chatPhrase: null, // 문구는 별도 API로 받을 때 채우기 (없어도 표시엔 지장 X)
+          reviewInfo: { productName: "수비드 닭가슴살", reviewCount: "최신", sentiment: "긍정적", generatedAt: "S3" }
+        }));
+
+      // presigned 중 가장 짧은 만료를 캐시 만료로 채택
+      const expiresAt = Math.min(...items.map(i => this._computeExpiry(i.url)));
+      this.cacheBanners(items, expiresAt);
+      return items;
+    },
+
+    // 공개 API: 배너 3개 반환(캐시 우선)
+    async getBannerList() {
+      const cached = this.getCachedBanners();
+      if (cached) return cached;
+      try {
+        return await this._fetchFromServer();
+      } catch (e) {
+        console.error('배너 목록 가져오기 실패, 기본 배너 사용:', e);
+        // 기본 배너는 10분짜리 임시 만료로 캐시
+        const defaults = this.getDefaultBanners();
+        const fallbackExpire = Date.now() + 10 * 60 * 1000;
+        this.cacheBanners(defaults, fallbackExpire);
+        return defaults;
       }
     },
 
-    // 새 배너 추가 (최대 3개 유지)
-    addNewBanner: function(currentBanners, newBannerData) {
-      const newBanner = {
-        id: Date.now(), // 고유 ID
-        url: newBannerData.imageBannerUrl,
-        chatPhrase: newBannerData.chatPhraseKo,
-        createdAt: new Date().toISOString(),
-        // 리뷰 기반 정보 추가
-        reviewInfo: {
-          productName: newBannerData.productName || "수비드 닭가슴살",
-          reviewCount: newBannerData.reviewCount || "최신",
-          sentiment: newBannerData.sentiment || "긍정적",
-          generatedAt: new Date().toLocaleString('ko-KR')
-        }
-      };
+    // 새 배너(=이미지) 생성 후 목록을 최신화(4→3→2로 자연 치환)
+    async generateAndAddBanner(currentBanners, additionalData = {}) {
+      // 서버에서 ‘리포트+배너 생성’ 실행
+      const r = await apiService.reports.generate();
+      if (!r?.imageBannerUrl) return currentBanners;
 
-      // 새 배너를 맨 앞에 추가하고, 3개까지만 유지
-      const updatedBanners = [newBanner, ...currentBanners].slice(0, 3);
-      
-      // 캐시에 저장
-      this.cacheBanners(updatedBanners);
-      
-      console.log('새 배너 추가 완료:', newBanner);
-      return updatedBanners;
+      // 새 presigned가 발급되므로 전체 목록을 다시 가져오면 자동으로 [새, 3, 2] 형태가 됨
+      const fresh = await this._fetchFromServer();
+      // 추가 메타(문구 등)가 있으면 첫 항목에 병합
+      if (fresh.length) {
+        fresh[0] = {
+          ...fresh[0],
+          chatPhrase: r.chatPhraseKo || fresh[0].chatPhrase,
+          reviewInfo: {
+            ...(fresh[0].reviewInfo || {}),
+            ...additionalData,
+            generatedAt: new Date().toLocaleString('ko-KR')
+          }
+        };
+        // 캐시 갱신(만료는 _fetchFromServer에서 이미 반영)
+        const expiresAt = Math.min(...fresh.map(i => this._computeExpiry(i.url)));
+        this.cacheBanners(fresh, expiresAt);
+      }
+      return fresh;
     },
 
-    // 기본 배너들 생성 (초기 로드용)
-    getDefaultBanners: function() {
+    // 기본 배너들 (초기 로드/장애 대비)
+    getDefaultBanners() {
       return [
         {
           id: 1,
@@ -346,111 +383,35 @@ class ApiService {
       ];
     },
 
-    // 배너 목록 가져오기 (캐시 우선)
-    getBannerList: async function() {
-      // 1. 캐시된 배너들 확인
-      const cached = this.getCachedBanners();
-      if (cached && cached.length > 0) {
-        return cached;
-      }
-
-      // 2. 캐시가 없으면 기본 배너들 반환
-      const defaultBanners = this.getDefaultBanners();
-      this.cacheBanners(defaultBanners);
-      return defaultBanners;
-    },
-
-    // 새 배너 생성 및 추가
-    generateAndAddBanner: async function(currentBanners, additionalData = {}) {
-      try {
-        const response = await apiService.reports.generate();
-        if (response) {
-          // 추가 메타데이터와 함께 새 배너 생성
-          const newBannerData = {
-            ...response,
-            ...additionalData // productName, reviewCount 등
-          };
-          
-          const updatedBanners = this.addNewBanner(currentBanners, newBannerData);
-          console.log('새 배너 생성 및 추가 완료:', updatedBanners);
-          return updatedBanners;
-        }
-      } catch (error) {
-        console.error('새 배너 생성 실패:', error);
-        throw error;
-      }
-    },
-
-    // 기존 방식 - 캐싱 로직 추가 (호환성 유지)
-    getLatest: async function() {
-      // 1. 캐시된 배너 확인
-      const cached = this.getCachedBanners();
-      if (cached && cached.length > 0) {
-        return {
-          imageUrl: cached[0].url,
-          chatPhrase: cached[0].chatPhrase
-        };
-      }
-
-      // 2. 새 배너 생성 시도
-      try {
-        const response = await apiService.reports.generate();
-        if (response) {
-          const banner = {
-            imageUrl: response.imageBannerUrl,
-            chatPhrase: response.chatPhraseKo
-          };
-          
-          // 새 배너를 배너 목록에 추가
-          const currentBanners = this.getDefaultBanners();
-          const newBannerData = {
-            imageBannerUrl: response.imageBannerUrl,
-            chatPhraseKo: response.chatPhraseKo
-          };
-          this.addNewBanner(currentBanners, newBannerData);
-          
-          return banner;
-        }
-      } catch (error) {
-        console.log("배너 생성 실패, 기본값 사용:", error.message);
-      }
-
-      // 3. 실패 시 기본값 반환
+    // (호환용) 최신 배너 1개만 필요할 때
+    async getLatest() {
+      const list = await this.getBannerList();
+      const top = list?.[0];
       return {
-        imageUrl: null,
-        chatPhrase: "인기 최고 판매율 1위 닭가슴살을 만나보세요!"
+        imageUrl: top?.url ?? null,
+        chatPhrase: top?.chatPhrase ?? "인기 최고 판매율 1위 닭가슴살을 만나보세요!"
       };
     },
 
-    // 리포트 생성과 함께 - 새로운 배너 강제 생성
-    generateWithReport: async function() {
-      try {
-        const response = await apiService.reports.generate();
-        if (response) {
-          const banner = {
-            imageUrl: response.imageBannerUrl,
-            chatPhrase: response.chatPhraseKo,
-            fullResponse: response
-          };
-          
-          // 새 배너를 배너 목록에 추가
-          const currentBanners = await this.getBannerList();
-          const newBannerData = {
-            imageBannerUrl: response.imageBannerUrl,
-            chatPhraseKo: response.chatPhraseKo
-          };
-          this.addNewBanner(currentBanners, newBannerData);
-          
-          return banner;
-        }
-      } catch (error) {
-        console.error('새 배너 생성 실패:', error);
-        throw error;
+    // (호환용) 리포트 생성과 함께 새 배너 생성 후 최신 배너 반환
+    async generateWithReport() {
+      const r = await apiService.reports.generate();
+      if (!r) {
+        // 실패 시 현재 최신 리턴
+        return this.getLatest();
       }
+      // 생성 성공 → 목록 리프레시
+      const list = await this._fetchFromServer();
+      const top = list?.[0];
+      return {
+        imageUrl: top?.url ?? r.imageBannerUrl ?? null,
+        chatPhrase: r.chatPhraseKo ?? top?.chatPhrase ?? null,
+        fullResponse: r
+      };
     },
 
     // 캐시 초기화 (관리자용)
-    clearCache: function() {
+    clearCache() {
       localStorage.removeItem(this.CACHE_KEY);
       console.log('배너 캐시 초기화 완료');
     }
@@ -468,7 +429,6 @@ class ApiService {
       try {
         const token = localStorage.getItem('accessToken');
         if (!token) return false;
-        
         const payload = JSON.parse(atob(token.split('.')[1]));
         return payload.role === 'ADMIN' || payload.authorities?.includes('ADMIN');
       } catch (error) {
