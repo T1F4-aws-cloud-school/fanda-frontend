@@ -9,7 +9,50 @@ export default function ReviewCollectionResult() {
   
   // Manager.jsx에서 전달받은 결과 데이터
   const resultData = location.state?.resultData;
+  const reportData = location.state?.reportData;
+  const slackMessage = location.state?.slackMessage;
+  const success = location.state?.success;
+  const errorMessage = location.state?.errorMessage;
 
+  // 실패한 경우
+  if (!success) {
+    return (
+      <div className="result-container">
+        <div className="result-header">
+          <BackButton to="/manager" />
+        </div>
+        <div className="error-content">
+          <div className="success-icon" style={{ fontSize: '60px' }}>
+            ❌
+          </div>
+          <h2 style={{ color: '#ef4444' }}>작업이 실패했습니다</h2>
+          <p>{errorMessage}</p>
+          
+          {/* 슬랙 메시지 표시 */}
+          {slackMessage && (
+            <div className="status-message">
+              <div className="info-message" style={{ 
+                backgroundColor: '#fef2f2', 
+                borderColor: '#ef4444',
+                color: '#dc2626' 
+              }}>
+                <p>📢 {slackMessage}</p>
+              </div>
+            </div>
+          )}
+          
+          <button 
+            className="action-button primary"
+            onClick={() => navigate("/manager")}
+          >
+            다시 시도하기
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // 결과 데이터가 없는 경우
   if (!resultData) {
     return (
       <div className="result-container">
@@ -20,7 +63,7 @@ export default function ReviewCollectionResult() {
           <h2>결과 데이터를 찾을 수 없습니다</h2>
           <p>관리자 페이지에서 다시 시도해주세요.</p>
           <button 
-            className="action-button"
+            className="action-button primary"
             onClick={() => navigate("/manager")}
           >
             관리자 페이지로 돌아가기
@@ -38,6 +81,8 @@ export default function ReviewCollectionResult() {
     navigate("/manager");
   };
 
+
+
   return (
     <div className="result-container">
       <div className="result-header">
@@ -50,7 +95,7 @@ export default function ReviewCollectionResult() {
         </div>
         
         <h2 className="result-title">
-          리뷰 수집이{'\n'}완료되었습니다!
+          {reportData ? '리뷰 수집 및 비교 리포트{\'\\n\'}생성이 완료되었습니다!' : '리뷰 수집이{\'\\n\'}완료되었습니다!'}
         </h2>
 
         {/* 결과 카드 */}
@@ -73,7 +118,32 @@ export default function ReviewCollectionResult() {
               {resultData.savedCount}개
             </span>
           </div>
+
+          {/* 비교 리포트 정보 */}
+          {reportData && (
+            <div className="result-item highlight" style={{
+              backgroundColor: '#f0f9f0',
+              borderColor: '#4caf50'
+            }}>
+              <span className="result-label">비교 리포트</span>
+              <span className="result-value" style={{ color: '#2e7d32' }}>
+                생성 완료
+              </span>
+            </div>
+          )}
         </div>
+
+        {/* 슬랙 메시지 표시 */}
+        {slackMessage && (
+          <div className="status-message">
+            <div className={reportData ? "success-message" : "info-message"}>
+              <p>📢 {slackMessage}</p>
+              {reportData && (
+                <p>생성된 비교 리포트가 슬랙으로 전송되었습니다.</p>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* 상태 메시지 */}
         <div className="status-message">
