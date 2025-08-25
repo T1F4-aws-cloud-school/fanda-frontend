@@ -4,7 +4,7 @@ const instance = axios.create({
   // nginx 프록시를 사용하는 경우 - 현재 도메인 사용
   baseURL: window.location.origin, // 프론트엔드와 같은 도메인
   withCredentials: false,
-  timeout: 30000, // 30초 타임아웃
+  timeout: 300000, 
 });
 
 // 요청 인터셉터 - 토큰 자동 추가
