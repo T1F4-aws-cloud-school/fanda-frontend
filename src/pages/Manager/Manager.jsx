@@ -10,8 +10,7 @@ export default function Manager() {
   const [productId, setProductId] = useState("4"); // 기본값: 허브맛 수비드 닭가슴살
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [baselineKey, setBaselineKey] = useState(""); // 비교 기준 리포트 파일명
-  const [generateReport, setGenerateReport] = useState(false); // 비교 리포트 생성 여부
+
   const [isLoading, setIsLoading] = useState(false);
 
   // 컴포넌트 마운트 시 현재 날짜 기준으로 기본값 설정
@@ -57,69 +56,39 @@ export default function Manager() {
         return;
       }
 
-      // 비교 리포트 생성이 체크되어 있는데 baselineKey가 없는 경우
-      if (generateReport && !baselineKey.trim()) {
-        alert("비교 리포트 생성을 위해서는 기준 리포트 파일명을 입력해주세요.");
-        return;
-      }
-
-      console.log("리뷰 수집 및 리포트 생성 시작:", {
+      console.log("리뷰 수집 및 슬랙 전송 시작:", {
         productId: parseInt(productId),
         startDate,
-        endDate,
-        generateReport,
-        baselineKey: generateReport ? baselineKey : null
+        endDate
       });
+
+      // 기본 baseline key 설정 (고정값 또는 최신 negative 리포트)
+      const defaultBaselineKey = "reports/negative/negative_20250808_173006.pdf";
 
       let result;
       let slackMessage = "";
 
-      if (generateReport && baselineKey.trim()) {
-        // 리뷰 수집 + 비교 리포트 생성
-        try {
-          result = await apiService.admin.collectAndGenerateReport(
-            parseInt(productId), 
-            startDate, 
-            endDate,
-            baselineKey.trim()
-          );
-          
-          console.log("리뷰 수집 및 비교 리포트 생성 성공:", result);
-          
-          if (result.report) {
-            slackMessage = "슬랙에 전송이 완료되었습니다";
-          } else {
-            slackMessage = "리뷰 수집은 완료되었지만, 비교 리포트 생성에 실패했습니다";
-          }
-          
-        } catch (error) {
-          console.error("리뷰 수집 및 비교 리포트 생성 실패:", error);
-          slackMessage = "슬랙 전송 실패했습니다";
-          throw error;
+      try {
+        // 리뷰 수집 + 비교 리포트 생성 및 슬랙 전송
+        result = await apiService.admin.collectAndGenerateReport(
+          parseInt(productId), 
+          startDate, 
+          endDate,
+          defaultBaselineKey
+        );
+        
+        console.log("리뷰 수집 및 비교 리포트 생성 성공:", result);
+        
+        if (result.report) {
+          slackMessage = "슬랙에 전송이 완료되었습니다";
+        } else {
+          slackMessage = "리뷰 수집은 완료되었지만, 슬랙 전송에 실패했습니다";
         }
-      } else {
-        // 리뷰 수집만
-        try {
-          const collectResult = await apiService.admin.collectReviewsByPeriod(
-            parseInt(productId), 
-            startDate, 
-            endDate
-          );
-          
-          result = {
-            collect: collectResult,
-            report: null,
-            success: true
-          };
-          
-          console.log("리뷰 수집 성공:", collectResult);
-          slackMessage = "리뷰 수집이 완료되었습니다";
-          
-        } catch (error) {
-          console.error("리뷰 수집 실패:", error);
-          slackMessage = "리뷰 수집에 실패했습니다";
-          throw error;
-        }
+        
+      } catch (error) {
+        console.error("리뷰 수집 및 슬랙 전송 실패:", error);
+        slackMessage = "슬랙 전송 실패했습니다";
+        throw error;
       }
 
       // 성공 시 결과 페이지로 이동
@@ -142,7 +111,7 @@ export default function Manager() {
       if (error.response?.status === 401) {
         errorMessage = "관리자 권한이 필요합니다. 로그인을 확인해주세요.";
       } else if (error.response?.status === 404) {
-        errorMessage = "해당 상품 또는 기준 리포트를 찾을 수 없습니다.";
+        errorMessage = "해당 상품을 찾을 수 없습니다.";
       } else if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error.message) {
@@ -169,8 +138,7 @@ export default function Manager() {
   const today = new Date().toISOString().split('T')[0];
 
   // 폼 유효성 검사
-  const isFormValid = productId && startDate && endDate && !isLoading && 
-    (!generateReport || (generateReport && baselineKey.trim()));
+  const isFormValid = productId && startDate && endDate && !isLoading;
 
   return (
     <div className="manager-container">
@@ -248,54 +216,12 @@ export default function Manager() {
         </div>
       </div>
 
-      {/* 비교 리포트 생성 옵션 카드 */}
-      <div className="white-card">
-        <div className="card-title">
-          <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={generateReport}
-              onChange={(e) => setGenerateReport(e.target.checked)}
-              disabled={isLoading}
-              style={{ marginRight: '8px' }}
-            />
-            개선 비교 리포트 생성 및 슬랙 전송
-          </label>
-        </div>
-        
-        {generateReport && (
-          <div style={{ marginTop: '12px' }}>
-            <input
-              type="text"
-              className="product-name-input"
-              placeholder="기준 리포트 파일명 입력"
-              value={baselineKey}
-              onChange={(e) => setBaselineKey(e.target.value)}
-              disabled={isLoading}
-              style={{ width: '100%' }}
-            />
-            <div style={{ 
-              fontSize: '12px', 
-              color: '#6e6e6e', 
-              marginTop: '8px',
-              lineHeight: '1.4'
-            }}>
-              * 예시: reports/negative/negative_20250808_173006.pdf<br/>
-              * 비교할 기준이 되는 부정 리포트 파일명을 입력하세요
-            </div>
-          </div>
-        )}
-      </div>
-
       <button
         className={`start-button ${!isFormValid ? 'disabled' : ''}`}
         onClick={handleStartCollection}
         disabled={!isFormValid}
       >
-        {isLoading 
-          ? (generateReport ? "리뷰 수집 및 리포트 생성 중..." : "수집 중...")
-          : (generateReport ? "리뷰 수집 및 비교 리포트 생성" : "리뷰 데이터 수집 시작")
-        }
+        {isLoading ? "수집 및 슬랙 전송 중..." : "리뷰 데이터 수집 시작"}
       </button>
     </div>
   );

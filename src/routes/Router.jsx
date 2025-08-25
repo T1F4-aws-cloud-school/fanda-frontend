@@ -13,6 +13,28 @@ import HomeLoggedIn from "../pages/HomeLoggedIn.jsx";
 import Manager from "../pages/Manager/Manager.jsx"; // 관리자 페이지
 import ReviewCollectionResult from "../pages/Manager/ReviewCollectionResult.jsx"; // 리뷰 수집 결과 페이지
 import { useAuth } from "../context/AuthContext";
+import apiService from "../api/apiService"; // 관리자 권한 체크를 위해 추가
+
+// 홈 라우트 컴포넌트 - 관리자 권한에 따른 자동 라우팅
+const HomeRoute = () => {
+  const { isLoggedIn } = useAuth();
+
+  // 비로그인 사용자는 게스트 홈
+  if (!isLoggedIn) {
+    return <HomeGuest />;
+  }
+
+  // 로그인된 사용자 중 관리자 체크
+  const isAdmin = apiService.utils.isAdmin();
+  
+  if (isAdmin) {
+    // 관리자면 Manager 페이지로 자동 리다이렉트
+    return <Navigate to="/manager" replace />;
+  }
+
+  // 일반 사용자면 로그인 홈
+  return <HomeLoggedIn />;
+};
 
 const Router = () => {
   const { isLoggedIn, isLoading } = useAuth();
@@ -36,10 +58,10 @@ const Router = () => {
   return (
     <BrowserRouter>
       <Routes>
-        {/* 홈 화면 - 로그인 상태에 따라 다른 컴포넌트 */}
+        {/* 홈 화면 - 로그인 상태 및 관리자 권한에 따라 자동 라우팅 */}
         <Route 
           path="/" 
-          element={isLoggedIn ? <HomeLoggedIn /> : <HomeGuest />} 
+          element={<HomeRoute />}
         />
         
         {/* 관리자 페이지들 */}
@@ -48,10 +70,16 @@ const Router = () => {
           element={<Manager />} 
         />
         
-        {/* 리뷰 수집 결과 페이지 - 새로 추가 */}
+        {/* 리뷰 수집 결과 페이지 */}
         <Route 
           path="/admin/review-result" 
           element={<ReviewCollectionResult />} 
+        />
+        
+        {/* 일반 사용자 홈 (관리자가 아닌 경우에만 접근 가능) */}
+        <Route 
+          path="/home" 
+          element={isLoggedIn ? <HomeLoggedIn /> : <Navigate to="/login" replace />} 
         />
         
         {/* 로그인/회원가입 - 이미 로그인된 경우 홈으로 리다이렉트 */}
