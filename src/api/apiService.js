@@ -125,7 +125,7 @@ class ApiService {
     generateCompareReport: async (productId, baselineKey, startAt, endAt) => {
       try {
         const response = await axios.post(
-          `/api/v1/reports/feedback/compare?productId=${productId}&baselineKey=${encodeURIComponent(baselineKey)}&startAt=${startAt}&endAt=${endAt}`
+          `/feedback/api/v1/admin/products/${productId}/reports/compare?baselineKey=${encodeURIComponent(baselineKey)}&startAt=${startAt}&endAt=${endAt}`
         );
         console.log('개선 비교 리포트 생성 성공:', response.data);
         return response.data;
