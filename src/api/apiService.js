@@ -367,6 +367,7 @@ class ApiService {
       
       fresh[i] = {
         ...fresh[i],
+        // ⭐ 핵심 수정: 각 배너마다 해당하는 캐치프레이즈 할당
         chatPhrase: bannerData.chatPhraseKo || fresh[i].chatPhrase || "맛있는 수비드 닭가슴살!", 
         reviewInfo: {
           ...(fresh[i].reviewInfo || {}),

@@ -107,6 +107,7 @@ function HomeGuest() {
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0)
   const [catchPhraseHighlight, setCatchPhraseHighlight] = useState(false)
   const [previousCatchPhrase, setPreviousCatchPhrase] = useState("")
+  const [displayCatchPhrase, setDisplayCatchPhrase] = useState("인기 최고 판매율 1위 닭가슴살을 만나보세요!")
 
   // 스와이프 기능을 위한 상태
   const [isDragging, setIsDragging] = useState(false)
@@ -126,29 +127,38 @@ function HomeGuest() {
   const navigate = useNavigate()
   const categories = ["전체", "베스트", "오늘특가", "대량구매", "신상품"]
 
-  // 🎯 현재 배너의 캐치프레이즈 (디버깅 로그와 함께)
-  const currentCatchPhrase = banners[currentBannerIndex]?.chatPhrase || "인기 최고 판매율 1위 닭가슴살을 만나보세요!"
-
   // 컴포넌트 마운트 시 초기 데이터 로드
   useEffect(() => {
     loadInitialData()
   }, [])
 
-  // 🎯 캐치프레이즈 변경 디버깅 로그
+
   useEffect(() => {
-    console.log('=== 캐치프레이즈 디버깅 ===')
-    console.log('현재 배너 인덱스:', currentBannerIndex)
-    console.log('전체 배너 수:', banners.length)
-    console.log('현재 배너:', banners[currentBannerIndex])
-    console.log('현재 캐치프레이즈:', currentCatchPhrase)
-    console.log('이전 캐치프레이즈:', previousCatchPhrase)
-    console.log('배너별 캐치프레이즈 목록:', banners.map((banner, idx) => ({
-      index: idx,
-      id: banner.id,
-      chatPhrase: banner.chatPhrase
-    })))
-    console.log('=========================')
-  }, [currentBannerIndex, banners, currentCatchPhrase])
+  if (banners.length === 0) return
+
+  const currentCatchPhrase = banners[currentBannerIndex]?.chatPhrase || "인기 최고 판매율 1위 닭가슴살을 만나보세요!"
+  
+  console.log('🎯 배너 인덱스 변경으로 인한 캐치프레이즈 업데이트:', {
+    bannerIndex: currentBannerIndex,
+    bannerId: banners[currentBannerIndex]?.id,
+    oldPhrase: displayCatchPhrase,
+    newPhrase: currentCatchPhrase,
+    allPhrases: banners.map(b => ({ id: b.id, phrase: b.chatPhrase }))
+  })
+
+  // 캐치프레이즈가 실제로 변경된 경우에만 업데이트 및 효과 적용
+  if (currentCatchPhrase !== displayCatchPhrase) {
+    setDisplayCatchPhrase(currentCatchPhrase)
+    
+    // 하이라이트 효과
+    setCatchPhraseHighlight(true)
+    setTimeout(() => setCatchPhraseHighlight(false), 1000)
+    
+    console.log('✨ 캐치프레이즈 변경 완료:', currentCatchPhrase)
+  }
+}, [currentBannerIndex, banners, displayCatchPhrase])
+
+
 
   // 배너 인덱스 변경 시 다른 배너들을 앞면으로 리셋하는 useEffect 추가
   useEffect(() => {
@@ -160,13 +170,6 @@ function HomeGuest() {
       
       // 새로운 flippedBanners 객체 생성
       const newFlippedBanners = {};
-      console.log('=== 캐치프레이즈 디버깅 ===')
-      console.log('현재 배너 인덱스:', currentBannerIndex)
-      console.log('전체 배너 수:', banners.length)
-      console.log('현재 배너:', banners[currentBannerIndex])
-      console.log('현재 캐치프레이즈:', currentCatchPhrase)
-      console.log('이전 캐치프레이즈:', previousCatchPhrase)
-      console.log('배너별 캐치프레이즈 목록:')
       banners.forEach((banner, index) => {
         const bannerId = banner.id || `banner-${index}`;
         // 현재 활성 배너가 아닌 경우 false로 리셋, 현재 배너는 기존 상태 유지
@@ -220,28 +223,7 @@ function HomeGuest() {
     return () => clearTimeout(resetTimer);
   }, [currentBannerIndex, banners]);
 
-  // 🎯 캐치프레이즈 변경 감지 및 애니메이션 효과
-  useEffect(() => {
-    console.log('🎪 캐치프레이즈 변경 감지:', {
-      current: currentCatchPhrase,
-      previous: previousCatchPhrase,
-      changed: currentCatchPhrase !== previousCatchPhrase
-    })
-
-    if (previousCatchPhrase && currentCatchPhrase !== previousCatchPhrase) {
-      console.log('✨ 캐치프레이즈 하이라이트 효과 시작')
-      // 새로운 캐치프레이즈가 설정되면 하이라이트 효과
-      setCatchPhraseHighlight(true)
-      
-      // 1초 후 하이라이트 제거
-      setTimeout(() => {
-        console.log('✨ 캐치프레이즈 하이라이트 효과 종료')
-        setCatchPhraseHighlight(false)
-      }, 1000)
-    }
-    setPreviousCatchPhrase(currentCatchPhrase)
-  }, [currentCatchPhrase, previousCatchPhrase])
-
+  
   // 배너 뒤집기 관리 useEffect 추가 (자동 슬라이드 대신)
   useEffect(() => {
     if (banners.length === 0 || isDragging) return
@@ -337,20 +319,38 @@ function HomeGuest() {
 
   // 초기 배너들 로드
   const loadInitialBanners = async () => {
-    try {
-      const bannerList = await apiService.banner.getBannerList()
-      const limitedBanners = maintainMaxBanners(bannerList)
-      setBanners(limitedBanners)
-      setCurrentBannerIndex(0) // 첫 번째 배너로 설정
-      console.log("게스트 초기 배너들 로드 완료:", limitedBanners)
-    } catch (error) {
-      console.error("배너 로드 실패:", error)
-      // 에러 시 기본 배너들 사용
-      const defaultBanners = apiService.banner.getDefaultBanners()
-      setBanners(maintainMaxBanners(defaultBanners))
-      setCurrentBannerIndex(0) // 첫 번째 배너로 설정
+  try {
+    const bannerList = await apiService.banner.getBannerList()
+    const limitedBanners = maintainMaxBanners(bannerList)
+    
+    console.log('🎪 초기 배너 목록 로드:', limitedBanners.map(b => ({
+      id: b.id,
+      chatPhrase: b.chatPhrase,
+      url: b.url?.substring(0, 50) + '...'
+    })))
+    
+    setBanners(limitedBanners)
+    setCurrentBannerIndex(0)
+    
+    // ✅ 추가: 첫 번째 배너의 캐치프레이즈로 초기값 설정
+    if (limitedBanners.length > 0 && limitedBanners[0].chatPhrase) {
+      setDisplayCatchPhrase(limitedBanners[0].chatPhrase)
+      console.log('🎯 초기 캐치프레이즈 설정:', limitedBanners[0].chatPhrase)
+    }
+    
+  } catch (error) {
+    console.error("배너 로드 실패:", error)
+    const defaultBanners = apiService.banner.getDefaultBanners()
+    const limitedDefaults = maintainMaxBanners(defaultBanners)
+    setBanners(limitedDefaults)
+    setCurrentBannerIndex(0)
+    
+    // ✅ 추가: 기본 배너의 캐치프레이즈로 설정
+    if (limitedDefaults.length > 0) {
+      setDisplayCatchPhrase(limitedDefaults[0].chatPhrase)
     }
   }
+}
 
   // 새 배너 생성 시도 (게스트용 - 권한 없으면 무시)
   const tryGenerateNewBanner = async () => {
@@ -819,9 +819,9 @@ function HomeGuest() {
         </div>
       </div>
 
-      {/* 🎯 수정된 캐치프레이즈 - JSX 구조 오류 수정 */}
+      {/* 수정된 캐치프레이즈 */}
       <div className={`catch-phrase ${catchPhraseHighlight ? 'highlight' : ''}`}>
-        {currentCatchPhrase}
+        {displayCatchPhrase}
       </div>
 
       {/* 사용자 프로필창 */}
