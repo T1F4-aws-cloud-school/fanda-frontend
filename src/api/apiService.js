@@ -107,33 +107,33 @@ class ApiService {
 
   // 관리자 전용 API
   admin = {
-    // 기간별 리뷰 수집 (관리자 전용)
-    collectReviewsByPeriod: async (productId, startAt, endAt) => {
-      try {
-        const response = await axios.post(
-          `/feedback/api/v1/admin/products/${productId}/reviews/collect?startAt=${startAt}&endAt=${endAt}`
-        );
-        console.log('기간별 리뷰 수집 성공:', response.data);
-        return response.data;
-      } catch (error) {
-        console.error('기간별 리뷰 수집 실패:', error);
-        throw error;
-      }
-    },
+  // 기간별 리뷰 수집 (관리자 전용) - kubectl exec에서 확인한 경로
+  collectReviewsByPeriod: async (productId, startAt, endAt) => {
+    try {
+      const response = await axios.post(
+        `/feedback/api/v1/admin/products/${productId}/reviews/collect?startAt=${startAt}&endAt=${endAt}`
+      );
+      console.log('기간별 리뷰 수집 성공:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('기간별 리뷰 수집 실패:', error);
+      throw error;
+    }
+  },
 
-    // 개선 비교 리포트 생성 및 슬랙 전송 (관리자 전용)
-    generateCompareReport: async (productId, baselineKey, startAt, endAt) => {
-      try {
-        const response = await axios.post(
-          `/feedback/api/v1/admin/products/${productId}/reports/compare?baselineKey=${encodeURIComponent(baselineKey)}&startAt=${startAt}&endAt=${endAt}`
-        );
-        console.log('개선 비교 리포트 생성 성공:', response.data);
-        return response.data;
-      } catch (error) {
-        console.error('개선 비교 리포트 생성 실패:', error);
-        throw error;
-      }
-    },
+  // 개선 비교 리포트 생성 및 슬랙 전송 (관리자 전용) - 포트포워딩에서 확인한 경로
+  generateCompareReport: async (productId, baselineKey, startAt, endAt) => {
+    try {
+      const response = await axios.post(
+        `/feedback/api/v1/reports/feedback/compare?productId=${productId}&baselineKey=${encodeURIComponent(baselineKey)}&startAt=${startAt}&endAt=${endAt}`
+      );
+      console.log('개선 비교 리포트 생성 성공:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('개선 비교 리포트 생성 실패:', error);
+      throw error;
+    }
+  },
 
     // 리뷰 수집과 동시에 비교 리포트 생성 (통합 메소드)
     collectAndGenerateReport: async (productId, startAt, endAt, baselineKey = null) => {
