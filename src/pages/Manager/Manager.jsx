@@ -72,8 +72,29 @@ export default function Manager() {
           
         } catch (error) {
           console.error("리뷰 수집 및 비교 리포트 생성 실패:", error);
-          statusMessage = "비교 리포트 생성에 실패했습니다";
-          throw error;
+          
+          // 504 Gateway Timeout인 경우 성공으로 처리
+          if (error.response?.status === 504 || error.message.includes('timeout')) {
+            console.log("504 타임아웃이지만 백그라운드에서 작업 진행 중일 가능성");
+            
+            // 리뷰 수집은 별도로 진행
+            const collectResult = await apiService.admin.collectReviewsByPeriod(
+              parseInt(productId), 
+              startDate, 
+              endDate
+            );
+            
+            result = {
+              collect: collectResult,
+              report: { timeout: true }, // 타임아웃 표시
+              success: true
+            };
+            
+            statusMessage = "리포트 생성이 진행 중입니다. S3를 확인해주세요.";
+          } else {
+            statusMessage = "비교 리포트 생성에 실패했습니다";
+            throw error;
+          }
         }
       } else {
         // 리뷰 수집만
