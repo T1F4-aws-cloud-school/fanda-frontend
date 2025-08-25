@@ -29,12 +29,12 @@ const mockRecommendedProducts = [
 ]
 
 const mockCategoryProducts = [
-  { id: 1, name: "무신사", subtitle: "제안하기", image: "/placeholder.svg?height=160&width=160" },
-  { id: 2, name: "무신사", subtitle: "제안하기", image: "/placeholder.svg?height=160&width=160" },
-  { id: 3, name: "무신사", subtitle: "제안하기", image: "/placeholder.svg?height=160&width=160" },
-  { id: 4, name: "무신사", subtitle: "제안하기", image: "/placeholder.svg?height=160&width=160" },
-  { id: 5, name: "무신사", subtitle: "제안하기", image: "/placeholder.svg?height=160&width=160" },
-  { id: 6, name: "무신사", subtitle: "제안하기", image: "/placeholder.svg?height=160&width=160" },
+  { id: 1, name: "무신사", subtitle: "제안하기", image: "https://placehold.co/160x160" },
+  { id: 2, name: "무신사", subtitle: "제안하기", image: "https://placehold.co/160x160" },
+  { id: 3, name: "무신사", subtitle: "제안하기", image: "https://placehold.co/160x160" },
+  { id: 4, name: "무신사", subtitle: "제안하기", image: "https://placehold.co/160x160" },
+  { id: 5, name: "무신사", subtitle: "제안하기", image: "https://placehold.co/160x160" },
+  { id: 6, name: "무신사", subtitle: "제안하기", image: "https://placehold.co/160x160" },
 ]
 
 function HomeLoggedIn() {

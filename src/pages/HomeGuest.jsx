@@ -63,37 +63,37 @@ const mockCategoryProducts = [
     id: 1,
     name: "무신사",
     subtitle: "구매하기",
-    image: "/placeholder.svg?height=160&width=160",
+    image: "https://placehold.co/160x160",
   },
   {
     id: 2,
     name: "무신사",
     subtitle: "구매하기",
-    image: "/placeholder.svg?height=160&width=160",
+    image: "https://placehold.co/160x160",
   },
   {
     id: 3,
     name: "무신사",
     subtitle: "구매하기",
-    image: "/placeholder.svg?height=160&width=160",
+    image: "https://placehold.co/160x160",
   },
   {
     id: 4,
     name: "무신사",
     subtitle: "구매하기",
-    image: "/placeholder.svg?height=160&width=160",
+    image: "https://placehold.co/160x160",
   },
   {
     id: 5,
     name: "무신사",
     subtitle: "구매하기",
-    image: "/placeholder.svg?height=160&width=160",
+    image: "https://placehold.co/160x160",
   },
   {
     id: 6,
     name: "무신사",
     subtitle: "구매하기",
-    image: "/placeholder.svg?height=160&width=160",
+    image: "https://placehold.co/160x160",
   },
 ]
 
@@ -279,8 +279,6 @@ function HomeGuest() {
       // 배너 목록 로드 (캐시된 배너들 또는 기본 배너들)
       await loadInitialBanners()
       
-      // 게스트도 새 배너 생성 시도 (권한 없으면 기본 배너 사용)
-      await tryGenerateNewBanner()
       
     } catch (error) {
       console.error("초기 데이터 로드 실패:", error)
@@ -677,7 +675,7 @@ function HomeGuest() {
             <div className="banner-back">
               <div className="review-info-header">
                 <div className="review-info-title">
-                  🔥 {banner.reviewInfo?.productName || "수비드 닭가슴살"}
+                   {banner.reviewInfo?.productName || "수비드 닭가슴살"}
                 </div>
                 <div className="review-info-meta">
                   <span>⭐ 4.8점</span>
@@ -710,7 +708,7 @@ function HomeGuest() {
     <div className="app">
       {/* 헤더 */}
       <header className="header">
-        <h1 className="logo">세 라 통 살</h1>
+        <h1 className="logo">세 끼 통 살</h1>
         <div className="header-icons">
           <img src={cartIcon || "/placeholder.svg"} alt="장바구니" className="header-icon cart-icon" />
           <img src={notificationIcon || "/placeholder.svg"} alt="알림" className="header-icon" />
@@ -721,7 +719,7 @@ function HomeGuest() {
       <div className="search-container">
         <div className="search-bar">
           <img src={searchIcon || "/placeholder.svg"} alt="검색" className="search-icon" />
-          <input type="text" placeholder="세라통살에서 검색해보세요!" className="search-input" />
+          <input type="text" placeholder="세끼통살에서 검색해보세요!" className="search-input" />
         </div>
       </div>
       

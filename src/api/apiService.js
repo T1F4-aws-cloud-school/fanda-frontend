@@ -346,7 +346,7 @@ class ApiService {
       return [
         {
           id: 1,
-          url: "https://via.placeholder.com/298x298/006AFF/FFFFFF?text=Banner+1",
+          url: "https://placehold.co/298x298/006AFF/FFFFFF?text=Banner+1",
           chatPhrase: "인기 최고 판매율 1위 닭가슴살을 만나보세요!",
           createdAt: new Date().toISOString(),
           reviewInfo: {
@@ -358,7 +358,7 @@ class ApiService {
         },
         {
           id: 2,
-          url: "https://via.placeholder.com/298x298/FF6B35/FFFFFF?text=Banner+2",
+          url: "https://placehold.co/298x298/FF6B35/FFFFFF?text=Banner+2",
           chatPhrase: "신선한 닭가슴살로 건강한 다이어트!",
           createdAt: new Date().toISOString(),
           reviewInfo: {
@@ -370,7 +370,7 @@ class ApiService {
         },
         {
           id: 3,
-          url: "https://via.placeholder.com/298x298/28A745/FFFFFF?text=Banner+3",
+          url: "https://placehold.co/298x298/28A745/FFFFFF?text=Banner+3",
           chatPhrase: "부드럽고 맛있는 프리미엄 닭가슴살",
           createdAt: new Date().toISOString(),
           reviewInfo: {
