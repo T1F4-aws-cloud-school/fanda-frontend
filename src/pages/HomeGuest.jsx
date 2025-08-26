@@ -172,7 +172,7 @@ function HomeGuest() {
 
       return () => clearTimeout(highlightTimer)
     }
-  }, [currentBannerIndex, banners, displayCatchPhrase]) // ✅ displayCatchPhrase 다시 추가하되 조건부 업데이트로 무한루프 방지
+  }, [currentBannerIndex, banners])
 
   // 배너 인덱스 변경 시 다른 배너들을 앞면으로 리셋하는 useEffect
   useEffect(() => {
@@ -839,7 +839,7 @@ function HomeGuest() {
             <img src={userIcon || "/placeholder.svg"} alt="사용자" />
           </div>
           <div className="home-user-info">
-            <h3 className="home-user-name">세라통살사랑님</h3>
+            <h3 className="home-user-name">세끼통살사랑님</h3>
             <p className="home-user-description">
               로그인을 하면 고객님에게{"\n"}
               딱 맞는 상품을 추천해드려요!

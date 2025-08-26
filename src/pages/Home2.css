@@ -199,7 +199,6 @@ body {
     rgba(241, 245, 249, 0.95) 70%, 
     rgba(226, 232, 240, 0.90) 100%
   );
-  backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.3);
   box-shadow: 
     0 20px 40px rgba(0, 0, 0, 0.1),
@@ -290,7 +289,6 @@ body {
   border: 1px solid rgba(226, 232, 240, 0.5);
   border-radius: 12px;
   padding: 14px;
-  backdrop-filter: blur(10px);
   box-shadow: 
     0 2px 8px rgba(0, 0, 0, 0.04),
     0 1px 3px rgba(0, 0, 0, 0.06);
