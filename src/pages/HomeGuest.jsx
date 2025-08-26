@@ -16,6 +16,11 @@ import heartGrey from "../assets/heart_grey.png"
 import apiService from "../api/apiService"
 import BottomNavigation from "./BottomNavigation"
 
+import banner1 from "../assets/banner_20250808_173006.png"
+import banner2 from "../assets/banner_20250808_174545.png" 
+import banner3 from "../assets/banner_20250813_163542.png"
+
+
 import { useNavigate } from "react-router-dom"
 
 // 하드코딩 목업 데이터 (비로그인용)
@@ -822,7 +827,7 @@ function HomeGuest() {
         </div>
       </div>
 
-      {/* 🎯 수정된 캐치프레이즈 */}
+      {/* 수정된 캐치프레이즈 */}
       <div className={`catch-phrase ${catchPhraseHighlight ? 'highlight' : ''}`}>
         {displayCatchPhrase}
       </div>

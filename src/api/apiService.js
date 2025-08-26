@@ -273,7 +273,10 @@ class ApiService {
     cacheBanners(banners, expiresAt) {
       try {
         localStorage.setItem(this.CACHE_KEY, JSON.stringify({ banners, expiresAt }));
-      } catch {}
+        console.log('배너 캐시 저장:', banners.length, '개');
+      } catch (error) {
+        console.error('캐시 저장 실패:', error);
+      }
     },
 
     // presigned 쿼리에서 만료 시각 계산
@@ -324,34 +327,97 @@ class ApiService {
       return items;
     },
 
-    // 공개 API: 배너 3개 반환(캐시 우선)
+    // 공개 API: 배너 3개 반환(캐시 우선, API 실패시 하드코딩된 이미지)
     async getBannerList() {
       const cached = this.getCachedBanners();
       if (cached) return cached;
+      
       try {
+        console.log('API에서 배너 데이터 가져오기 시도...');
         return await this._fetchFromServer();
       } catch (e) {
-        console.error('배너 목록 가져오기 실패, 기본 배너 사용:', e);
-        // 기본 배너는 10분짜리 임시 만료로 캐시
-        const defaults = this.getDefaultBanners();
+        console.log('API 실패로 하드코딩된 배너 사용:', e.message);
+        // API 실패시 하드코딩된 실제 이미지들 사용
+        const hardcodedBanners = this.getHardcodedBanners();
         const fallbackExpire = Date.now() + 10 * 60 * 1000;
-        this.cacheBanners(defaults, fallbackExpire);
-        return defaults;
+        this.cacheBanners(hardcodedBanners, fallbackExpire);
+        return hardcodedBanners;
       }
     },
 
-    // 🎯 새 배너 생성 후 기존 이미지 유지 + 캐치프레이즈만 업데이트
+    // 하드코딩된 실제 배너 이미지들 (API 실패시만 사용)
+    getHardcodedBanners() {
+      // import는 HomeGuest.jsx에서 처리하고 여기서는 상대경로 사용
+      return [
+        {
+          id: 'hardcoded-1',
+          url: "/src/assets/banner_20250808_173006.png",
+          chatPhrase: "부드러운 수비드 닭가슴살, 건강한 한 끼 식사",
+          createdAt: new Date('2025-08-08T17:30:06').toISOString(),
+          reviewInfo: {
+            productName: "수비드 닭가슴살",
+            reviewCount: "1,250+",
+            sentiment: "긍정적",
+            generatedAt: "하드코딩"
+          }
+        },
+        {
+          id: 'hardcoded-2',
+          url: "/src/assets/banner_20250808_174545.png",
+          chatPhrase: "맛과 영양을 모두 잡은 다이어트 필수품",
+          createdAt: new Date('2025-08-08T17:45:45').toISOString(),
+          reviewInfo: {
+            productName: "프리미엄 닭가슴살",
+            reviewCount: "890+",
+            sentiment: "매우 긍정적",
+            generatedAt: "하드코딩"
+          }
+        },
+        {
+          id: 'hardcoded-3',
+          url: "/src/assets/banner_20250813_163542.png",
+          chatPhrase: "수비드 공법의 촉촉함, 허브의 은은한 향기",
+          createdAt: new Date('2025-08-13T16:35:42').toISOString(),
+          reviewInfo: {
+            productName: "허브 닭가슴살",
+            reviewCount: "567+",
+            sentiment: "긍정적",
+            generatedAt: "하드코딩"
+          }
+        }
+      ];
+    },
+
+    // 기본 배너들 (초기 로딩용 placeholder)
+    getDefaultBanners() {
+      return [
+        {
+          id: 'placeholder-1',
+          url: "https://placehold.co/298x298/006AFF/FFFFFF?text=Loading...",
+          chatPhrase: "데이터를 불러오는 중...",
+          createdAt: new Date().toISOString(),
+          reviewInfo: {
+            productName: "로딩 중",
+            reviewCount: "-",
+            sentiment: "로딩 중",
+            generatedAt: "Placeholder"
+          }
+        }
+      ];
+    },
+
+    // 캐치프레이즈만 업데이트 (기존 이미지 유지) - 캐치프레이즈 로직 완전 유지
     async generateAndAddBanner(currentBanners, additionalData = {}) {
       console.log('새 배너 생성 시작:', additionalData);
       
       // 서버에서 리포트+배너 생성 실행 (새 캐치프레이즈만 받기 위해)
       const reportResult = await apiService.reports.generate();
-      console.log('🔍 리포트 생성 결과 (RAW):', reportResult);
-      console.log('🔍 리포트 결과 타입:', typeof reportResult);
-      console.log('🔍 리포트 결과 배열 여부:', Array.isArray(reportResult));
+      console.log('리포트 생성 결과 (RAW):', reportResult);
+      console.log('리포트 결과 타입:', typeof reportResult);
+      console.log('리포트 결과 배열 여부:', Array.isArray(reportResult));
       
       if (Array.isArray(reportResult)) {
-        console.log('🔍 각 배너별 캐치프레이즈:');
+        console.log('각 배너별 캐치프레이즈:');
         reportResult.forEach((item, index) => {
           console.log(`  배너 ${index}:`, {
             chatPhraseKo: item.chatPhraseKo,
@@ -361,16 +427,16 @@ class ApiService {
       }
       
       if (!reportResult || !Array.isArray(reportResult) || reportResult.length === 0) {
-        console.log('⚠ 새 배너 생성 결과가 없음 또는 잘못된 형식');
+        console.log('새 배너 생성 결과가 없음 또는 잘못된 형식');
         return currentBanners;
       }
 
-      // ✅ 핵심: 기존 배너 이미지는 그대로 유지하고 캐치프레이즈만 업데이트
+      // 핵심: 기존 배너 이미지는 그대로 유지하고 캐치프레이즈만 업데이트
       const updatedBanners = currentBanners.map((banner, index) => {
         // 해당 인덱스의 새 캐치프레이즈가 있으면 사용, 없으면 기존 것 유지
         const newCatchPhrase = reportResult[index]?.chatPhraseKo;
         
-        console.log(`🔄 배너 ${index} 업데이트:`, {
+        console.log(`배너 ${index} 업데이트:`, {
           기존이미지: banner.url,
           기존캐치프레이즈: banner.chatPhrase,
           새캐치프레이즈: newCatchPhrase,
@@ -390,13 +456,13 @@ class ApiService {
         };
       });
 
-      console.log('🎯 최종 업데이트된 배너들:', updatedBanners.map(b => ({
+      console.log('최종 업데이트된 배너들:', updatedBanners.map(b => ({
         id: b.id,
         url: b.url, // 기존 이미지 URL 유지됨
         chatPhrase: b.chatPhrase // 새 캐치프레이즈
       })));
 
-      // ✅ 캐시도 업데이트 (기존 이미지 URL 기반으로)
+      // 캐시도 업데이트 (기존 이미지 URL 기반으로)
       if (updatedBanners.length > 0) {
         // 기존 배너들의 만료시간 중 가장 짧은 것 사용 (또는 기본값)
         const defaultExpiry = Date.now() + 10 * 60 * 1000; // 10분
@@ -420,48 +486,6 @@ class ApiService {
       }
       
       return updatedBanners;
-    },
-
-    // 기본 배너들 (초기 로드/장애 대비)
-    getDefaultBanners() {
-      return [
-        {
-          id: 1,
-          url: "https://placehold.co/298x298/006AFF/FFFFFF?text=Banner+1",
-          chatPhrase: "인기 최고 판매율 1위 닭가슴살을 만나보세요!",
-          createdAt: new Date().toISOString(),
-          reviewInfo: {
-            productName: "수비드 닭가슴살",
-            reviewCount: "1,250+",
-            sentiment: "긍정적",
-            generatedAt: "기본 배너"
-          }
-        },
-        {
-          id: 2,
-          url: "https://placehold.co/298x298/FF6B35/FFFFFF?text=Banner+2",
-          chatPhrase: "신선한 닭가슴살로 건강한 다이어트!",
-          createdAt: new Date().toISOString(),
-          reviewInfo: {
-            productName: "프리미엄 닭가슴살",
-            reviewCount: "890+",
-            sentiment: "매우 긍정적",
-            generatedAt: "기본 배너"
-          }
-        },
-        {
-          id: 3,
-          url: "https://placehold.co/298x298/28A745/FFFFFF?text=Banner+3",
-          chatPhrase: "부드럽고 맛있는 프리미엄 닭가슴살",
-          createdAt: new Date().toISOString(),
-          reviewInfo: {
-            productName: "허브 닭가슴살",
-            reviewCount: "567+",
-            sentiment: "긍정적",
-            generatedAt: "기본 배너"
-          }
-        }
-      ];
     },
 
     // (호환용) 최신 배너 1개만 필요할 때
