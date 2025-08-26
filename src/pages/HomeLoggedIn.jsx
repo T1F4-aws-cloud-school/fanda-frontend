@@ -18,6 +18,11 @@ import apiService from "../api/apiService"
 import { useAuth } from "../context/AuthContext"
 import BottomNavigation from "./BottomNavigation"
 
+import banner1 from "../assets/banner_20250808_173006.png"
+import banner2 from "../assets/banner_20250808_174545.png" 
+import banner3 from "../assets/banner_20250813_163542.png"
+
+
 // 목업 데이터 (API 없을 때 사용)
 const mockRecommendedProducts = [
   { id: 1, name: "단백질 쉐이크", price: "15,800원", image: chicken },
@@ -713,7 +718,7 @@ function HomeLoggedIn() {
     <div className="app">
       {/* 헤더 */}
       <header className="header">
-        <h1 className="logo">세 라 통 살</h1>
+        <h1 className="logo">세 끼 통 살</h1>
         <div className="header-icons">
           <img src={cartIcon || "/placeholder.svg"} alt="장바구니" className="header-icon cart-icon" />
           <img src={notificationIcon || "/placeholder.svg"} alt="알림" className="header-icon" />
@@ -724,7 +729,7 @@ function HomeLoggedIn() {
       <div className="search-container">
         <div className="search-bar">
           <img src={searchIcon || "/placeholder.svg"} alt="검색" className="search-icon" />
-          <input type="text" placeholder="세라통살에서 검색해보세요!" className="search-input" />
+          <input type="text" placeholder="세끼통살에서 검색해보세요!" className="search-input" />
         </div>
       </div>
 
