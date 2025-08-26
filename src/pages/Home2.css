@@ -914,10 +914,11 @@ body {
 .home-bottom-nav {
   position: fixed;
   bottom: 0;
-  left: 50%;                     
-  transform: translateX(-50%);   
+  left: 0;  /* 화면 전체 기준으로 시작 */
+  right: 0; /* 화면 전체 기준으로 끝 */
   width: 100%;
-  max-width: 375px;              
+  max-width: 375px; /* 최대 너비 제한 */
+  margin: 0 auto;   /* 자동 중앙 정렬 */
   background-color: #ffffff;
   border-top: 1px solid #e8ebec;
   display: flex;
@@ -928,6 +929,7 @@ body {
   box-sizing: border-box;
 }
 
+/* 네비게이션 아이템 스타일은 기존과 동일 */
 .home-nav-item {
   display: flex;
   flex-direction: column;
@@ -972,13 +974,6 @@ body {
     max-width: 375px;
     margin: 0 auto;
     position: relative;
-  }
-
-  .home-bottom-nav {
-    left: 37.2%;
-    transform: none;    
-    width: 100%;        
-    max-width: 375px;
   }
 }
 
