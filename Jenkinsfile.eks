@@ -146,8 +146,8 @@ pipeline {
                                 # GitHub 인증된 URL로 fetch
                                 git remote set-url origin https://${GITHUB_TOKEN}@github.com/T1F4-aws-cloud-school/fanda-frontend.git
                                 git fetch origin
-                                git checkout main
-                                git reset --hard origin/main
+                                git checkout dev
+                                git reset --hard origin/dev
                             '''
                             
                             def currentTag = sh(
@@ -166,7 +166,7 @@ pipeline {
                                 
                                 git add k8s/eks/deployment.yaml
                                 git commit -m "Auto-update frontend image tag to ${IMAGE_TAG} [skip ci]"
-                                git push origin main
+                                git push origin dev
                                 echo "Git 푸시 성공"
                             '''
                         }
