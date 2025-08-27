@@ -921,7 +921,6 @@ body {
   left: 0;
   right: 0;
   width: 100%;
-  /* max-width 제거하여 전체 너비 사용 */
   margin: 0 auto;
   background-color: #ffffff;
   border-top: 1px solid #e8ebec;
@@ -987,11 +986,9 @@ body {
   }
   
   .home-bottom-nav {
-    /* 데스크톱에서는 기본 스타일 유지 */
-    left: 0;           /* left 초기화 */
-    right: 0;          /* right 초기화 */
-    transform: none;   /* transform 제거 */
-    width: 100%;       /* 부모 컨테이너에 맞춤 */
-    max-width: 375px;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 375px !important;
+    max-width: 375px !important;
   }
 }
