@@ -912,8 +912,8 @@ body {
 .home-bottom-nav {
   position: fixed;
   bottom: 0;
-  left: 0;
-  right: 0;
+  left: 50%;
+  transform: translateX(-50%);
   width: 100%;
   max-width: 375px;
   margin: 0 auto;
@@ -983,5 +983,6 @@ body {
   .home-bottom-nav {
     /* 데스크톱에서는 기본 스타일 유지 */
     max-width: 375px;
+    overflow: hidden;
   }
 }

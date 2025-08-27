@@ -22,6 +22,13 @@ import banner1 from "../assets/banner_20250808_173006.png"
 import banner2 from "../assets/banner_20250808_174545.png" 
 import banner3 from "../assets/banner_20250813_163542.png"
 
+import mock_garlic from "../assets/mock_Garlic.png"
+import mock_steam from "../assets/mock_steam.png"
+import mock_spicy from "../assets/mock_spicy.png"
+import mock_grill from "../assets/mock_grill.png"
+import mock_s from "../assets/mock_s.png"
+import mock_t from "../assets/mock_t.png"
+
 
 // 목업 데이터 (API 없을 때 사용)
 const mockRecommendedProducts = [
@@ -34,12 +41,42 @@ const mockRecommendedProducts = [
 ]
 
 const mockCategoryProducts = [
-  { id: 1, name: "무신사", subtitle: "제안하기", image: "https://placehold.co/160x160" },
-  { id: 2, name: "무신사", subtitle: "제안하기", image: "https://placehold.co/160x160" },
-  { id: 3, name: "무신사", subtitle: "제안하기", image: "https://placehold.co/160x160" },
-  { id: 4, name: "무신사", subtitle: "제안하기", image: "https://placehold.co/160x160" },
-  { id: 5, name: "무신사", subtitle: "제안하기", image: "https://placehold.co/160x160" },
-  { id: 6, name: "무신사", subtitle: "제안하기", image: "https://placehold.co/160x160" },
+  {
+    id: 1,
+    name: "갈릭 허브 닭가슴살",
+    subtitle: "구매하기",
+    image: mock_garlic,
+  },
+  {
+    id: 2,
+    name: "직화 스팀 닭가슴살",
+    subtitle: "구매하기",
+    image: mock_steam,
+  },
+  {
+    id: 3,
+    name: "매콤 바베큐 닭가슴살",
+    subtitle: "구매하기",
+    image: mock_spicy,
+  },
+  {
+    id: 4,
+    name: "그릴 바베큐 닭가슴살",
+    subtitle: "구매하기",
+    image: mock_grill,
+  },
+  {
+    id: 5,
+    name: "튀김 닭가슴살",
+    subtitle: "구매하기",
+    image: mock_t,
+  },
+  {
+    id: 6,
+    name: "수비드 닭가슴살",
+    subtitle: "구매하기",
+    image: mock_s,
+  },
 ]
 
 function HomeLoggedIn() {
