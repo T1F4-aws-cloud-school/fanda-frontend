@@ -15,6 +15,7 @@ import heart from "../assets/heart.png"
 import heartGrey from "../assets/heart_grey.png"
 import apiService from "../api/apiService"
 import BottomNavigation from "./BottomNavigation"
+import FakeNotification from "./FakeNotification"  // 추가
 
 import banner1 from "../assets/banner_20250808_173006.png"
 import banner2 from "../assets/banner_20250808_174545.png" 
@@ -134,15 +135,25 @@ function HomeGuest() {
   const flipTimeouts = useRef({})
   const progressIntervals = useRef({})
   
+  // 가짜 알림 상태 추가
+  const [showNotification, setShowNotification] = useState(false)
+  
   const navigate = useNavigate()
   const categories = ["전체", "베스트", "오늘특가", "대량구매", "신상품"]
 
   // 컴포넌트 마운트 시 초기 데이터 로드
   useEffect(() => {
     loadInitialData()
+    
+    // 2초 후에 알림 표시
+    const notificationTimer = setTimeout(() => {
+      setShowNotification(true)
+    }, 2000)
+    
+    return () => clearTimeout(notificationTimer)
   }, [])
 
-  // 🎯 핵심 수정: 캐치프레이즈 업데이트 useEffect
+  // 핵심 수정: 캐치프레이즈 업데이트 useEffect
   useEffect(() => {
     if (banners.length === 0) return
 
@@ -151,7 +162,7 @@ function HomeGuest() {
 
     const newCatchPhrase = currentBanner.chatPhrase || "인기 최고 판매율 1위 닭가슴살을 만나보세요!"
     
-    console.log('🎯 배너 인덱스 변경으로 인한 캐치프레이즈 업데이트:', {
+    console.log('배너 인덱스 변경으로 인한 캐치프레이즈 업데이트:', {
       bannerIndex: currentBannerIndex,
       bannerId: currentBanner.id,
       oldPhrase: displayCatchPhrase,
@@ -165,7 +176,7 @@ function HomeGuest() {
 
     // 캐치프레이즈가 실제로 변경된 경우에만 업데이트
     if (newCatchPhrase !== displayCatchPhrase) {
-      console.log('✨ 캐치프레이즈 변경 시작:', { from: displayCatchPhrase, to: newCatchPhrase })
+      console.log('캐치프레이즈 변경 시작:', { from: displayCatchPhrase, to: newCatchPhrase })
       
       // 하이라이트 효과와 함께 즉시 업데이트
       setCatchPhraseHighlight(true)
@@ -307,7 +318,7 @@ function HomeGuest() {
     return bannerList
   }
 
-  // 🎯 캐치프레이즈 업데이트 헬퍼 함수 추가
+  // 캐치프레이즈 업데이트 헬퍼 함수 추가
   const updateCatchPhraseFromBanner = (bannerIndex, bannerList) => {
     if (!bannerList || bannerList.length === 0 || bannerIndex < 0 || bannerIndex >= bannerList.length) {
       return
@@ -316,7 +327,7 @@ function HomeGuest() {
     const targetBanner = bannerList[bannerIndex]
     const newPhrase = targetBanner?.chatPhrase || "인기 최고 판매율 1위 닭가슴살을 만나보세요!"
     
-    console.log('🎯 캐치프레이즈 헬퍼 함수 호출:', {
+    console.log('캐치프레이즈 헬퍼 함수 호출:', {
       bannerIndex,
       newPhrase,
       currentPhrase: displayCatchPhrase
@@ -329,9 +340,9 @@ function HomeGuest() {
     }
   }
 
-  // 🎯 수정된 초기 데이터 로드
+  // 수정된 초기 데이터 로드
   const loadInitialData = async () => {
-    console.log('🚀 초기 데이터 로드 시작...')
+    console.log('초기 데이터 로드 시작...')
     
     try {
       // 1. 먼저 기본 배너들로 초기화
@@ -344,7 +355,7 @@ function HomeGuest() {
       if (limitedDefaults.length > 0) {
         const firstPhrase = limitedDefaults[0].chatPhrase || "인기 최고 판매율 1위 닭가슴살을 만나보세요!"
         setDisplayCatchPhrase(firstPhrase)
-        console.log('🎯 초기 캐치프레이즈 설정:', firstPhrase)
+        console.log('초기 캐치프레이즈 설정:', firstPhrase)
       }
       
       // 2. 백그라운드에서 실제 배너들 로드 시도
@@ -361,14 +372,14 @@ function HomeGuest() {
         console.log('배너 생성은 실패했지만 앱 로드는 계속 진행')
       }
       
-      console.log('✅ 초기 데이터 로드 완료')
+      console.log('초기 데이터 로드 완료')
       
     } catch (error) {
-      console.error('⚠ 초기 데이터 로드 중 치명적 오류:', error)
+      console.error('초기 데이터 로드 중 치명적 오류:', error)
     }
   }
 
-  // 🎯 수정된 초기 배너 로드
+  // 수정된 초기 배너 로드
   const loadInitialBanners = async () => {
     try {
       const bannerList = await apiService.banner.getBannerList()
@@ -377,9 +388,9 @@ function HomeGuest() {
         setBanners(limitedBanners)
         setCurrentBannerIndex(0)
         
-        // 🎯 헬퍼 함수 사용
+        // 헬퍼 함수 사용
         updateCatchPhraseFromBanner(0, limitedBanners)
-        console.log('🎯 초기 배너 로드 후 캐치프레이즈 업데이트 완료')
+        console.log('초기 배너 로드 후 캐치프레이즈 업데이트 완료')
       }
     } catch (error) {
       console.log('초기 배너 로드 실패:', error.message)
@@ -388,20 +399,20 @@ function HomeGuest() {
 
   // 새 배너 생성 시도 (게스트용 - 권한 없으면 무시)
   const tryGenerateNewBanner = async () => {
-    console.log('🎪 게스트용 새 배너 생성 시도...')
+    console.log('게스트용 새 배너 생성 시도...')
     
     try {
       const hasToken = localStorage.getItem('accessToken')
       if (!hasToken) {
-        console.log('🔑 토큰이 없어서 배너 생성을 건너뜁니다 (게스트 모드)')
+        console.log('토큰이 없어서 배너 생성을 건너뜁니다 (게스트 모드)')
         return
       }
 
       const response = await apiService.reports.generate()
-      console.log('📋 배너 생성 API 응답:', response)
+      console.log('배너 생성 API 응답:', response)
       
       if (!response) {
-        console.log('⚠️ 배너 생성 권한이 없거나 오류 발생 - 기존 배너 유지')
+        console.log('배너 생성 권한이 없거나 오류 발생 - 기존 배너 유지')
         return
       }
       
@@ -412,7 +423,7 @@ function HomeGuest() {
           sentiment: "긍정적"
         }
         
-        console.log('🔄 새 배너 목록 생성 중...')
+        console.log('새 배너 목록 생성 중...')
         const updatedBanners = await apiService.banner.generateAndAddBanner(banners, {
           ...additionalData
         })
@@ -421,23 +432,23 @@ function HomeGuest() {
         setBanners(limitedBanners)
         setCurrentBannerIndex(0)
         
-        // 🎯 헬퍼 함수 사용
+        // 헬퍼 함수 사용
         updateCatchPhraseFromBanner(0, limitedBanners)
-        console.log("🎉 게스트 새 배너 생성 성공!")
+        console.log("게스트 새 배너 생성 성공!")
       }
     } catch (error) {
-      console.log("⚠️ 게스트 배너 생성 실패 (정상적인 경우일 수 있음):", {
+      console.log("게스트 배너 생성 실패 (정상적인 경우일 수 있음):", {
         message: error.message,
         status: error.response?.status
       })
       
       if (error.response?.status === 401 || error.response?.status === 403) {
-        console.log('🔑 권한 부족으로 기본 배너 사용 (정상)')
+        console.log('권한 부족으로 기본 배너 사용 (정상)')
         return
       }
       
       if (error.message.includes('JSON') || error.message.includes('Unexpected end')) {
-        console.log('🔑 서버 응답 파싱 오류 - 기본 배너 유지')
+        console.log('서버 응답 파싱 오류 - 기본 배너 유지')
         return
       }
     }
@@ -448,13 +459,18 @@ function HomeGuest() {
     navigate("/login")
   }
 
-  // 🎯 수정된 배너 슬라이드 제어 함수들 - 헬퍼 함수 사용
+  // 알림 숨기기 함수 추가
+  const handleHideNotification = () => {
+    setShowNotification(false)
+  }
+
+  // 수정된 배너 슬라이드 제어 함수들 - 헬퍼 함수 사용
   const goToPrevBanner = () => {
     setCurrentBannerIndex((prev) => {
       const newIndex = (prev - 1 + banners.length) % banners.length
       console.log(`Manual prev: ${prev} -> ${newIndex}`)
       
-      // 🎯 캐치프레이즈 즉시 업데이트
+      // 캐치프레이즈 즉시 업데이트
       setTimeout(() => updateCatchPhraseFromBanner(newIndex, banners), 0)
       
       return newIndex
@@ -466,7 +482,7 @@ function HomeGuest() {
       const newIndex = (prev + 1) % banners.length
       console.log(`Manual next: ${prev} -> ${newIndex}`)
       
-      // 🎯 캐치프레이즈 즉시 업데이트  
+      // 캐치프레이즈 즉시 업데이트  
       setTimeout(() => updateCatchPhraseFromBanner(newIndex, banners), 0)
       
       return newIndex
@@ -477,7 +493,7 @@ function HomeGuest() {
     console.log(`Direct go to banner: ${currentBannerIndex} -> ${index}`)
     setCurrentBannerIndex(index)
     
-    // 🎯 캐치프레이즈 즉시 업데이트
+    // 캐치프레이즈 즉시 업데이트
     setTimeout(() => updateCatchPhraseFromBanner(index, banners), 0)
   }
 
@@ -775,9 +791,15 @@ function HomeGuest() {
 
   return (
     <div className="app">
+      {/* 가짜 알림 컴포넌트 추가 */}
+      <FakeNotification 
+        show={showNotification} 
+        onHide={handleHideNotification} 
+      />
+
       {/* 헤더 */}
       <header className="header">
-        <h1 className="logo">세 끼 통 살</h1>
+        <h1 className="logo">세 라 통 살</h1>
         <div className="header-icons">
           <img src={cartIcon || "/placeholder.svg"} alt="장바구니" className="header-icon cart-icon" />
           <img src={notificationIcon || "/placeholder.svg"} alt="알림" className="header-icon" />
@@ -788,7 +810,7 @@ function HomeGuest() {
       <div className="search-container">
         <div className="search-bar">
           <img src={searchIcon || "/placeholder.svg"} alt="검색" className="search-icon" />
-          <input type="text" placeholder="세끼통살에서 검색해보세요!" className="search-input" />
+          <input type="text" placeholder="세라통살에서 검색해보세요!" className="search-input" />
         </div>
       </div>
       
@@ -845,7 +867,7 @@ function HomeGuest() {
             <img src={userIcon || "/placeholder.svg"} alt="사용자" />
           </div>
           <div className="home-user-info">
-            <h3 className="home-user-name">세끼통살사랑님</h3>
+            <h3 className="home-user-name">세라통살사랑님</h3>
             <p className="home-user-description">
               로그인을 하면 고객님에게{"\n"}
               딱 맞는 상품을 추천해드려요!
