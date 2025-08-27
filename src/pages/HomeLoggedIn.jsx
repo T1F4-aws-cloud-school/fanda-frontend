@@ -32,12 +32,12 @@ import mock_t from "../assets/mock_t.png"
 
 // 목업 데이터 (API 없을 때 사용)
 const mockRecommendedProducts = [
-  { id: 1, name: "단백질 쉐이크", price: "15,800원", image: chicken },
-  { id: 2, name: "닭가슴살 큐브", price: "27,800원", image: chicken },
-  { id: 3, name: "훈제 닭가슴살", price: "19,800원", image: chicken },
-  { id: 4, name: "칠리 닭가슴살", price: "21,800원", image: chicken },
-  { id: 5, name: "갈릭 바베큐 닭가슴살", price: "18,800원", image: chicken },
-  { id: 6, name: "스팀 닭가슴살", price: "17,500원", image: chicken },
+  { id: 1, name: "갈릭 바베큐", price: "15,800원", image: mock_garlic },
+  { id: 2, name: "스팀 닭가슴살", price: "27,800원", image: mock_steam },
+  { id: 3, name: "칠리 닭가슴살", price: "19,800원", image: mock_spicy },
+  { id: 4, name: "그릴드 바베큐", price: "21,800원", image: mock_grill },
+  { id: 5, name: "닭가슴살", price: "18,800원", image: mock_s },
+  { id: 6, name: "튀김 닭가슴살", price: "17,500원", image: mock_t },
 ]
 
 const mockCategoryProducts = [
