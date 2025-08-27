@@ -360,7 +360,7 @@ body {
   bottom: 15px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.6);
   color: #475569;
   padding: 6px 12px;
   border-radius: 20px;
@@ -369,8 +369,10 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  border: 1px solid rgba(226, 232, 240, 0.5);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(226, 232, 240, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  opacity: 0.7; /* 전체적으로 연하게 */
+  transition: all 0.3s ease; /* 호버 효과를 위한 트랜지션 추가 */
 }
 
 .flip-progress-bar {
@@ -424,7 +426,11 @@ body {
 
 
   .banner-slide:hover .flip-progress {
-    opacity: 0.5;
+    opacity: 1;
+    transform: translateX(-50%) scale(1.05); /* 살짝 커지게 */
+    background: rgba(255, 255, 255, 0.95); /* 배경도 진하게 */
+    border: 1px solid rgba(226, 232, 240, 0.5); /* 테두리도 진하게 */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* 그림자도 진하게 */
   }
   
   .banner-slide:hover .banner-number {
@@ -912,10 +918,10 @@ body {
 .home-bottom-nav {
   position: fixed;
   bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
   width: 100%;
-  max-width: 375px;
+  /* max-width 제거하여 전체 너비 사용 */
   margin: 0 auto;
   background-color: #ffffff;
   border-top: 1px solid #e8ebec;
@@ -982,7 +988,10 @@ body {
   
   .home-bottom-nav {
     /* 데스크톱에서는 기본 스타일 유지 */
+    left: 50%;
+    transform: translateX(-50%);
     max-width: 375px;
+    width: 375px; /* 고정 너비로 설정 */
     overflow: hidden;
   }
 }
