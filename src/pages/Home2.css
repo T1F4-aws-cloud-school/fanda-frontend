@@ -918,10 +918,10 @@ body {
 .home-bottom-nav {
   position: fixed;
   bottom: 0;
-  left: 0;
-  right: 0;
+  left: 50%;
+  transform: translateX(-50%);
   width: 100%;
-  margin: 0 auto;
+  max-width: 375px;
   background-color: #ffffff;
   border-top: 1px solid #e8ebec;
   display: flex;
@@ -931,6 +931,7 @@ body {
   z-index: 100;
   box-sizing: border-box;
 }
+
 
 /* 네비게이션 아이템 스타일은 기존과 동일 */
 .home-nav-item {
@@ -986,12 +987,6 @@ body {
   }
   
   .home-bottom-nav {
-    position: fixed;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 375px;
-    max-width: 375px;
-    right: auto; 
+    left: 49.5%; /* Detail.css와 동일한 값 */
   }
 }
