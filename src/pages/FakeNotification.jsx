@@ -24,3 +24,5 @@ const FakeNotification = ({ show, onHide }) => {
     </div>
   );
 };
+
+export default FakeNotification;
