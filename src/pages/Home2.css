@@ -988,6 +988,7 @@ body {
   
   .home-bottom-nav {
     /* 데스크톱에서는 기본 스타일 유지 */
+    left: 49.5%;
     transform: translateX(-50%);
     max-width: 375px;
     width: 375px; /* 고정 너비로 설정 */
