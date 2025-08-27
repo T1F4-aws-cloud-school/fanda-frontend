@@ -988,10 +988,10 @@ body {
   
   .home-bottom-nav {
     /* 데스크톱에서는 기본 스타일 유지 */
-    left: 49.5%;
-    transform: translateX(-50%);
+    left: 0;           /* left 초기화 */
+    right: 0;          /* right 초기화 */
+    transform: none;   /* transform 제거 */
+    width: 100%;       /* 부모 컨테이너에 맞춤 */
     max-width: 375px;
-    width: 375px; /* 고정 너비로 설정 */
-    overflow: hidden;
   }
 }
