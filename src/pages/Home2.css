@@ -986,9 +986,12 @@ body {
   }
   
   .home-bottom-nav {
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    width: 375px !important;
-    max-width: 375px !important;
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 375px;
+    max-width: 375px;
+    right: auto; 
   }
 }
