@@ -27,7 +27,7 @@ spec:
       containers:
       - name: fanda-fe
         # Jenkins가 자동으로 업데이트하는 ECR 이미지
-        image: 746491138596.dkr.ecr.us-east-1.amazonaws.com/fanda-fe/frontend:231f7005
+        image: 746491138596.dkr.ecr.us-east-1.amazonaws.com/fanda-fe/frontend:e041fb6a
         imagePullPolicy: Always
 
         ports:
