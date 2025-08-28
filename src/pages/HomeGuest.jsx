@@ -778,7 +778,7 @@ const testBannerAPI = async () => {
 
       {/* 헤더 */}
       <header className="header">
-        <h1 className="logo">세 라 통 살</h1>
+        <h1 className="logo">세 끼 통 살</h1>
         <div className="header-icons">
           <img src={cartIcon || "/placeholder.svg"} alt="장바구니" className="header-icon cart-icon" />
           <img src={notificationIcon || "/placeholder.svg"} alt="알림" className="header-icon" />
@@ -789,7 +789,7 @@ const testBannerAPI = async () => {
       <div className="search-container">
         <div className="search-bar">
           <img src={searchIcon || "/placeholder.svg"} alt="검색" className="search-icon" />
-          <input type="text" placeholder="세라통살에서 검색해보세요!" className="search-input" />
+          <input type="text" placeholder="세끼통살에서 검색해보세요!" className="search-input" />
         </div>
       </div>
       
@@ -846,7 +846,7 @@ const testBannerAPI = async () => {
             <img src={userIcon || "/placeholder.svg"} alt="사용자" />
           </div>
           <div className="home-user-info">
-            <h3 className="home-user-name">세라통살사랑님</h3>
+            <h3 className="home-user-name">세끼통살사랑님</h3>
             <p className="home-user-description">
               로그인을 하면 고객님에게{"\n"}
               딱 맞는 상품을 추천해드려요!
