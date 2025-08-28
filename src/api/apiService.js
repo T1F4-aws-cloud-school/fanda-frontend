@@ -28,7 +28,25 @@ class ApiService {
         refreshToken
       });
       return response.data;
-    }
+    },
+
+    logout: () => {
+    // 로컬 스토리지에서 토큰들 삭제
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    
+    // 배너 캐시도 삭제
+    apiService.banner.clearCache();
+    
+    // 기타 사용자 데이터가 있다면 모두 삭제
+    localStorage.removeItem('userInfo');
+    localStorage.removeItem('userPreferences');
+    
+    console.log('로그아웃 완료 - 클라이언트 데이터 모두 삭제');
+    return true;
+  }
+
+
   };
 
   // 상품 관련 API

@@ -1,18 +1,46 @@
-import React from "react";
+import React, { useState } from "react"; // useState 추가
 import { useLocation, useNavigate } from "react-router-dom";
 import BackButton from "../../components/BackButton";
 import "./ReviewCollectionResult.css";
+import apiService from "../../api/apiService"; 
 
 export default function ReviewCollectionResult() {
   const location = useLocation();
   const navigate = useNavigate();
   
+  // 숨겨진 로그아웃 버튼 상태
+  const [clickCount, setClickCount] = useState(0);
+
   // Manager.jsx에서 전달받은 결과 데이터
   const resultData = location.state?.resultData;
   const reportData = location.state?.reportData;
-  const statusMessage = location.state?.statusMessage; // slackMessage → statusMessage로 변경
+  const statusMessage = location.state?.statusMessage;
   const success = location.state?.success;
   const errorMessage = location.state?.errorMessage;
+
+  // 개발자 전용 숨겨진 로그아웃 기능
+  const handleSecretClick = () => {
+    const newCount = clickCount + 1;
+    setClickCount(newCount);
+    
+    if (newCount === 5) {
+      if (window.confirm('개발자 로그아웃 하시겠습니까?')) {
+        // 모든 로컬 데이터 삭제
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        // 홈으로 이동 후 새로고침
+        navigate('/');
+        window.location.reload();
+      }
+      setClickCount(0);
+    }
+    
+    // 3초 후 카운트 리셋
+    setTimeout(() => {
+      setClickCount(0);
+    }, 3000);
+  };
 
   // 실패한 경우
   if (!success) {
@@ -20,6 +48,21 @@ export default function ReviewCollectionResult() {
       <div className="result-container">
         <div className="result-header">
           <BackButton to="/manager" />
+          
+          {/* 숨겨진 개발자 영역 */}
+          <div 
+            onClick={handleSecretClick}
+            style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              width: '40px',
+              height: '40px',
+              opacity: 0,
+              cursor: 'default',
+              zIndex: 999
+            }}
+          />
         </div>
         <div className="error-content">
           <div className="success-icon" style={{ fontSize: '60px' }}>
@@ -58,6 +101,21 @@ export default function ReviewCollectionResult() {
       <div className="result-container">
         <div className="result-header">
           <BackButton to="/manager" />
+          
+          {/* 숨겨진 개발자 영역 */}
+          <div 
+            onClick={handleSecretClick}
+            style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              width: '40px',
+              height: '40px',
+              opacity: 0,
+              cursor: 'default',
+              zIndex: 999
+            }}
+          />
         </div>
         <div className="error-content">
           <h2>결과 데이터를 찾을 수 없습니다</h2>
@@ -85,10 +143,38 @@ export default function ReviewCollectionResult() {
     <div className="result-container">
       <div className="result-header">
         <BackButton to="/manager" />
+        
+        {/* 숨겨진 개발자 영역 - 오른쪽 상단 모서리 */}
+        <div 
+          onClick={handleSecretClick}
+          style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            width: '40px',
+            height: '40px',
+            opacity: 0,
+            cursor: 'default',
+            zIndex: 999
+          }}
+        />
+        
+        {/* 개발 환경에서만 클릭 카운트 표시 */}
+        {process.env.NODE_ENV === 'development' && clickCount > 0 && (
+          <div style={{
+            position: 'absolute',
+            top: '45px',
+            right: '16px',
+            fontSize: '10px',
+            color: '#999',
+            opacity: 0.5
+          }}>
+            {clickCount}/5
+          </div>
+        )}
       </div>
 
       <div className="result-content">
-        
         <h2 className="result-title">
           {reportData ? '리뷰 수집 및 비교 리포트\n생성이 완료되었습니다!' : '리뷰 수집이\n완료되었습니다!'}
         </h2>
@@ -144,7 +230,7 @@ export default function ReviewCollectionResult() {
         <div className="status-message">
           {resultData.savedCount > 0 ? (
             <div className="success-message">
-              <p> {resultData.savedCount}개의 새로운 리뷰가 수집되었습니다!</p>
+              <p>{resultData.savedCount}개의 새로운 리뷰가 수집되었습니다!</p>
               <p>상품 상세 페이지에서 확인해보세요.</p>
             </div>
           ) : (
