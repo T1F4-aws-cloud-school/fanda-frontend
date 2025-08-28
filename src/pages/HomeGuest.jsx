@@ -399,60 +399,90 @@ function HomeGuest() {
 
   // 새 배너 생성 시도 (게스트용 - 권한 없으면 무시)
   const tryGenerateNewBanner = async () => {
-    console.log('게스트용 새 배너 생성 시도...')
-    
-    try {
-      const hasToken = localStorage.getItem('accessToken')
-      if (!hasToken) {
-        console.log('토큰이 없어서 배너 생성을 건너뜁니다 (게스트 모드)')
-        return
-      }
+  console.log('새 배너 생성 시도...');
+  
+  try {
+    // 토큰 확인
+    const hasToken = localStorage.getItem('accessToken');
+    if (!hasToken) {
+      console.log('토큰이 없어서 배너 생성을 건너뜁니다 (게스트 모드)');
+      return;
+    }
 
-      const response = await apiService.reports.generate()
-      console.log('배너 생성 API 응답:', response)
-      
-      if (!response) {
-        console.log('배너 생성 권한이 없거나 오류 발생 - 기존 배너 유지')
-        return
-      }
-      
-      if (response && Array.isArray(response) && response.length > 0) {
-        const additionalData = {
-          productName: "닭가슴살",
-          reviewCount: "최신",
-          sentiment: "긍정적"
-        }
-        
-        console.log('새 배너 목록 생성 중...')
-        const updatedBanners = await apiService.banner.generateAndAddBanner(banners, {
-          ...additionalData
-        })
-        
-        const limitedBanners = maintainMaxBanners(updatedBanners)
-        setBanners(limitedBanners)
-        setCurrentBannerIndex(0)
-        
-        // 헬퍼 함수 사용
-        updateCatchPhraseFromBanner(0, limitedBanners)
-        console.log("게스트 새 배너 생성 성공!")
-      }
-    } catch (error) {
-      console.log("게스트 배너 생성 실패 (정상적인 경우일 수 있음):", {
-        message: error.message,
-        status: error.response?.status
-      })
-      
-      if (error.response?.status === 401 || error.response?.status === 403) {
-        console.log('권한 부족으로 기본 배너 사용 (정상)')
-        return
-      }
-      
-      if (error.message.includes('JSON') || error.message.includes('Unexpected end')) {
-        console.log('서버 응답 파싱 오류 - 기본 배너 유지')
-        return
-      }
+    // API 직접 호출
+    const newBannersData = await apiService.reports.generate();
+    console.log('새 배너 생성 결과:', newBannersData);
+    
+    if (!newBannersData || !Array.isArray(newBannersData) || newBannersData.length === 0) {
+      console.log('새 배너 생성 실패 또는 빈 결과');
+      return;
+    }
+    
+    // 새 배너로 완전 교체
+    console.log('새로 생성된 배너로 교체');
+    const limitedBanners = maintainMaxBanners(newBannersData);
+    setBanners(limitedBanners);
+    setCurrentBannerIndex(0);
+    
+    // 첫 번째 배너의 캐치프레이즈 즉시 설정
+    if (limitedBanners.length > 0) {
+      const firstPhrase = limitedBanners[0].chatPhrase || "인기 최고 판매율 1위 닭가슴살을 만나보세요!";
+      setDisplayCatchPhrase(firstPhrase);
+      setCatchPhraseHighlight(true);
+      setTimeout(() => setCatchPhraseHighlight(false), 1000);
+      console.log('새 배너의 캐치프레이즈 설정 완료:', firstPhrase);
+    }
+    
+    console.log("새 배너 생성 및 적용 성공!");
+    
+  } catch (error) {
+    console.log("배너 생성 실패:", {
+      message: error.message,
+      status: error.response?.status
+    });
+    
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      console.log('권한 부족으로 기본 배너 사용 (정상)');
+      return;
     }
   }
+};
+
+// 테스트용 함수도 추가하세요 (개발 중에만 사용)
+const testBannerAPI = async () => {
+  console.log('=== 배너 API 테스트 시작 ===');
+  
+  try {
+    console.log('1. 토큰 확인:', localStorage.getItem('accessToken') ? '있음' : '없음');
+    
+    console.log('2. API 직접 호출 테스트...');
+    const result = await apiService.reports.generate();
+    
+    console.log('3. API 결과:', result);
+    
+    if (result && Array.isArray(result)) {
+      console.log('4. 배너 상태 업데이트 시도...');
+      setBanners(result);
+      setCurrentBannerIndex(0);
+      
+      if (result.length > 0) {
+        setDisplayCatchPhrase(result[0].chatPhrase);
+        setCatchPhraseHighlight(true);
+        setTimeout(() => setCatchPhraseHighlight(false), 1000);
+        console.log('5. 캐치프레이즈 업데이트:', result[0].chatPhrase);
+      }
+      
+      console.log('6. 테스트 완료 - 성공!');
+    } else {
+      console.log('4. API 결과가 올바르지 않음');
+    }
+    
+  } catch (error) {
+    console.error('테스트 실패:', error);
+  }
+  
+  console.log('=== 배너 API 테스트 종료 ===');
+};
 
   // 로그인 핸들러 함수
   const handleLogin = () => {
