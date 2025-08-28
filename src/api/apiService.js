@@ -230,23 +230,112 @@ class ApiService {
 
   // 리포트 및 배너 관련 API
   reports = {
-    // 긍/부정 리포트 생성 및 배너 이미지 생성 (관리자 토큰 필요)
-    generate: async () => {
-      try {
-        const response = await axios.post('/banner/api/v1/reports/generate');
-        console.log('배너 및 리포트 생성 성공:', response.data);
-        return response.data;
-      } catch (error) {
-        console.error('배너 생성 실패:', error);
-        // 관리자 권한이 없거나 토큰이 없는 경우에도 에러를 던지지 않고 null 반환
-        if (error.response?.status === 401 || error.response?.status === 403) {
-          console.log('관리자 권한 없음, 기본 배너 사용');
-          return null;
-        }
-        throw error;
+  // 긍/부정 리포트 생성 및 배너 이미지 생성 (관리자 토큰 필요)
+  generate: async () => {
+    try {
+      console.log('배너 생성 API 호출 시작');
+      
+      const response = await axios.post('/banner/api/v1/reports/generate');
+      console.log('배너 생성 API 원시 응답:', response);
+      console.log('배너 생성 API 데이터:', response.data);
+      
+      // 응답 데이터 검증
+      if (!response.data) {
+        console.warn('응답 데이터가 없습니다');
+        return null;
       }
+      
+      // 배열 형태의 응답 처리
+      if (Array.isArray(response.data)) {
+        console.log(`${response.data.length}개의 배너 데이터 받음`);
+        
+        const transformedBanners = response.data.map((item, index) => {
+          console.log(`배너 ${index + 1} 변환 전:`, item);
+          
+          const transformed = {
+            id: `api-banner-${Date.now()}-${index}`,
+            url: item.imageBannerUrl,
+            chatPhrase: item.chatPhraseKo,
+            createdAt: new Date().toISOString(),
+            reviewInfo: {
+              productName: "수비드 닭가슴살",
+              reviewCount: "최신",
+              sentiment: "긍정적",
+              generatedAt: "API"
+            }
+          };
+          
+          console.log(`배너 ${index + 1} 변환 완료:`, transformed);
+          return transformed;
+        });
+        
+        console.log('모든 배너 변환 완료:', transformedBanners);
+        return transformedBanners;
+      }
+      
+      // 단일 객체 응답 처리
+      if (typeof response.data === 'object') {
+        console.log('단일 객체 응답 처리');
+        const transformed = {
+          id: `api-banner-${Date.now()}`,
+          url: response.data.imageBannerUrl,
+          chatPhrase: response.data.chatPhraseKo,
+          createdAt: new Date().toISOString(),
+          reviewInfo: {
+            productName: "수비드 닭가슴살",
+            reviewCount: "최신",
+            sentiment: "긍정적",
+            generatedAt: "API"
+          }
+        };
+        
+        console.log('단일 배너 변환 완료:', transformed);
+        return [transformed];
+      }
+      
+      console.warn('예상치 못한 응답 형식:', typeof response.data);
+      return null;
+      
+    } catch (error) {
+      console.error('배너 생성 실패:', {
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        url: error.config?.url
+      });
+      
+      // 상태 코드별 구체적인 로깅
+      if (error.response) {
+        switch (error.response.status) {
+          case 400:
+            console.error('잘못된 요청 - 요청 형식을 확인해주세요');
+            break;
+          case 401:
+            console.error('인증 실패 - 토큰을 확인해주세요');
+            break;
+          case 403:
+            console.error('권한 부족 - 관리자 권한이 필요합니다');
+            break;
+          case 404:
+            console.error('엔드포인트를 찾을 수 없습니다');
+            break;
+          case 500:
+            console.error('서버 내부 오류');
+            break;
+        }
+      }
+      
+      // 권한 관련 에러는 null 반환 (정상적인 처리)
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        console.log('권한 없음 - 기본 배너 사용');
+        return null;
+      }
+      
+      throw error;
     }
-  };
+  }
+};
 
   // 배너 관련 API - (최대 3개 · 최신순 · presigned 만료 자동 갱신)
   banner = {
