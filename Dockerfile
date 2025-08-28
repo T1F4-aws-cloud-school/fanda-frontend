@@ -44,10 +44,6 @@ COPY --from=builder /app/build /usr/share/nginx/html
 # Nginx 설정 복사 
 COPY nginx/default.conf /etc/nginx/conf.d/default.conf
 
-# DNS resolver 이슈 해결을 위한 nginx 설정 패치
-RUN sed -i '/^server {/a \    resolver kube-dns.kube-system.svc.cluster.local valid=5s;' /etc/nginx/conf.d/default.conf && \
-    sed -i 's|proxy_pass http://fanda-gateway-service.fanda-gateway.svc.cluster.local:8001|set $backend fanda-gateway-service.fanda-gateway.svc.cluster.local:8001;\n        proxy_pass http://$backend|g' /etc/nginx/conf.d/default.conf
-
 # 보안 강화: 불필요한 파일 제거 및 권한 설정
 RUN find /usr/share/nginx/html -type f -exec chmod 644 {} \; && \
     find /usr/share/nginx/html -type d -exec chmod 755 {} \; && \
