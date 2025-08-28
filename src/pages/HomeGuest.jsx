@@ -342,109 +342,58 @@ function HomeGuest() {
 
   // 수정된 초기 데이터 로드
   const loadInitialData = async () => {
-    console.log('초기 데이터 로드 시작...')
-    
-    try {
-      // 1. 먼저 기본 배너들로 초기화
-      const defaultBanners = apiService.banner.getDefaultBanners()
-      const limitedDefaults = maintainMaxBanners(defaultBanners)
-      setBanners(limitedDefaults)
-      setCurrentBannerIndex(0)
-      
-      // 첫 번째 배너의 캐치프레이즈 즉시 설정
-      if (limitedDefaults.length > 0) {
-        const firstPhrase = limitedDefaults[0].chatPhrase || "인기 최고 판매율 1위 닭가슴살을 만나보세요!"
-        setDisplayCatchPhrase(firstPhrase)
-        console.log('초기 캐치프레이즈 설정:', firstPhrase)
-      }
-      
-      // 2. 백그라운드에서 실제 배너들 로드 시도
-      try {
-        await loadInitialBanners()
-      } catch (bannerError) {
-        console.log('백그라운드 배너 로드 실패, 기본 배너 유지')
-      }
-      
-      // 3. 새 배너 생성 시도 (실패해도 계속 진행)
-      try {
-        await tryGenerateNewBanner()
-      } catch (bannerError) {
-        console.log('배너 생성은 실패했지만 앱 로드는 계속 진행')
-      }
-      
-      console.log('초기 데이터 로드 완료')
-      
-    } catch (error) {
-      console.error('초기 데이터 로드 중 치명적 오류:', error)
-    }
-  }
-
-  // 수정된 초기 배너 로드
-  const loadInitialBanners = async () => {
-    try {
-      const bannerList = await apiService.banner.getBannerList()
-      if (bannerList && bannerList.length > 0) {
-        const limitedBanners = maintainMaxBanners(bannerList)
-        setBanners(limitedBanners)
-        setCurrentBannerIndex(0)
-        
-        // 헬퍼 함수 사용
-        updateCatchPhraseFromBanner(0, limitedBanners)
-        console.log('초기 배너 로드 후 캐치프레이즈 업데이트 완료')
-      }
-    } catch (error) {
-      console.log('초기 배너 로드 실패:', error.message)
-    }
-  }
-
-  // 새 배너 생성 시도 (게스트용 - 권한 없으면 무시)
-  const tryGenerateNewBanner = async () => {
-  console.log('새 배너 생성 시도...');
+  console.log('초기 데이터 로드 시작...')
   
   try {
-    // 토큰 확인
-    const hasToken = localStorage.getItem('accessToken');
-    if (!hasToken) {
-      console.log('토큰이 없어서 배너 생성을 건너뜁니다 (게스트 모드)');
-      return;
-    }
-
-    // API 직접 호출
-    const newBannersData = await apiService.reports.generate();
-    console.log('새 배너 생성 결과:', newBannersData);
-    
-    if (!newBannersData || !Array.isArray(newBannersData) || newBannersData.length === 0) {
-      console.log('새 배너 생성 실패 또는 빈 결과');
-      return;
-    }
-    
-    // 새 배너로 완전 교체
-    console.log('새로 생성된 배너로 교체');
-    const limitedBanners = maintainMaxBanners(newBannersData);
-    setBanners(limitedBanners);
-    setCurrentBannerIndex(0);
+    // 1. 먼저 기본 배너들로 초기화
+    const defaultBanners = apiService.banner.getDefaultBanners()
+    const limitedDefaults = maintainMaxBanners(defaultBanners)
+    setBanners(limitedDefaults)
+    setCurrentBannerIndex(0)
     
     // 첫 번째 배너의 캐치프레이즈 즉시 설정
-    if (limitedBanners.length > 0) {
-      const firstPhrase = limitedBanners[0].chatPhrase || "인기 최고 판매율 1위 닭가슴살을 만나보세요!";
-      setDisplayCatchPhrase(firstPhrase);
-      setCatchPhraseHighlight(true);
-      setTimeout(() => setCatchPhraseHighlight(false), 1000);
-      console.log('새 배너의 캐치프레이즈 설정 완료:', firstPhrase);
+    if (limitedDefaults.length > 0) {
+      const firstPhrase = limitedDefaults[0].chatPhrase || "인기 최고 판매율 1위 닭가슴살을 만나보세요!"
+      setDisplayCatchPhrase(firstPhrase)
+      console.log('초기 캐치프레이즈 설정:', firstPhrase)
     }
     
-    console.log("새 배너 생성 및 적용 성공!");
+    // 2. reports.generate()로 실제 배너들 로드 시도
+    try {
+      await loadBannersFromAPI()
+    } catch (bannerError) {
+      console.log('배너 API 로드 실패, 기본 배너 유지')
+    }
+    
+    console.log('초기 데이터 로드 완료')
     
   } catch (error) {
-    console.log("배너 생성 실패:", {
-      message: error.message,
-      status: error.response?.status
-    });
-    
-    if (error.response?.status === 401 || error.response?.status === 403) {
-      console.log('권한 부족으로 기본 배너 사용 (정상)');
-      return;
+    console.error('초기 데이터 로드 중 치명적 오류:', error)
+  }
+}
+
+// 새로운 함수 - API에서 배너 로드
+const loadBannersFromAPI = async () => {
+  try {
+    const bannerList = await apiService.banner.getBannerList()
+    if (bannerList && bannerList.length > 0) {
+      console.log('API에서 배너 로드 성공:', bannerList.length, '개')
+      const limitedBanners = maintainMaxBanners(bannerList)
+      setBanners(limitedBanners)
+      setCurrentBannerIndex(0)
+      
+      // 첫 번째 배너의 캐치프레이즈 설정
+      if (limitedBanners.length > 0) {
+        const firstPhrase = limitedBanners[0].chatPhrase || "인기 최고 판매율 1위 닭가슴살을 만나보세요!"
+        setDisplayCatchPhrase(firstPhrase)
+        setCatchPhraseHighlight(true)
+        setTimeout(() => setCatchPhraseHighlight(false), 1000)
+        console.log('API 배너 로드 후 캐치프레이즈 업데이트 완료:', firstPhrase)
+      }
     }
+  } catch (error) {
+    console.log('API 배너 로드 실패:', error.message)
+    throw error // loadInitialData에서 catch하도록
   }
 };
 
