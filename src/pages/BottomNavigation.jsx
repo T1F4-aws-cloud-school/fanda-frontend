@@ -6,7 +6,7 @@ import mypageIcon from "../assets/mypage.png"
 import favoriteIcon from "../assets/favorite.png"
 import ichomeIcon from "../assets/ichome.png"
 
-const BottomNavigation = () => {
+const BottomNavigation = ({ onShowNotification }) => {
   const { handleLogout } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
@@ -38,6 +38,14 @@ const BottomNavigation = () => {
     }, 3000)
   }
 
+  // 찜 버튼 클릭 핸들러
+  const handleFavoriteClick = () => {
+    // 알림만 표시하고 페이지 이동 안함
+    if (onShowNotification) {
+      onShowNotification()
+    }
+  }
+
   const navItems = [
     {
       id: 'home',
@@ -58,7 +66,7 @@ const BottomNavigation = () => {
       icon: favoriteIcon,
       label: '찜',
       path: '/favorite',
-      onClick: () => navigate('/favorite')
+      onClick: handleFavoriteClick
     },
     {
       id: 'mypage',
