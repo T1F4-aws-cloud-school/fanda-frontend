@@ -17,6 +17,7 @@ import heartGrey from "../assets/heart_grey.png"
 import apiService from "../api/apiService"
 import { useAuth } from "../context/AuthContext"
 import BottomNavigation from "./BottomNavigation"
+import FakeNotification from "./FakeNotification"
 
 import banner1 from "../assets/banner_20250808_173006.png"
 import banner2 from "../assets/banner_20250808_174545.png" 
@@ -111,6 +112,9 @@ function HomeLoggedIn() {
   // API 연동을 위한 상태
   const [recommendedProducts, setRecommendedProducts] = useState(mockRecommendedProducts)
   const [loading, setLoading] = useState(false)
+
+  // 가짜 알림 상태 추가
+  const [showNotification, setShowNotification] = useState(false)
 
   const categories = ["전체", "베스트", "오늘특가", "대량구매", "신상품"]
 
@@ -367,6 +371,11 @@ function HomeLoggedIn() {
     }
   }
 
+  // 알림 숨기기 함수 추가
+  const handleHideNotification = () => {
+    setShowNotification(false)
+  }
+
   // 배너 슬라이드 제어 (HomeGuest와 동일)
   const goToPrevBanner = () => {
     setCurrentBannerIndex((prev) => {
@@ -598,15 +607,29 @@ function HomeLoggedIn() {
   }
 
   const toggleRecommendedLike = (productId) => {
+    const wasLiked = likedRecommended.includes(productId)
+    
     setLikedRecommended((prev) =>
       prev.includes(productId) ? prev.filter((id) => id !== productId) : [...prev, productId],
     )
+    
+    // 찜하기(좋아요 추가)할 때만 알림 표시
+    if (!wasLiked) {
+      setShowNotification(true)
+    }
   }
 
   const toggleCategoryLike = (productId) => {
+    const wasLiked = likedCategory.includes(productId)
+    
     setLikedCategory((prev) =>
       prev.includes(productId) ? prev.filter((id) => id !== productId) : [...prev, productId],
     )
+    
+    // 찜하기(좋아요 추가)할 때만 알림 표시
+    if (!wasLiked) {
+      setShowNotification(true)
+    }
   }
 
   // 현재 배너의 캐치프레이즈 (HomeGuest와 동일)
@@ -753,6 +776,12 @@ function HomeLoggedIn() {
 
   return (
     <div className="app">
+      {/* 가짜 알림 컴포넌트 추가 */}
+      <FakeNotification 
+        show={showNotification} 
+        onHide={handleHideNotification} 
+      />
+
       {/* 헤더 */}
       <header className="header">
         <h1 className="logo">세 끼 통 살</h1>
@@ -907,7 +936,7 @@ function HomeLoggedIn() {
       </section>
 
       {/* 하단 네비게이션 */}
-      <BottomNavigation />
+      <BottomNavigation onShowNotification={() => setShowNotification(true)} />
     </div>
   )
 }

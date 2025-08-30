@@ -143,15 +143,8 @@ function HomeGuest() {
 
   // 컴포넌트 마운트 시 초기 데이터 로드
   useEffect(() => {
-    loadInitialData()
-    
-    // 2초 후에 알림 표시
-    const notificationTimer = setTimeout(() => {
-      setShowNotification(true)
-    }, 2000)
-    
-    return () => clearTimeout(notificationTimer)
-  }, [])
+  loadInitialData()
+}, [])
 
   // 핵심 수정: 캐치프레이즈 업데이트 useEffect
   useEffect(() => {
