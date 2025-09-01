@@ -167,7 +167,7 @@ pipeline {
                                 git add k8s/eks/deployment.yaml
                                 git commit -m "Auto-update frontend image tag to ${IMAGE_TAG} [skip ci]"
                                 git push origin dev
-                                echo "Git 푸시 성공"
+                                echo "Git 푸시 성공!"
                             '''
                         }
                         
