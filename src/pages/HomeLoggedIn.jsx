@@ -29,7 +29,12 @@ import roast_mock from "../assets/roast_mock.png"
 import smoke_mock from "../assets/smoke_mock.png"
 import teri_mock from "../assets/teri_mock.png"
 import tom_mock from "../assets/tom_mock.png"
-
+import mock_garlic from "../assets/mock_garlic.png"
+import mock_grill from "../assets/mock_grill.png"
+import mock_s from "../assets/mock_s.png"
+import mock_spicy from "../assets/mock_spicy.png"
+import mock_steam from "../assets/mock_steam.png"
+import mock_t from "../assets/mock_t.png"
 
 // 목업 데이터 (API 없을 때 사용)
 const mockRecommendedProducts = [
