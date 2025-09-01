@@ -21,91 +21,52 @@ import banner1 from "../assets/banner_20250808_173006.png"
 import banner2 from "../assets/banner_20250808_174545.png" 
 import banner3 from "../assets/banner_20250813_163542.png"
 
-import mock_garlic from "../assets/mock_Garlic.png"
-import mock_steam from "../assets/mock_steam.png"
-import mock_spicy from "../assets/mock_spicy.png"
-import mock_grill from "../assets/mock_grill.png"
-import mock_s from "../assets/mock_s.png"
-import mock_t from "../assets/mock_t.png"
+import black_mock from "../assets/black_mock.png"
+import herb_mock from "../assets/herb_mock.png"
+import roast_mock from "../assets/roast_mock.png"
+import smoke_mock from "../assets/smoke_mock.png"
+import teri_mock from "../assets/teri_mock.png"
+import tom_mock from "../assets/tom_mock.png"
 
 import { useNavigate } from "react-router-dom"
 
 // 하드코딩 목업 데이터 (비로그인용)
-const mockRecommendedProducts = [
-  {
-    id: 1,
-    name: "갈릭 바베큐 닭가슴살",
-    price: "18,800원",
-    image: chicken,
-  },
-  {
-    id: 2,
-    name: "갈릭 바베큐 닭가슴살",
-    price: "18,800원",
-    image: chicken,
-  },
-  {
-    id: 3,
-    name: "갈릭 바베큐 닭가슴살",
-    price: "18,800원",
-    image: chicken,
-  },
-  {
-    id: 4,
-    name: "갈릭 바베큐 닭가슴살",
-    price: "18,800원",
-    image: chicken,
-  },
-  {
-    id: 5,
-    name: "갈릭 바베큐 닭가슴살",
-    price: "18,800원",
-    image: chicken,
-  },
-  {
-    id: 6,
-    name: "갈릭 바베큐 닭가슴살",
-    price: "18,800원",
-    image: chicken,
-  },
-]
-
 const mockCategoryProducts = [
   {
     id: 1,
-    name: "갈릭 허브 닭가슴살",
-    subtitle: "구매하기",
-    image: mock_garlic,
+    name: "똠얌 닭가슴살",
+    price: "17,600원",
+    image: tom_mock,
   },
   {
     id: 2,
-    name: "직화 스팀 닭가슴살",
-    subtitle: "구매하기",
-    image: mock_steam,
+    name: "스모크 닭가슴살",
+    price: "18,800원",
+    image: smoke_mock,
   },
   {
     id: 3,
-    name: "매콤 바베큐 닭가슴살",
-    subtitle: "구매하기",
-    image: mock_spicy,
+    name: "흑임자 닭가슴살",
+    price: "19,800원",
+    image: black_mock,
   },
   {
     id: 4,
-    name: "그릴 바베큐 닭가슴살",
-    subtitle: "구매하기",
-    image: mock_grill,
+    name: "허브 닭가슴살",
+    price: "15,800원",
+    image: herb_mock,
   },
   {
     id: 5,
-    name: "튀김 닭가슴살",
-    subtitle: "구매하기",
-    image: mock_t,
+    name: "데리야끼 닭가슴살",
+    price: "17,600원",
+    image: teri_mock,
   },
   {
     id: 6,
-    name: "수비드 닭가슴살",
-    subtitle: "구매하기",
-    image: mock_s,
+    name: "로스트 닭가슴살",
+    price: "16,500원",
+    image: roast_mock,
   },
 ]
 
